@@ -1,0 +1,187 @@
+/* ===================== CONTAINER GERAL ===================== */
+.container {
+  background: #FFF5F8;
+  width: 100%;
+}
+
+/* ===================== HERO ===================== */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 60px 48px;
+  gap: 32px;
+}
+
+.rosa { color: #FF5A8F; }
+.roxo { color: #6C63FF; }
+.bold { color: #1E1B4B; font-weight: 700; }
+
+.heroText h1 { font-size: 4.5rem; color: black; font-weight: 600; line-height: 0.9; }
+.heroText h2 { color: black; font-weight: 400; font-size: 1.4rem; margin-top: 12px; line-height: 1.3; }
+.heroText p { margin-top: 16px; font-size: 1.0rem; color: #4B4B6B; max-width: 420px; }
+
+.heroActions { margin-top: 24px; display: flex; gap: 12px; }
+.btnPrimary { background: #1E1B4B; color: #fff; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 300; font-size: 0.9rem; }
+.btnSecondary { background: #fff; border: 1px solid #1E1B4B; color: #1E1B4B; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 300; font-size: 0.9rem; }
+.heroImage img { width: 320px; max-width: 100%; }
+
+/* ===================== COMO O ASTRO FUNCIONA ===================== */
+.comoFunciona {
+  background-color: #F8BBCA;
+  width: 100%;
+  padding: 40px 48px 40px 48px; 
+  box-sizing: border-box;
+}
+
+.sectionTitle {
+  max-width: 1300px;
+  margin: 0 auto 24px auto;
+  font-size: 1.1rem;
+  color: #1E1B4B;
+  font-weight: 700;
+}
+
+.gridFunciona {
+  max-width: 1300px; 
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 0.9fr 1.3fr;
+  gap: 20px;
+}
+
+.card { border-radius: 20px; padding: 20px 22px; position: relative; }
+.card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; display: flex; gap: 6px; }
+.card p { font-size: 0.82rem; line-height: 1.4; }
+
+.cardLight { background: #fff; color: #1E1B4B; }
+.cardLight p { color: #555; }
+
+.cardDark {
+  background: #1E1B4B;
+  color: #fff;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding-right: 130px;
+}
+
+.cardPink {
+  background: #FF8FAF;
+  color: #1E1B4B;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.badgePercent {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 95px;
+  height: 95px;
+  background: #E93A7A;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 2.6rem;
+  color: #1E1B4B;
+  clip-path: polygon(50% 0%, 61% 8%, 75% 0%, 85% 10%, 100% 15%, 95% 30%, 100% 45%, 92% 58%, 100% 75%, 85% 82%, 78% 100%, 60% 92%, 45% 100%, 30% 92%, 15% 98%, 5% 85%, 0% 68%, 8% 52%, 0% 35%, 10% 18%);
+}
+
+/* ===================== UNIVERSO PET ===================== */
+.universo {
+  background: #1E1B4B;
+  border-radius: 20px;
+  max-width: 1300px;
+  margin: 40px auto; 
+  padding: 32px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  color: #fff;
+}
+.universo h2 { font-size: 1.1rem; margin-bottom: 8px; }
+.universo p { font-size: 0.85rem; opacity: 0.8; max-width: 700px; line-height: 1.4; }
+.btnUniverso { background: #FF5A8F; color: #fff; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
+
+/* ===================== IMPACTO - COM BORDAS FIGMA ===================== */
+.impacto { 
+  max-width: 1300px; 
+  margin: 0 auto; 
+  padding: 50px 48px 80px 48px; 
+  background: #FFF5F8;
+}
+
+.impactoTitle { 
+  text-align: center; 
+  color: #1E1B4B; 
+  font-size: 1.8rem; 
+  font-weight: 700; 
+  margin-bottom: 32px; 
+}
+
+.gridImpacto { 
+  display: grid; 
+  grid-template-columns: repeat(4, 1fr); 
+  gap: 20px; 
+}
+
+.impactoCard {
+  border-radius: 20px;
+  padding: 24px 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-width: 2px;
+  border-style: solid;
+}
+
+
+.bordaRoxa {
+  background: #E9E4FF;
+  border-color: #2A2861; 
+}
+
+.bordaRosa {
+  background: #FFD6E2; 
+  border-color: #FF8FAF; 
+}
+
+.impactoIcon {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  font-size: 2.4rem;
+}
+
+.impactoCard h4 {
+  font-size: 0.92rem;
+  color: #1E1B4B;
+  font-weight: 800;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.impactoCard p {
+  font-size: 0.76rem;
+  color: #3A3A5C;
+  line-height: 1.35;
+}
+
+/* ===================== RESPONSIVO ===================== */
+@media (max-width: 900px) {
+  .hero { flex-direction: column; text-align: center; padding: 40px 24px; }
+  .comoFunciona { padding: 32px 24px; }
+  .gridFunciona { grid-template-columns: 1fr; }
+  .cardDark { grid-column: 1; grid-row: auto; padding-right: 20px; }
+  .cardPink { grid-column: 1; grid-row: auto; }
+  .badgePercent { position: static; margin-top: 16px; }
+  .universo { flex-direction: column; text-align: center; margin: 24px; }
+  .impacto { padding: 20px 24px 60px 24px; }
+  .gridImpacto { grid-template-columns: 1fr 1fr; }
+}
