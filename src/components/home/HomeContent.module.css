@@ -1,187 +1,811 @@
-/* ===================== CONTAINER GERAL ===================== */
+/* =========================
+   CONTAINER GERAL
+========================= */
+
 .container {
-  background: #FFF5F8;
   width: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 80px;
+
+  padding: 80px 0;
+
+  background: #fffdfd;
 }
 
-/* ===================== HERO ===================== */
+
+/* =========================
+   BLOCO 1 - HERO
+========================= */
+
 .hero {
+  width: 100%;
+  max-width: 1200px;
+
+  margin: 0 auto;
+  padding: 0 32px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 60px 48px;
-  gap: 32px;
+
+  gap: 70px;
 }
 
-.rosa { color: #FF5A8F; }
-.roxo { color: #6C63FF; }
-.bold { color: #1E1B4B; font-weight: 700; }
-
-.heroText h1 { font-size: 4.5rem; color: black; font-weight: 600; line-height: 0.9; }
-.heroText h2 { color: black; font-weight: 400; font-size: 1.4rem; margin-top: 12px; line-height: 1.3; }
-.heroText p { margin-top: 16px; font-size: 1.0rem; color: #4B4B6B; max-width: 420px; }
-
-.heroActions { margin-top: 24px; display: flex; gap: 12px; }
-.btnPrimary { background: #1E1B4B; color: #fff; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 300; font-size: 0.9rem; }
-.btnSecondary { background: #fff; border: 1px solid #1E1B4B; color: #1E1B4B; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 300; font-size: 0.9rem; }
-.heroImage img { width: 320px; max-width: 100%; }
-
-/* ===================== COMO O ASTRO FUNCIONA ===================== */
-.comoFunciona {
-  background-color: #F8BBCA;
-  width: 100%;
-  padding: 40px 48px 40px 48px; 
-  box-sizing: border-box;
+.heroText {
+  width: 520px;
+  max-width: 100%;
 }
 
-.sectionTitle {
-  max-width: 1300px;
-  margin: 0 auto 24px auto;
-  font-size: 1.1rem;
-  color: #1E1B4B;
+.heroText h1 {
+  margin: 0;
+
+  color: #000000;
+
+  font-size: 58px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.heroText h2 {
+  margin: 10px 0 0;
+
+  color: #111111;
+
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.bold {
+  color: #15056f;
   font-weight: 700;
 }
 
-.gridFunciona {
-  max-width: 1300px; 
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 0.9fr 1.3fr;
-  gap: 20px;
-}
+.heroText p {
+  max-width: 500px;
 
-.card { border-radius: 20px; padding: 20px 22px; position: relative; }
-.card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; display: flex; gap: 6px; }
-.card p { font-size: 0.82rem; line-height: 1.4; }
+  margin: 28px 0 0;
 
-.cardLight { background: #fff; color: #1E1B4B; }
-.cardLight p { color: #555; }
+  color: #111111;
 
-.cardDark {
-  background: #1E1B4B;
-  color: #fff;
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  padding-right: 130px;
-}
-
-.cardPink {
-  background: #FF8FAF;
-  color: #1E1B4B;
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.badgePercent {
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  width: 95px;
-  height: 95px;
-  background: #E93A7A;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
-  font-size: 2.6rem;
-  color: #1E1B4B;
-  clip-path: polygon(50% 0%, 61% 8%, 75% 0%, 85% 10%, 100% 15%, 95% 30%, 100% 45%, 92% 58%, 100% 75%, 85% 82%, 78% 100%, 60% 92%, 45% 100%, 30% 92%, 15% 98%, 5% 85%, 0% 68%, 8% 52%, 0% 35%, 10% 18%);
-}
-
-/* ===================== UNIVERSO PET ===================== */
-.universo {
-  background: #1E1B4B;
-  border-radius: 20px;
-  max-width: 1300px;
-  margin: 40px auto; 
-  padding: 32px 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  color: #fff;
-}
-.universo h2 { font-size: 1.1rem; margin-bottom: 8px; }
-.universo p { font-size: 0.85rem; opacity: 0.8; max-width: 700px; line-height: 1.4; }
-.btnUniverso { background: #FF5A8F; color: #fff; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
-
-/* ===================== IMPACTO - COM BORDAS FIGMA ===================== */
-.impacto { 
-  max-width: 1300px; 
-  margin: 0 auto; 
-  padding: 50px 48px 80px 48px; 
-  background: #FFF5F8;
-}
-
-.impactoTitle { 
-  text-align: center; 
-  color: #1E1B4B; 
-  font-size: 1.8rem; 
-  font-weight: 700; 
-  margin-bottom: 32px; 
-}
-
-.gridImpacto { 
-  display: grid; 
-  grid-template-columns: repeat(4, 1fr); 
-  gap: 20px; 
-}
-
-.impactoCard {
-  border-radius: 20px;
-  padding: 24px 18px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-width: 2px;
-  border-style: solid;
-}
-
-
-.bordaRoxa {
-  background: #E9E4FF;
-  border-color: #2A2861; 
-}
-
-.bordaRosa {
-  background: #FFD6E2; 
-  border-color: #FF8FAF; 
-}
-
-.impactoIcon {
-  width: 72px;
-  height: 72px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 16px;
-  font-size: 2.4rem;
-}
-
-.impactoCard h4 {
-  font-size: 0.92rem;
-  color: #1E1B4B;
-  font-weight: 800;
-  margin-bottom: 10px;
-  line-height: 1.2;
-}
-
-.impactoCard p {
-  font-size: 0.76rem;
-  color: #3A3A5C;
+  font-size: 15px;
+  font-weight: 400;
   line-height: 1.35;
 }
 
-/* ===================== RESPONSIVO ===================== */
-@media (max-width: 900px) {
-  .hero { flex-direction: column; text-align: center; padding: 40px 24px; }
-  .comoFunciona { padding: 32px 24px; }
-  .gridFunciona { grid-template-columns: 1fr; }
-  .cardDark { grid-column: 1; grid-row: auto; padding-right: 20px; }
-  .cardPink { grid-column: 1; grid-row: auto; }
-  .badgePercent { position: static; margin-top: 16px; }
-  .universo { flex-direction: column; text-align: center; margin: 24px; }
-  .impacto { padding: 20px 24px 60px 24px; }
-  .gridImpacto { grid-template-columns: 1fr 1fr; }
+
+/* =========================
+   BOTÕES DO HERO
+========================= */
+
+.heroActions {
+  margin-top: 26px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 20px;
+}
+
+.btnPrimary,
+.btnSecondary {
+  min-width: 162px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 20px;
+
+  border-radius: 999px;
+
+  text-decoration: none;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.btnPrimary {
+  background: #15056f;
+  color: white;
+}
+
+.btnPrimary:hover {
+  background: #251296;
+  transform: translateY(-1px);
+}
+
+.btnSecondary {
+  background: #e4e1ec;
+  color: #111111;
+
+  border: 1px solid #15056f;
+}
+
+.btnSecondary:hover {
+  background: #15056f;
+  color: white;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================
+   IMAGEM DO HERO
+========================= */
+
+.heroImage {
+  width: 350px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+}
+
+.heroImage img {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+
+  display: block;
+
+  object-fit: contain;
+}
+
+
+/* ==========================================
+   BLOCO 2 - COMO O ASTRO FUNCIONA
+========================================== */
+
+.comoFunciona {
+  width: 100%;
+
+  padding: 38px 28px 30px;
+
+  background: #efa8ba;
+}
+
+.comoFuncionaConteudo {
+  width: 100%;
+  max-width: 1200px;
+
+  margin: 0 auto;
+}
+
+
+/* =========================
+   TÍTULO DO BLOCO 2
+========================= */
+
+.sectionTitle {
+  margin: 0 0 36px;
+
+  color: #15056f;
+
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+
+/* =========================
+   GRID DO BLOCO 2
+========================= */
+
+.gridFunciona {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns: 0.94fr 1.06fr;
+  grid-template-rows: 165px 165px;
+
+  column-gap: 14px;
+  row-gap: 20px;
+}
+
+
+/* =========================
+   CARDS GERAIS
+========================= */
+
+.card {
+  position: relative;
+
+  padding: 22px 22px;
+
+  border-radius: 24px;
+
+  overflow: hidden;
+}
+
+
+/* =========================
+   TÍTULOS DOS CARDS
+========================= */
+
+.cardTituloLinha {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+.cardTituloLinha h3 {
+  margin: 0;
+
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+
+/* =========================
+   TEXTO DOS CARDS
+========================= */
+
+.card p {
+  margin: 0;
+
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+
+/* =========================
+   ESTRELAS
+========================= */
+
+.estrela {
+  flex-shrink: 0;
+
+  font-size: 36px;
+  line-height: 1;
+}
+
+.estrelaRosa {
+  color: #e63d68;
+}
+
+.estrelaAzul {
+  color: #15056f;
+}
+
+
+/* =========================
+   CARD BRANCO
+========================= */
+
+.cardLight {
+  grid-column: 1;
+  grid-row: 1;
+
+  background: #ffffff;
+  color: #111111;
+}
+
+.cardLight p {
+  max-width: 500px;
+}
+
+
+/* =========================
+   CARD ROSA
+========================= */
+
+.cardPink {
+  grid-column: 1;
+  grid-row: 2;
+
+  background: #df3b67;
+  color: #ffffff;
+}
+
+.cardPink p {
+  max-width: 500px;
+}
+
+
+/* =========================
+   CARD AZUL
+========================= */
+
+.cardDark {
+  grid-column: 2;
+  grid-row: 1 / 3;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 22px 24px;
+
+  background: #15056f;
+  color: #ffffff;
+}
+
+
+/* TÍTULO DO CARD AZUL */
+
+.cardDark .cardTituloLinha {
+  margin-bottom: 18px;
+}
+
+
+/* =========================
+   PRIMEIRO PARÁGRAFO AZUL
+========================= */
+
+.cardDarkPrimeiroTexto {
+  width: 100%;
+
+  margin: 0 0 24px !important;
+
+  font-size: 17px !important;
+  font-weight: 400;
+  line-height: 1.3 !important;
+}
+
+
+/* =========================
+   PARTE INFERIOR DO CARD AZUL
+========================= */
+
+.cardDarkInferior {
+  width: 100%;
+  flex: 1;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  align-items: center;
+
+  gap: 28px;
+}
+
+
+/* SEGUNDO PARÁGRAFO */
+
+.cardDarkSegundoTexto {
+  margin: 0 !important;
+
+  font-size: 17px !important;
+  font-weight: 400;
+  line-height: 1.3 !important;
+}
+
+
+/* =========================
+   CUPOM
+========================= */
+
+.cupomArea {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cupom {
+  width: 140px;
+  height: 140px;
+
+  display: block;
+
+  object-fit: contain;
+}
+
+
+/* =========================
+   BLOCO 3 - UNIVERSO PET
+========================= */
+
+.universoWrapper {
+  width: 100%;
+
+  padding: 0 32px;
+
+  background: #fffdfd;
+}
+
+.universo {
+  width: 100%;
+  max-width: 1100px;
+
+  margin: 0 auto;
+
+  padding: 38px 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 50px;
+
+  background: #15056f;
+  color: white;
+
+  border-radius: 48px;
+}
+
+.universoTexto {
+  max-width: 600px;
+}
+
+.universo h2 {
+  margin: 0 0 20px;
+
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.universo p {
+  margin: 0;
+
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.universo p + p {
+  margin-top: 2px;
+}
+
+
+/* =========================
+   BOTÃO UNIVERSO
+========================= */
+
+.btnUniverso {
+  min-width: 250px;
+  height: 72px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 28px;
+
+  background: #df3b67;
+  color: white;
+
+  border-radius: 999px;
+
+  text-decoration: none;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btnUniverso:hover {
+  background: #c9345c;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================
+   BLOCO 4 - IMPACTO
+========================= */
+
+.impacto {
+  width: 100%;
+  max-width: 1200px;
+
+  margin: 0 auto;
+  padding: 0 32px;
+
+  background: #fffdfd;
+}
+
+.impactoTitle {
+  margin: 0 0 60px;
+
+  text-align: center;
+
+  color: #15056f;
+
+  font-size: 22px;
+  font-weight: 700;
+}
+
+
+/* =========================
+   GRID - IMPACTO
+========================= */
+
+.gridImpacto {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 28px;
+}
+
+
+/* =========================
+   CARDS - IMPACTO
+========================= */
+
+.impactoCard {
+  min-height: 275px;
+
+  padding: 28px 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  border: 2px solid;
+  border-radius: 24px;
+
+  text-align: center;
+}
+
+.bordaRoxa {
+  background: #dedbea;
+  border-color: #15056f;
+}
+
+.bordaRosa {
+  background: #f5bdcc;
+  border-color: #e63d68;
+}
+
+
+/* =========================
+   ÍCONES - IMPACTO
+========================= */
+
+.impactoIcon {
+  width: 82px;
+  height: 82px;
+
+  margin-bottom: 18px;
+
+  object-fit: contain;
+}
+
+
+/* =========================
+   TÍTULOS - IMPACTO
+========================= */
+
+.impactoCard h3 {
+  max-width: 170px;
+
+  margin: 0 0 16px;
+
+  color: #15056f;
+
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.bordaRosa h3 {
+  color: #e63d68;
+}
+
+
+/* =========================
+   TEXTOS - IMPACTO
+========================= */
+
+.impactoCard p {
+  max-width: 180px;
+
+  margin: 0;
+
+  color: #111111;
+
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+
+/* ==========================================
+   RESPONSIVIDADE - TABLET
+========================================== */
+
+@media (max-width: 1000px) {
+
+  .hero {
+    gap: 40px;
+  }
+
+  .heroImage {
+    width: 310px;
+  }
+
+  .heroImage img {
+    max-width: 310px;
+  }
+
+  .gridImpacto {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ==========================================
+   RESPONSIVIDADE - TABLET PEQUENO
+========================================== */
+
+@media (max-width: 850px) {
+
+  .container {
+    gap: 40px;
+
+    padding: 40px 0;
+  }
+
+
+  /* HERO */
+
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+
+    padding: 0 30px;
+  }
+
+  .heroImage {
+    width: 100%;
+  }
+
+  .heroImage img {
+    max-width: 350px;
+
+    margin: 0 auto;
+  }
+
+  .heroActions {
+    flex-wrap: wrap;
+  }
+
+
+  /* BLOCO 2 */
+
+  .comoFunciona {
+    padding: 40px 30px;
+  }
+
+  .gridFunciona {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+
+    gap: 20px;
+  }
+
+  .cardLight,
+  .cardPink,
+  .cardDark {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .card {
+    min-height: 160px;
+  }
+
+  .cardDark {
+    min-height: 360px;
+  }
+
+  .cardDarkInferior {
+    grid-template-columns: 1fr 160px;
+  }
+
+  .cupom {
+    width: 125px;
+    height: 125px;
+  }
+
+
+  /* BLOCO 3 */
+
+  .universo {
+    flex-direction: column;
+    align-items: flex-start;
+
+    border-radius: 36px;
+  }
+
+  .btnUniverso {
+    min-width: 220px;
+    height: 58px;
+  }
+}
+
+
+/* ==========================================
+   RESPONSIVIDADE - CELULAR
+========================================== */
+
+@media (max-width: 600px) {
+
+  .container {
+    gap: 35px;
+
+    padding: 35px 0;
+  }
+
+
+  /* HERO */
+
+  .heroText h1 {
+    font-size: 48px;
+  }
+
+  .heroText h2 {
+    font-size: 18px;
+  }
+
+  .heroImage img {
+    max-width: 290px;
+  }
+
+
+  /* BLOCO 2 */
+
+  .cardTituloLinha h3 {
+    font-size: 18px;
+  }
+
+  .estrela {
+    font-size: 32px;
+  }
+
+  .card p,
+  .cardDarkPrimeiroTexto,
+  .cardDarkSegundoTexto {
+    font-size: 13px !important;
+  }
+
+  .cardDarkInferior {
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+  }
+
+  .cupomArea {
+    justify-content: flex-start;
+  }
+
+
+  /* BLOCO 4 */
+
+  .gridImpacto {
+    grid-template-columns: 1fr;
+  }
+
+  .impactoCard {
+    width: 100%;
+    max-width: 330px;
+
+    margin: 0 auto;
+  }
 }

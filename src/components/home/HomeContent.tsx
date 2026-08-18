@@ -1,85 +1,310 @@
-import styles from "./HomeContent.module.css"
-import Link from "next/link"
+import styles from "./HomeContent.module.css";
+import Link from "next/link";
 
 export function HomeContent() {
   return (
     <div className={styles.container}>
-      {/* HERO TOP */}
+
+      {/* =========================
+          BLOCO 1 - HERO
+      ========================= */}
       <section className={styles.hero}>
+
         <div className={styles.heroText}>
           <h1>Astro</h1>
-          <h2>O ecossistema completo para você<br /> encontrar e cuidar do seu pet<span className={styles.bold}> na sua órbita.</span></h2>
-          <p>Conectamos você a ONGs da sua região para adoção e às clínicas veterinárias mais acessíveis perto de você. Tudo em um só lugar, para o seu pet gravitar sempre com saúde e carinho.</p>
+
+          <h2>
+            O ecossistema completo para você
+            <br />
+            encontrar e cuidar do seu pet{" "}
+            <span className={styles.bold}>na sua órbita.</span>
+          </h2>
+
+          <p>
+            Conectamos você às ONGs da sua região para adoção e às clínicas
+            veterinárias mais acessíveis perto de você. Tudo em um só lugar,
+            para o seu pet gravitar sempre com saúde e carinho.
+          </p>
+
           <div className={styles.heroActions}>
-            <Link href="/animais" className={styles.btnPrimary}>Encontrar meu pet</Link>
-            <Link href="/sobre" className={styles.btnSecondary}>Buscar clínicas próximas</Link>
+            <Link href="/animais" className={styles.btnPrimary}>
+              Encontrar meu pet
+            </Link>
+
+            <Link href="/animais" className={styles.btnSecondary}>
+              Buscar clínicas próximas
+            </Link>
           </div>
         </div>
+
         <div className={styles.heroImage}>
-          <img src="/dog-astro.png" alt="Gato e cachorro" />
+          <img
+            src="/dog-astro.png"
+            alt="Pet em destaque no Astro"
+          />
         </div>
+
       </section>
 
-      {/* COMO FUNCIONA */}
+
+      {/* =========================
+          BLOCO 2 - COMO FUNCIONA
+      ========================= */}
       <section className={styles.comoFunciona}>
-        <h2 className={styles.sectionTitle}>Como o Astro funciona?</h2>
-        <div className={styles.gridFunciona}>
-          <div className={`${styles.card} ${styles.cardLight}`}>
-            <h3><span>✦</span> Adoção Consciente & Divulgação</h3>
-            <p>Facilitamos a conexão entre ONGs, abrigos e adotantes, com filtros inteligentes para você encontrar o pet ideal. Uma vitrine completa para dar mais visibilidade aos animais.</p>
-          </div>
-          <div className={`${styles.card} ${styles.cardDark}`}>
-            <h3><span>✦</span> Saúde Acessível, Cupons e Recompensas</h3>
-            <p>Acesso a uma rede de clínicas parceiras, cupons de desconto exclusivos e cashback que retornam como créditos para você usar em serviços de saúde e bem-estar.</p>
-            <div className={styles.badgePercent}>%</div>
-          </div>
-          <div className={`${styles.card} ${styles.cardPink}`}>
-            <h3><span>✦</span> Cuidado Contínuo na Sua Órbita</h3>
-            <p>Carteira de vacinação digital, lembretes de vermifugação, histórico de consultas e dicas personalizadas. Tudo para manter a saúde do seu pet em dia.</p>
+
+        <div className={styles.comoFuncionaConteudo}>
+
+          <h2 className={styles.sectionTitle}>
+            Como o Astro funciona?
+          </h2>
+
+          <div className={styles.gridFunciona}>
+
+            {/* CARD BRANCO */}
+            <div className={`${styles.card} ${styles.cardLight}`}>
+
+              <div className={styles.cardTituloLinha}>
+                <span
+                  className={`${styles.estrela} ${styles.estrelaRosa}`}
+                >
+                  ✦
+                </span>
+
+                <h3>
+                  Adoção Consciente & Divulgação
+                </h3>
+              </div>
+
+              <p>
+                As ONGs cadastram os bichinhos que precisam de um lar. Nós
+                cuidamos de toda a divulgação para que a história de cada um
+                chegue até você sem burocracia.
+              </p>
+
+            </div>
+
+
+            {/* CARD ROSA */}
+            <div className={`${styles.card} ${styles.cardPink}`}>
+
+              <div className={styles.cardTituloLinha}>
+                <span
+                  className={`${styles.estrela} ${styles.estrelaAzul}`}
+                >
+                  ✦
+                </span>
+
+                <h3>
+                  Cuidado Contínuo na Sua Órbita
+                </h3>
+              </div>
+
+              <p>
+                Acompanhe os cuidados de saúde do seu amigo e garanta que
+                ele tenha a melhor qualidade de vida com a previsibilidade e
+                proteção que ele merece.
+              </p>
+
+            </div>
+
+
+            {/* CARD AZUL */}
+            <div className={`${styles.card} ${styles.cardDark}`}>
+
+              <div className={styles.cardTituloLinha}>
+                <span
+                  className={`${styles.estrela} ${styles.estrelaRosa}`}
+                >
+                  ✦
+                </span>
+
+                <h3>
+                  Saúde Acessível, Cupons & Recompensas
+                </h3>
+              </div>
+
+              <p className={styles.cardDarkPrimeiroTexto}>
+                Encontre clínicas veterinárias na sua região e aproveite cupons
+                exclusivos disponibilizados frequentemente para ONGs e tutores
+                cadastrados.
+              </p>
+
+              <div className={styles.cardDarkInferior}>
+
+                <p className={styles.cardDarkSegundoTexto}>
+                  Além disso, ao consultar seu pet pelas clínicas do nosso
+                  sistema e deixar sua avaliação, você e as ONGs acumulam
+                  pontos que podem ser trocados por descontos nas próximas
+                  consultas e tratamentos!
+                </p>
+
+                <div className={styles.cupomArea}>
+                  <img
+                    src="/home/cupom.svg"
+                    alt=""
+                    className={styles.cupom}
+                  />
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
         </div>
+
       </section>
 
-      {/* UNIVERSO PET */}
-      <section className={styles.universo}>
-        <div>
-          <h2>O universo pet gravita aqui!</h2>
-          <p>Nascemos para reinventar a forma como cuidamos e adotamos: nenhum pet deve ficar sem um lar e nenhum tutor deve escolher entre a saúde do seu amigo e o próprio bolso. <br /> Conectamos <strong>quem ama, quem resgata e quem cuida</strong> para garantir que o carinho e a saúde estejam ao alcance de todos.</p>
+
+      {/* =========================
+          BLOCO 3 - UNIVERSO PET
+      ========================= */}
+      <section className={styles.universoWrapper}>
+
+        <div className={styles.universo}>
+
+          <div className={styles.universoTexto}>
+
+            <h2>
+              O universo pet gravita aqui!
+            </h2>
+
+            <p>
+              Nascemos para reinventar a forma como cuidamos e adotamos:
+              nenhum pet deve ficar sem um lar e nenhum tutor deve escolher
+              entre a saúde do seu amigo e o próprio bolso.
+            </p>
+
+            <p>
+              Conectamos{" "}
+              <strong>
+                quem ama, quem resgata e quem cuida
+              </strong>{" "}
+              para garantir que o carinho e a saúde estejam ao alcance de todos.
+            </p>
+
+          </div>
+
+          <Link
+            href="/sobre-nos"
+            className={styles.btnUniverso}
+          >
+            Conheça nossa história
+          </Link>
+
         </div>
-        <Link href="/sobre" className={styles.btnUniverso}>Conheça nossa história</Link>
+
       </section>
 
-      {/* IMPACTO - COM BORDAS DO FIGMA */}
+
+      {/* =========================
+          BLOCO 4 - IMPACTO
+      ========================= */}
       <section className={styles.impacto}>
-        <h2 className={styles.impactoTitle}>O impacto que estamos construindo</h2>
+
+        <h2 className={styles.impactoTitle}>
+          O impacto que estamos construindo
+        </h2>
+
         <div className={styles.gridImpacto}>
-          
-          <div className={`${styles.impactoCard} ${styles.bordaRoxa}`}>
-            <div className={styles.impactoIcon}>🐱</div>
-            <h4>Adoção sem Fronteiras</h4>
-            <p>Criando uma ponte direta entre ONGs e tutores, multiplicando as chances de cada pet encontrar um lar definitivo.</p>
+
+
+          {/* ADOÇÃO */}
+          <div
+            className={`${styles.impactoCard} ${styles.bordaRoxa}`}
+          >
+
+            <img
+              src="/home/adocao.svg"
+              alt=""
+              className={styles.impactoIcon}
+            />
+
+            <h3>
+              Adoção sem Fronteiras
+            </h3>
+
+            <p>
+              Criando uma ponte direta entre ONGs parceiras e tutores,
+              multiplicando as chances de cada pet encontrar um lar definitivo.
+            </p>
+
           </div>
 
-          <div className={`${styles.impactoCard} ${styles.bordaRosa}`}>
-            <div className={styles.impactoIcon}>❤️</div>
-            <h4>Saúde que Cabe no Bolso</h4>
-            <p>Mapeamento de clínicas parceiras com opções acessíveis na sua região para que o cuidado veterinário nunca precise ser adiado.</p>
+
+          {/* SAÚDE */}
+          <div
+            className={`${styles.impactoCard} ${styles.bordaRosa}`}
+          >
+
+            <img
+              src="/home/saude.svg"
+              alt=""
+              className={styles.impactoIcon}
+            />
+
+            <h3>
+              Saúde que Cabe no Bolso
+            </h3>
+
+            <p>
+              Mapeamento de clínicas parceiras com opções acessíveis na sua
+              região para que o cuidado veterinário nunca precise ser adiado.
+            </p>
+
           </div>
 
-          <div className={`${styles.impactoCard} ${styles.bordaRoxa}`}>
-            <div className={styles.impactoIcon}>%</div>
-            <h4>Recompensas por Cuidar</h4>
-            <p>Um sistema de pontos e cupons frequentes onde a sua avaliação sobre um atendimento gera descontos reais para as próximas consultas.</p>
+
+          {/* RECOMPENSAS */}
+          <div
+            className={`${styles.impactoCard} ${styles.bordaRoxa}`}
+          >
+
+            <img
+              src="/home/recompensas.svg"
+              alt=""
+              className={styles.impactoIcon}
+            />
+
+            <h3>
+              Recompensas por Cuidar
+            </h3>
+
+            <p>
+              Um sistema de pontos e cupons frequentes onde a sua avaliação
+              sobre um atendimento gera descontos reais para as próximas
+              consultas.
+            </p>
+
           </div>
 
-          <div className={`${styles.impactoCard} ${styles.bordaRosa}`}>
-            <div className={styles.impactoIcon}>🐾</div>
-            <h4>Órbita de Proteção</h4>
-            <p>Acompanhamento prático da saúde do seu amigo, facilitando a rotina de exames, vacinas e tratamentos preventivos.</p>
+
+          {/* ÓRBITA */}
+          <div
+            className={`${styles.impactoCard} ${styles.bordaRosa}`}
+          >
+
+            <img
+              src="/home/orbita.svg"
+              alt=""
+              className={styles.impactoIcon}
+            />
+
+            <h3>
+              Órbita de Proteção
+            </h3>
+
+            <p>
+              Acompanhamento prático da saúde do seu amigo, facilitando a
+              rotina de exames, vacinas e tratamentos preventivos.
+            </p>
+
           </div>
 
         </div>
+
       </section>
+
     </div>
-  )
+  );
 }
