@@ -1,69 +1,267 @@
+/* HEADER */
+
 .header {
   width: 100%;
-  background: white;
-  height: 64px;
+  height: 74px;
+
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+
   padding: 0 32px;
+
+  background: white;
+  border-bottom: 1px solid #f9f9f9;
+}
+
+
+/* LOGO */
+
+.logoLink {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #f9f9f9;
+  justify-content: flex-start;
 }
 
 .logo {
   height: 60px;
   width: auto;
-  transform: scale(1.25);
+
+  object-fit: contain;
+
+  transition: transform 0.2s ease;
 }
+
+.logoLink:hover .logo {
+  transform: scale(1.04);
+}
+
+
+/* MENU */
 
 .nav {
   display: flex;
-  gap: 90px; 
+  align-items: center;
+  justify-content: center;
+
+  gap: 70px;
+
   font-size: 15px;
-  font-weight: 530;
-  color: black;
+  font-weight: 400;
 }
+
+.nav a {
+  position: relative;
+
+  color: black;
+  text-decoration: none;
+
+  white-space: nowrap;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.nav a:hover {
+  color: #e94e77;
+  transform: translateY(-1px);
+}
+
+
+/* Linha que aparece embaixo do link */
+
+.nav a::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  bottom: -5px;
+
+  width: 0;
+  height: 2px;
+
+  background: #e94e77;
+
+  border-radius: 999px;
+
+  transform: translateX(-50%);
+
+  transition: width 0.2s ease;
+}
+
+.nav a:hover::after {
+  width: 100%;
+}
+
+
+/* ÁREA DIREITA */
 
 .acoes {
   display: flex;
   align-items: center;
-  gap: 12px;
+
+  gap: 32px;
 }
+
+
+/* BUSCA */
 
 .busca {
   position: relative;
+
+  display: flex;
+  align-items: center;
+
+  width: 180px;
+  height: 30px;
 }
 
+
+/* CAMPO DE PESQUISA */
+
 .buscaInput {
-  width: 200px;
-  height: 32px;
+  width: 100%;
+  height: 100%;
+
+  border: 2px solid #160877;
   border-radius: 999px;
-  background: #EDE8FF;
-  border: 1px solid #1E1B4B;
-  padding-left: 32px;
+
+  background: #e9e6f2;
+
+  padding: 0 14px 0 45px;
+
+  outline: none;
+
+  color: #111111;
+  font-size: 13px;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
+
+
+/* HOVER */
+
+.buscaInput:hover {
+  background: #e3dfed;
+}
+
+
+/* QUANDO CLICAR NA BUSCA */
+
+.buscaInput:focus {
+  background: #ffffff;
+
+  border-color: #160877;
+
+  box-shadow: 0 0 0 3px rgba(22, 8, 119, 0.1);
+}
+
+
+/* ÍCONE DA LUPA */
+
+.buscaIcone {
+  position: absolute;
+
+  left: 9px;
+  top: 50%;
+
+  width: 15px;
+  height: 15px;
+
+  transform: translateY(-50%);
+
+  object-fit: contain;
+
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+/* BOTÕES ENTRAR / CADASTRO */
 
 .botoes {
   display: flex;
+  align-items: center;
+
+  background: #ffd6e0;
+
+  border: 1px solid #e94e77;
   border-radius: 999px;
-  border: 1px solid black;
-  overflow: hidden;
-  font-size: 13px;
+
+  overflow: visible;
+
+  font-size: 12px;
   font-weight: 700;
 }
 
+.btnEntrar,
+.btnCadastro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 64px;
+  height: 27px;
+
+  padding: 0 16px;
+
+  border-radius: 999px;
+
+  text-decoration: none;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+
+/* ESTADO NORMAL */
+
 .btnEntrar {
-  background: #FFD6E0;
-  color: #000; 
-  padding: 6px 20px;
+  background: transparent;
+  color: black;
 }
 
 .btnCadastro {
-  background: #E94E77;
+  background: #e94e77;
   color: white;
-  padding: 6px 20px;
 }
 
-.buscaInput::placeholder {
-  color: #8B8B8B;
-  font-size: 13px;
+
+/* HOVER NO ENTRAR */
+
+.botoes:has(.btnEntrar:hover) .btnEntrar {
+  background: #e94e77;
+  color: white;
+}
+
+.botoes:has(.btnEntrar:hover) .btnCadastro {
+  background: transparent;
+  color: black;
+}
+
+
+/* HOVER NO CADASTRO */
+
+.botoes:has(.btnCadastro:hover) .btnEntrar {
+  background: transparent;
+  color: black;
+}
+
+.botoes:has(.btnCadastro:hover) .btnCadastro {
+  background: #e94e77;
+  color: white;
+}
+
+
+/* CLIQUE */
+
+.btnEntrar:active,
+.btnCadastro:active {
+  opacity: 0.85;
 }

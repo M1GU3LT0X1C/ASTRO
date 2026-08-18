@@ -1,107 +1,231 @@
+/* FOOTER */
+
 .footer {
   width: 100%;
-  background: #F8AFC0;
-  padding: 48px 64px;
+
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 60px;
-  align-items: start;
+  grid-template-columns: 1fr 420px;
+  align-items: center;
+
+  gap: 70px;
+
+  padding: 55px 48px;
+
+  background: #efa8ba;
+}
+
+
+/* LADO ESQUERDO */
+
+.topo {
+  width: 100%;
+  max-width: 520px;
 }
 
 .titulo {
-  font-size: 24px;
-  font-weight: 800;
-  color: #1A1140;
-  margin-bottom: 12px;
+  margin: 0 0 10px;
+
+  color: #13076f;
+
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .descricao {
-  font-size: 13.5px;
-  line-height: 20px;
-  color: #1A1140;
-  font-weight: 500;
-  margin-bottom: 46px;
+  max-width: 470px;
+
+  margin: 0 0 30px;
+
+  color: #111111;
+
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.25;
 }
+
+
+/* LISTA */
 
 .lista {
   display: flex;
-  flex-direction: column; /* AQUI QUE TAVA ERRADO, TEM QUE SER COLUNA */
+  flex-direction: column;
+
   gap: 28px;
 }
 
 .item {
   display: flex;
+  align-items: center;
+
   gap: 16px;
-  align-items: flex-start;
 }
+
+
+/* ÍCONE SVG */
 
 .icone {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
-  border-radius: 50%;
-  background: #1A1140;
-  display: grid;
-  place-items: center;
-  font-size: 24px;
-  /* pra ficar rosa igual teu figma */
-  color: #F8AFC0;
+  width: 72px;
+  height: 72px;
+
+  flex-shrink: 0;
+
+  object-fit: contain;
 }
 
+
+/* TEXTO DOS ITENS */
+
 .itemTitulo {
-  color: #1A1140;
-  font-weight: 800;
-  font-size: 16px;
+  margin: 0 0 5px;
+
+  color: #13076f;
+
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .itemTexto {
-  color: #1A1140;
+  max-width: 310px;
+
+  margin: 0;
+
+  color: #111111;
+
   font-size: 12.5px;
-  margin-top: 4px;
-  max-width: 260px;
-  line-height: 17px;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
+
 /* CARD DA DIREITA */
+
 .card {
+  width: 100%;
+  max-width: 365px;
+
+  justify-self: center;
+
+  padding: 28px 38px 42px;
+
   background: white;
-  border-radius: 28px; /* arredondado igual teu figma */
-  padding: 32px 40px 40px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+
+  border-radius: 42px;
+
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.18);
 }
 
 .cardTitulo {
+  margin: 0 0 65px;
+
   text-align: center;
-  color: #C13A5D;
-  font-weight: 700;
+
+  color: #e63d68;
+
   font-size: 17px;
-  margin-bottom: 28px;
+  font-weight: 700;
+}
+
+
+/* FORMULÁRIO */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
 }
 
 .input {
   width: 100%;
-  height: 40px;
+  height: 38px;
+
+  margin-bottom: 18px;
+
+  padding: 0 12px;
+
+  background: #deddeb;
+
+  border: 1px solid #160877;
   border-radius: 999px;
-  background: #EDE8FF;
-  border: 1.5px solid #1A1140;
-  padding: 0 20px;
-  margin-bottom: 14px;
-  font-size: 13px;
+
+  color: #111111;
+
+  font-size: 11px;
+
+  outline: none;
+
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .input::placeholder {
-  color: #1A1140;
-  opacity: 0.8;
+  color: #444444;
+  opacity: 1;
 }
 
+.input:focus {
+  background: white;
+
+  box-shadow: 0 0 0 3px rgba(22, 8, 119, 0.1);
+}
+
+
+/* BOTÃO CONTINUAR */
+
 .botao {
-  background: #1A1140;
+  width: fit-content;
+
+  margin: 24px auto 0;
+
+  padding: 9px 20px;
+
+  background: #160877;
   color: white;
-  border-radius: 999px;
-  padding: 10px 32px;
+
   border: none;
-  font-weight: 700;
-  display: block;
-  margin: 18px auto 0;
+  border-radius: 999px;
+
+  font-size: 16px;
+  font-weight: 400;
+
   cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.botao:hover {
+  background: #241297;
+
+  transform: translateY(-1px);
+}
+
+.botao:active {
+  transform: scale(0.97);
+}
+
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 900px) {
+  .footer {
+    grid-template-columns: 1fr;
+
+    gap: 50px;
+
+    padding: 45px 30px;
+  }
+
+  .topo {
+    max-width: 600px;
+
+    margin: 0 auto;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 430px;
+  }
 }
