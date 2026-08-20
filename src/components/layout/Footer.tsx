@@ -1,6 +1,31 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./Footer.module.css";
 
 export function Footer() {
+  const router = useRouter();
+
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+
+  function continuarCadastro(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    sessionStorage.setItem(
+      "astroCadastroInicial",
+      JSON.stringify({
+        nome,
+        email,
+        senha,
+      })
+    );
+
+    router.push("/cadastro");
+  }
+
   return (
     <footer className={styles.footer}>
       <div className={styles.topo}>
@@ -17,13 +42,15 @@ export function Footer() {
         <div className={styles.lista}>
           <div className={styles.item}>
             <img
-              src="icone-ong.svg"
+              src="/icone-ong.svg"
               alt=""
               className={styles.icone}
             />
 
             <div>
-              <h3 className={styles.itemTitulo}>É uma ONG?</h3>
+              <h3 className={styles.itemTitulo}>
+                É uma ONG?
+              </h3>
 
               <p className={styles.itemTexto}>
                 Cadastre seus bichinhos na nossa vitrine e amplie seu alcance
@@ -34,13 +61,15 @@ export function Footer() {
 
           <div className={styles.item}>
             <img
-              src="icone-tutor.svg"
+              src="/icone-tutor.svg"
               alt=""
               className={styles.icone}
             />
 
             <div>
-              <h3 className={styles.itemTitulo}>É um tutor?</h3>
+              <h3 className={styles.itemTitulo}>
+                É um tutor?
+              </h3>
 
               <p className={styles.itemTexto}>
                 Encontre seu novo amigo e cuide da saúde dele com descontos e
@@ -51,13 +80,15 @@ export function Footer() {
 
           <div className={styles.item}>
             <img
-              src="icone-clinica.svg"
+              src="/icone-clinica.svg"
               alt=""
               className={styles.icone}
             />
 
             <div>
-              <h3 className={styles.itemTitulo}>É uma clínica?</h3>
+              <h3 className={styles.itemTitulo}>
+                É uma clínica?
+              </h3>
 
               <p className={styles.itemTexto}>
                 Conecte-se a tutores da sua região e mostre seu trabalho na
@@ -69,30 +100,47 @@ export function Footer() {
       </div>
 
       <div className={styles.card}>
-        <h3 className={styles.cardTitulo}>Crie sua conta Astro</h3>
+        <h3 className={styles.cardTitulo}>
+          Crie sua conta Astro
+        </h3>
 
-        <div className={styles.formulario}>
+        <form
+          className={styles.formulario}
+          onSubmit={continuarCadastro}
+        >
           <input
             className={styles.input}
             placeholder="Nome"
+            value={nome}
+            onChange={(event) => setNome(event.target.value)}
+            required
           />
 
           <input
             className={styles.input}
             placeholder="E-mail"
             type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
           />
 
           <input
             className={styles.input}
             placeholder="Senha"
             type="password"
+            value={senha}
+            onChange={(event) => setSenha(event.target.value)}
+            required
           />
 
-          <button className={styles.botao}>
+          <button
+            type="submit"
+            className={styles.botao}
+          >
             Continuar
           </button>
-        </div>
+        </form>
       </div>
     </footer>
   );
