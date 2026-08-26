@@ -19,7 +19,7 @@ export function Header() {
       <nav className={styles.nav}>
         <Link href="/">Início</Link>
         <Link href="/sobre-nos">Sobre nós</Link>
-        <Link href="/animais">Adoção & Clínicas</Link>
+        <Link href="/adocao-clinicas">Adoção & Clínicas</Link>
         <Link href="/">Ajuda</Link>
       </nav>
 
