@@ -1,0 +1,136 @@
+.sidebar {
+  width: 240px;
+  background: #f3f1f8;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.sidebar.fechado {
+  width: 72px;
+  padding: 16px 8px;
+  align-items: center;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px 24px 4px;
+  width: 100%;
+}
+.fechado .topo {
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.avatarTopo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+}
+.avatarTopoFechado {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+}
+
+.nomeOng {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+}
+.fechado .hamburger {
+  margin-left: 0;
+}
+.tracinhos {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  flex: 1;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #4a445f;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: 0.2s;
+  width: 100%;
+}
+.fechado .item {
+  justify-content: center;
+  padding: 12px;
+  gap: 0;
+}
+.item:hover {
+  background: #e9e0ff;
+}
+.item.ativo {
+  background: #fff;
+  color: #e63d68;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.fechado .item.ativo {
+  background: #ffe1e8;
+}
+
+.iconeVetor {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.fechado .iconeVetor {
+  width: 22px;
+  height: 22px;
+}
+
+.label { white-space: nowrap; }
+
+.rodape { margin-top: auto; width: 100%; }
+.voltar {
+  background: #e63d68;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  border-radius: 20px;
+  display: block;
+  font-size: 12px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.fechado .voltar {
+  padding: 8px;
+}

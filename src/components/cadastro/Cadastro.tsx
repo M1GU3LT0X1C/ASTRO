@@ -1,12 +1,15 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase"; // seu client do supabase
 import styles from "./Cadastro.module.css";
 
 type Perfil = "explorador" | "guardiao" | "base-estelar" | "estacao";
-type DadosIniciais = { nome: string; email: string; senha: string; };
+type DadosIniciais = { nome: string; email: string; senha: string };
 
 export function Cadastro() {
+  const router = useRouter();
   const [perfilSelecionado, setPerfilSelecionado] = useState<Perfil | null>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -16,6 +19,7 @@ export function Cadastro() {
   const [erroSenha, setErroSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
     const dadosSalvos = sessionStorage.getItem("astroCadastroInicial");
@@ -30,16 +34,76 @@ export function Cadastro() {
     }
   }, []);
 
-  function selecionarPerfil(perfil: Perfil) { setPerfilSelecionado(perfil); }
+  function selecionarPerfil(perfil: Perfil) {
+    setPerfilSelecionado(perfil);
+  }
 
-  function finalizarCadastro(event: FormEvent<HTMLFormElement>) {
+  async function finalizarCadastro(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!perfilSelecionado) { alert("Escolha como você pretende orbitar com a gente."); return; }
-    if (senha !== confirmarSenha) { setErroSenha("As senhas não coincidem!"); return; }
-    if (senha.length < 6) { setErroSenha("A senha precisa ter pelo menos 6 caracteres."); return; }
+    if (!perfilSelecionado) {
+      alert("Escolha como você pretende orbitar com a gente.");
+      return;
+    }
+    if (senha !== confirmarSenha) {
+      setErroSenha("As senhas não coincidem!");
+      return;
+    }
+    if (senha.length < 6) {
+      setErroSenha("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
     setErroSenha("");
-    console.log("Cadastro:", { perfil: perfilSelecionado, nome, email, senha, cep });
-    sessionStorage.removeItem("astroCadastroInicial");
+    setCarregando(true);
+
+    try {
+      // 1. Cria o usuário no Auth do Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          data: { nome, perfil: perfilSelecionado, cep }
+        }
+      });
+
+      if (authError) throw authError;
+      const userId = authData.user?.id;
+      if (!userId) throw new Error("Não foi possível criar usuário");
+
+      // 2. Se for Guardião / Base Estelar / Estação -> cria na tabela ONGS (nome_organizacao)
+      if (perfilSelecionado === "guardiao" || perfilSelecionado === "base-estelar" || perfilSelecionado === "estacao") {
+        const { error: ongError } = await supabase.from("ongs").insert({
+          nome_organizacao: nome, // sua coluna
+          usuario_id: userId,
+          regiao: cep, // usando cep como regiao por enquanto
+          descricao: `Perfil: ${perfilSelecionado}`
+        });
+        if (ongError) throw ongError;
+
+        localStorage.setItem("ong_nome", nome);
+        // Salva pra dashboard usar
+        sessionStorage.removeItem("astroCadastroInicial");
+        router.push("/dashboard");
+        return;
+      }
+
+      // 3. Se for Explorador -> cria na tabela usuarios
+      if (perfilSelecionado === "explorador") {
+        await supabase.from("usuarios").insert({
+          id: userId, // se sua tabela usuarios usa uuid igual do auth
+          nome,
+          email
+        });
+        sessionStorage.removeItem("astroCadastroInicial");
+        router.push("/"); // explorador vai pro site
+        return;
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Erro ao cadastrar");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   const IconeOlhoAberto = () => (
@@ -97,7 +161,9 @@ export function Cadastro() {
 
           {erroSenha && <span className={styles.erroSenha}>{erroSenha}</span>}
           <input type="text" placeholder="CEP" className={styles.inputGrande} value={cep} onChange={(e) => setCep(e.target.value)} required />
-          <button type="submit" className={styles.botaoContinuar}>Continuar</button>
+          <button type="submit" className={styles.botaoContinuar} disabled={carregando}>
+            {carregando ? "Criando..." : "Continuar"}
+          </button>
         </form>
       </section>
     </main>
