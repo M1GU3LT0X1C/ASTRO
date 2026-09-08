@@ -119,7 +119,7 @@ export default function MetricasPage(){
                 {totalPets===0 ? (
                   <small style={{fontSize:"10px", color:"#999", padding:"6px"}}>Cadastre pets para ver o desempenho aqui. No mobile arraste o nome pro lado pra ver completo.</small>
                 ) : null}
-                {(pets.length ? pets : [{nome:"Exemplo bem grandão pra testar arraste pro lado", views:0, likes:0, msg:0, bandeira:"/bandeiraverde.png"}]).slice(0,6).map((a:any,i:number)=>(
+                {(pets.length ? pets : [{nome:"Exemplo pra testar arraste pro lado", views:0, likes:0, msg:0, bandeira:"/bandeiraverde.png"}]).slice(0,6).map((a:any,i:number)=>(
                   <div key={i} className="astroRow">
                     <div style={{display:"flex", alignItems:"center", gap:"8px", flex:1, minWidth:0}}>
                       <div style={{width:"20px", height:"20px", borderRadius:"50%", background:"#e9e2ff", flexShrink:0}}></div>

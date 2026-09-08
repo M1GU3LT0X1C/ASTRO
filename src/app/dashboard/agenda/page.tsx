@@ -21,27 +21,20 @@ export default function AgendaPage(){
   const salvar = (n:Tarefa[])=>{ setTarefas(n); localStorage.setItem("tarefas-agenda", JSON.stringify(n)); };
   const toISO = (d:Date)=> d.toISOString().split("T")[0];
   const fmtBR = (d:Date)=> d.toLocaleDateString("pt-BR",{day:"numeric", month:"long", year:"numeric"});
-
-  // pega inicio da semana (segunda)
   const inicioSemana = (d:Date)=>{ const dia=d.getDay(); const diff=d.getDate()-(dia===0?6:dia-1); return new Date(d.getFullYear(), d.getMonth(), diff); };
   const fimSemana = (d:Date)=>{ const i=inicioSemana(d); return new Date(i.getFullYear(), i.getMonth(), i.getDate()+6); };
-
   const estaNaSemana = (dataISO:string, ref:Date)=>{
     const dt = new Date(dataISO+"T00:00:00");
-    const ini = inicioSemana(ref);
-    const fim = fimSemana(ref);
-    return dt>=ini && dt<=fim;
+    return dt>=inicioSemana(ref) && dt<=fimSemana(ref);
   };
-
   const diasNoMes = (d:Date)=> new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
   const primeiroDia = (d:Date)=>{ const v=new Date(d.getFullYear(), d.getMonth(), 1).getDay(); return v===0?6:v-1; };
 
-  // filtra de acordo com modo
   let tarefasVisiveis = tarefas.filter(t=>{
     if(modo==="hoje") return t.data===toISO(dataSel);
     if(modo==="essa") return estaNaSemana(t.data, hoje);
-    if(modo==="proxima"){ const prox = new Date(hoje); prox.setDate(prox.getDate()+7); return estaNaSemana(t.data, prox); }
-    return false;
+    const prox = new Date(hoje); prox.setDate(prox.getDate()+7);
+    return estaNaSemana(t.data, prox);
   }).sort((a,b)=> (a.data+a.hora).localeCompare(b.data+b.hora));
 
   const selecionarHoje = ()=>{ const h=new Date(); setDataSel(h); setMesAtual(h); setModo("hoje"); };
@@ -51,15 +44,15 @@ export default function AgendaPage(){
   return(
     <div style={{background:"#f6f4ff", minHeight:"100vh", padding:"10px", display:"flex", justifyContent:"center"}}>
       <style>{`
-      .wrap{ width:100%; max-width:1200px; display:flex; gap:14px; }
-      .left{ width:360px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
-      .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:14px; min-height:600px; min-width:0; }
-      .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
-      .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
-      .seta{ width:28px; height:28px; border-radius:999px; background:#fff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
-      .seta:hover{ background:#1a125f; color:#fff; }
-      .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
-      .taskInside{ background:#e9e2ff; border-radius:12px; padding:0; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding-left:12px; }
+    .wrap{ width:100%; max-width:1200px; display:flex; gap:14px; }
+    .left{ width:340px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
+    .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
+    .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
+    .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
+    .seta{ width:24px; height:24px; border-radius:999px; background:#fff; border:1px solid #e9e2ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; font-size:12px; line-height:1; }
+    .seta:hover{ background:#1a125f; color:#fff; border-color:#1a125f; }
+    .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; }
+    .taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 10px 8px 12px; position:relative; }
        @media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
       `}</style>
 
@@ -78,8 +71,8 @@ export default function AgendaPage(){
           <div className="cal">
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px"}}>
               <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
-                <img src="/agendapets.png" alt="" style={{width:"18px", height:"18px"}} />
-                <b style={{fontSize:"13px"}}>{mesAtual.toLocaleDateString("pt-BR",{month:"long", year:"numeric"})}</b>
+                <img src="/agendapets.png" alt="" style={{width:"18px", height:"18px", objectFit:"contain"}} />
+                <b style={{fontSize:"12px"}}>{mesAtual.toLocaleDateString("pt-BR",{month:"long", year:"numeric"})}</b>
               </div>
               <div style={{display:"flex", gap:"6px"}}>
                 <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))}>‹</div>
@@ -97,9 +90,8 @@ export default function AgendaPage(){
                 const dt=new Date(mesAtual.getFullYear(), mesAtual.getMonth(), dia);
                 const isHoje=toISO(dt)===toISO(hoje);
                 const isSel=toISO(dt)===toISO(dataSel) && modo==="hoje";
-                const isInSemana = modo!=="hoje" && estaNaSemana(toISO(dt), modo==="essa"?hoje: new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()+7));
                 return(
-                  <div key={dia} onClick={()=>{setDataSel(dt); setModo("hoje");}} style={{height:"30px", borderRadius:"999px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"11px", cursor:"pointer", background:isSel?"#1a125f": isInSemana?"#fff":"transparent", color:isSel?"#fff": isHoje?"#1a125f":"#000", fontWeight:isSel||isHoje||isInSemana?700:400, border:isHoje?"1.5px solid #1a125f": isInSemana?"1px dashed #1a125f":"none"}}>{dia}</div>
+                  <div key={dia} onClick={()=>{setDataSel(dt); setModo("hoje");}} style={{height:"30px", borderRadius:"999px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"11px", cursor:"pointer", background:isSel?"#1a125f":"transparent", color:isSel?"#fff": isHoje?"#1a125f":"#000", fontWeight:isSel||isHoje?700:400, border:isHoje?"1.5px solid #1a125f":"none"}}>{dia}</div>
                 )
               })}
             </div>
@@ -109,42 +101,58 @@ export default function AgendaPage(){
               <button className="chip" onClick={selecionarEssa} style={{background: modo==="essa"?"#1a125f":"#fff", color: modo==="essa"?"#fff":"#000"}}>Essa semana</button>
               <button className="chip" onClick={selecionarProxima} style={{background: modo==="proxima"?"#1a125f":"#fff", color: modo==="proxima"?"#fff":"#000"}}>Próxima semana</button>
             </div>
-            {modo!=="hoje" && <small style={{fontSize:"9px", color:"#555", display:"block", textAlign:"center", marginTop:"8px"}}>Mostrando {tarefasVisiveis.length} tarefas da semana</small>}
           </div>
         </div>
 
         <div className="right">
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"14px"}}>
-            <div>
-              <b style={{fontSize:"14px"}}>Tarefas {modo==="hoje"?"do dia": modo==="essa"?"dessa semana":"da próxima semana"}</b><br/>
-              <small style={{fontSize:"10px", color:"#888"}}>{modo==="hoje"? fmtBR(dataSel): modo==="essa"? `${fmtBR(inicioSemana(hoje))} - ${fmtBR(fimSemana(hoje))}`: `${fmtBR(inicioSemana(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()+7)))} - ${fmtBR(fimSemana(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()+7)))}`}</small>
-            </div>
-            <div onClick={()=>{setForm({data:toISO(dataSel), hora:"08:30", desc:"", pet:""}); setPopup(true);}} style={{width:"36px", height:"36px", borderRadius:"50%", background:"#1a125f", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
-              <img src="/maistarefas.png" alt="+" style={{width:"18px", height:"18px"}} />
+          <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
+            <b style={{fontSize:"14px"}}>Tarefas do dia</b>
+            <div onClick={()=>{setForm({data:toISO(dataSel), hora:"08:30", desc:"", pet:""}); setPopup(true);}} style={{width:"20px", height:"20px", borderRadius:"50%", border:"1.5px solid #000", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", background:"#fff"}}>
+              <img src="/maistarefas.png" alt="+" style={{width:"12px", height:"12px", objectFit:"contain"}} onError={(e:any)=>{e.target.outerHTML='<span style="font-size:12px;line-height:1">+</span>'}} />
             </div>
           </div>
+          <small style={{fontSize:"10px", color:"#888", display:"block", marginBottom:"16px"}}>{fmtBR(dataSel)}</small>
 
           {tarefasVisiveis.length===0? (
             <div style={{height:"400px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"#aaa"}}>
-              <small style={{fontSize:"11px"}}>Nenhuma tarefa {modo==="hoje"?"para esse dia":"nessa semana"}</small>
-              <small style={{fontSize:"10px", marginTop:"4px"}}>Clique no + para adicionar</small>
+              <small style={{fontSize:"11px"}}>Nenhuma tarefa para esse dia</small>
+              <small style={{fontSize:"10px", marginTop:"4px"}}>Clique no + ao lado do título para adicionar</small>
             </div>
           ) : (
             <div style={{display:"flex", flexDirection:"column", gap:"12px"}}>
               {tarefasVisiveis.map(t=>(
                 <div key={t.id} style={{display:"flex", gap:"10px", alignItems:"center"}}>
-                  <div style={{width:"52px", flexShrink:0}}>
-                    <b style={{fontSize:"12px"}}>{t.hora}</b><br/>
+                  <div style={{width:"44px", flexShrink:0, textAlign:"left"}}>
+                    <b style={{fontSize:"11px"}}>{t.hora}</b><br/>
                     <small style={{fontSize:"8px", color:"#888"}}>{new Date(t.data+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit", month:"short"})}</small>
                   </div>
-                  {/* BARRA IGUAL SEU PRINT - INFOS DENTRO */}
                   <div className="taskInside" style={{flex:1}}>
-                    <div style={{flex:1}}>
+                    <div style={{flex:1, minWidth:0}}>
                       <b style={{fontSize:"11px"}}>{t.pet||"Tarefa"}</b>
-                      <span style={{fontSize:"10px", marginLeft:"8px"}}>{t.desc}</span>
-                      <small style={{fontSize:"8px", color:"#666", display:"block"}}>{t.hora} • {t.pet?"Consulta":"Lembrete"}</small>
+                      <span style={{fontSize:"10px", marginLeft:"6px"}}>{t.desc}</span>
+                      <small style={{fontSize:"8px", color:"#666", display:"block"}}>{t.hora} • Consulta</small>
                     </div>
-                    <span onClick={()=>salvar(tarefas.filter(x=>x.id!==t.id))} style={{padding:"0 10px", cursor:"pointer", fontSize:"12px"}}>✕</span>
+                    {/* X ARRUMADO */}
+                    <div
+                      onClick={()=>salvar(tarefas.filter(x=>x.id!==t.id))}
+                      title="Excluir tarefa"
+                      style={{
+                        width:"22px",
+                        height:"22px",
+                        borderRadius:"50%",
+                        background:"#fff",
+                        border:"1px solid #e0d4ff",
+                        display:"flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        cursor:"pointer",
+                        flexShrink:0,
+                        marginLeft:"8px",
+                        transition:".2s"
+                      }}
+                    >
+                      <span style={{fontSize:"10px", fontWeight:700, lineHeight:1}}>✕</span>
+                    </div>
                   </div>
                 </div>
               ))}

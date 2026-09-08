@@ -71,14 +71,15 @@ function ConteudoMeusPets() {
   return (
     <div className={styles.container}>
       <div className={styles.topBar}>
-        {/* REMOVI A LUPA DAQUI - AGORA USA SÓ A DE CIMA */}
         {busca && (
           <div style={{fontSize:13, color:"#555"}}>
             Buscando por: <b>"{busca}"</b> <button onClick={()=>{setBusca(""); localStorage.removeItem("astro_busca");}} style={{marginLeft:8, background:"none", border:"none", color:"#e63d68", cursor:"pointer"}}>✕ limpar</button>
           </div>
         )}
         <div style={{marginLeft:"auto"}} className={styles.ordenarWrap}>
-          <button className={styles.ordenarBtn} onClick={()=>setMenuOrdenar(!menuOrdenar)}>Ordenar <span>▼</span></button>
+          <button className={styles.ordenarBtn} onClick={()=>setMenuOrdenar(!menuOrdenar)}>
+            {ordenar === "recentes"? "Ordenar" : ordenar === "nome"? "Nome A-Z" : "Idade"} <span>▼</span>
+          </button>
           {menuOrdenar && (
             <div className={styles.dropdown}>
               <button className={ordenar==="recentes"?styles.ativo:""} onClick={()=>{setOrdenar("recentes"); setMenuOrdenar(false);}}>Recentes</button>
