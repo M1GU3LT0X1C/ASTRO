@@ -43,13 +43,12 @@ export function Login() {
     await checkAndRedirect(data.user);
   }
 
-  // NOVA FUNÇÃO GOOGLE
   async function handleGoogleLogin() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`
+        redirectTo: `${window.location.origin}/auth/callback`
       }
     });
     if (error) {
@@ -64,7 +63,6 @@ export function Login() {
       return;
     }
 
-    // Salva o email se marcou lembrar
     if (lembrar) {
       localStorage.setItem("astro_remember_email", user.email || email);
     }
@@ -83,10 +81,9 @@ export function Login() {
       return;
     }
 
-    // SE NÃO TEM ONG, CRIA AUTOMATICAMENTE NO PRIMEIRO LOGIN COM GOOGLE
     const nomeOng = user.user_metadata?.full_name || user.email?.split('@')[0] || "Minha ONG";
     
-    const { data: novaOng, error: erroOng } = await supabase
+    const { data: novaOng } = await supabase
       .from("ongs")
       .insert({
         usuario_id: user.id,
@@ -107,7 +104,6 @@ export function Login() {
       return;
     }
 
-    // Fallback adotante
     const { data: usuario } = await supabase
       .from("usuarios")
       .select("id, nome")
@@ -200,7 +196,7 @@ export function Login() {
             disabled={loading}
             style={{ background: 'white', color: 'black', border: '1px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
           >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" /> 
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="" /> 
             Continuar com Google
           </button>
         </div>

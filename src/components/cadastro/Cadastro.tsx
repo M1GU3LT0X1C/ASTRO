@@ -128,7 +128,10 @@ export function Cadastro() {
   async function handleGoogleCadastro() {
     if (!perfilSelecionado) { alert("Escolhe um perfil primeiro"); return; }
     localStorage.setItem("astro_perfil_pendente", perfilSelecionado);
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/dashboard` } });
+    const { error } = await supabase.auth.signInWithOAuth({ 
+      provider: "google", 
+      options: { redirectTo: `${window.location.origin}/auth/callback` } 
+    });
     if (error) alert(error.message);
   }
 
