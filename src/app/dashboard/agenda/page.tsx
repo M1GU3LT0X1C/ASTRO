@@ -23,7 +23,12 @@ export default function AgendaPage(){
   const fmtBR = (d:Date)=> d.toLocaleDateString("pt-BR",{day:"numeric", month:"long", year:"numeric"});
   const inicioSemana = (d:Date)=>{ const dia=d.getDay(); const diff=d.getDate()-(dia===0?6:dia-1); return new Date(d.getFullYear(), d.getMonth(), diff); };
   const fimSemana = (d:Date)=>{ const i=inicioSemana(d); return new Date(i.getFullYear(), i.getMonth(), i.getDate()+6); };
-  const estaNaSemana = (dataISO:string, ref:Date)=> new Date(dataISO+"T00:00:00")>=inicioSemana(ref) && new Date(dataISO+"T00:00:00")<=fimSemana(ref);
+  const estaNaSemana = (dataISO:string, ref:Date)=>{
+    const dt=new Date(dataISO+"T00:00:00");
+    const ini=inicioSemana(ref); ini.setHours(0,0,0,0);
+    const fim=fimSemana(ref); fim.setHours(23,59,59,999);
+    return dt>=ini && dt<=fim;
+  };
   const diasNoMes = (d:Date)=> new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
   const primeiroDia = (d:Date)=>{ const v=new Date(d.getFullYear(), d.getMonth(), 1).getDay(); return v===0?6:v-1; };
 
@@ -34,34 +39,28 @@ export default function AgendaPage(){
     return estaNaSemana(t.data, prox);
   }).sort((a,b)=> (a.data+a.hora).localeCompare(b.data+b.hora));
 
-  // COMPONENTE SETA COM SEU PNG
   const Seta = ({dir, onClick}:{dir:"left"|"right", onClick:()=>void})=>(
-    <div onClick={onClick} style={{width:"26px", height:"26px", borderRadius:"50%", background:"#fff", border:"1px solid #f0e8ff", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
-      <img
-        src="/seta.png"
-        alt=""
-        style={{
-          width:"10px",
-          height:"10px",
-          objectFit:"contain",
-          transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)"
-        }}
-      />
+    <div className="seta" onClick={onClick}>
+      <img src="/seta.png" alt="" style={{width:"10px", height:"10px", objectFit:"contain", transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)"}} />
     </div>
   );
+
+  const proxSemanaRef = new Date(hoje); proxSemanaRef.setDate(hoje.getDate()+7);
 
   return(
     <div style={{background:"#f6f4ff", minHeight:"100vh", padding:"10px", display:"flex", justifyContent:"center"}}>
       <style>{`
-    .wrap{ width:100%; max-width:1200px; display:flex; gap:14px; }
-    .left{ width:340px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
-    .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
-    .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
-    .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
-    .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; }
-    .taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 10px 8px 12px; position:relative; }
-    .xbtn{ width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
-    .xbtn:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
+  .wrap{ width:100%; max-width:1200px; display:flex; gap:14px; }
+  .left{ width:340px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
+  .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
+  .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
+  .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
+  .seta{ width:26px; height:26px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+  .seta:hover{ background:#d5c8ff; border-color:#1a125f; }
+  .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
+  .taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 32px 8px 12px; position:relative; }
+  .xbtn{ position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+  .xbtn:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
        @media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
       `}</style>
 
@@ -97,17 +96,28 @@ export default function AgendaPage(){
               {Array.from({length:diasNoMes(mesAtual)}).map((_,i)=>{
                 const dia=i+1;
                 const dt=new Date(mesAtual.getFullYear(), mesAtual.getMonth(), dia);
-                const isHoje=toISO(dt)===toISO(hoje);
-                const isSel=toISO(dt)===toISO(dataSel) && modo==="hoje";
+                const iso=toISO(dt);
+                const isHoje=iso===toISO(hoje);
+                const isSel=iso===toISO(dataSel) && modo==="hoje";
+
+                // marca semana toda
+                const isEssaSemana = modo==="essa" && estaNaSemana(iso, hoje);
+                const isProxSemana = modo==="proxima" && estaNaSemana(iso, proxSemanaRef);
+
+                let bg="transparent", color="#000", border="none", fw=400;
+                if(isSel){ bg="#1a125f"; color="#fff"; fw=700; }
+                else if(isEssaSemana || isProxSemana){ bg="#fff"; color="#1a125f"; border="1px solid #1a125f"; fw=700; }
+                else if(isHoje){ border="1.5px solid #1a125f"; color="#1a125f"; fw=700; }
+
                 return(
-                  <div key={dia} onClick={()=>{setDataSel(dt); setModo("hoje");}} style={{height:"30px", borderRadius:"999px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"11px", cursor:"pointer", background:isSel?"#1a125f":"transparent", color:isSel?"#fff": isHoje?"#1a125f":"#000", fontWeight:isSel||isHoje?700:400, border:isHoje?"1.5px solid #1a125f":"none"}}>{dia}</div>
+                  <div key={dia} onClick={()=>{setDataSel(dt); setModo("hoje");}} style={{height:"30px", borderRadius:"999px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"11px", cursor:"pointer", background:bg, color, fontWeight:fw, border}}>{dia}</div>
                 )
               })}
             </div>
 
             <div style={{display:"flex", gap:"6px", marginTop:"12px", justifyContent:"center"}}>
               <button className="chip" onClick={()=>{const h=new Date(); setDataSel(h); setMesAtual(h); setModo("hoje");}} style={{background: modo==="hoje"?"#1a125f":"#fff", color: modo==="hoje"?"#fff":"#000"}}>Hoje</button>
-              <button className="chip" onClick={()=>{setModo("essa"); setDataSel(inicioSemana(hoje));}} style={{background: modo==="essa"?"#1a125f":"#fff", color: modo==="essa"?"#fff":"#000"}}>Essa semana</button>
+              <button className="chip" onClick={()=>{setModo("essa"); setDataSel(inicioSemana(hoje)); setMesAtual(hoje);}} style={{background: modo==="essa"?"#1a125f":"#fff", color: modo==="essa"?"#fff":"#000"}}>Essa semana</button>
               <button className="chip" onClick={()=>{const p=new Date(); p.setDate(hoje.getDate()+7); setModo("proxima"); setDataSel(inicioSemana(p)); setMesAtual(p);}} style={{background: modo==="proxima"?"#1a125f":"#fff", color: modo==="proxima"?"#fff":"#000"}}>Próxima semana</button>
             </div>
           </div>
@@ -120,11 +130,11 @@ export default function AgendaPage(){
               <img src="/maistarefas.png" alt="+" style={{width:"12px", height:"12px"}} />
             </div>
           </div>
-          <small style={{fontSize:"10px", color:"#888", display:"block", marginBottom:"16px"}}>{fmtBR(dataSel)}</small>
+          <small style={{fontSize:"10px", color:"#888", display:"block", marginBottom:"16px"}}>{modo==="hoje"? fmtBR(dataSel) : modo==="essa"? `${fmtBR(inicioSemana(hoje))} - ${fmtBR(fimSemana(hoje))}` : `${fmtBR(inicioSemana(proxSemanaRef))} - ${fmtBR(fimSemana(proxSemanaRef))}`}</small>
 
           {tarefasVisiveis.length===0? (
             <div style={{height:"400px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"#aaa"}}>
-              <small style={{fontSize:"11px"}}>Nenhuma tarefa</small>
+              <small style={{fontSize:"11px"}}>Nenhuma tarefa {modo==="hoje"?"para esse dia":"nessa semana"}</small>
             </div>
           ) : (
             <div style={{display:"flex", flexDirection:"column", gap:"12px"}}>
