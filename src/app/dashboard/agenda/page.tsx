@@ -41,7 +41,9 @@ export default function AgendaPage(){
 
   const Seta = ({dir, onClick}:{dir:"left"|"right", onClick:()=>void})=>(
     <div className="seta" onClick={onClick}>
-      <img src="/seta.png" alt="" style={{width:"10px", height:"10px", objectFit:"contain", transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)"}} />
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)"}}>
+        <path d="M6 9l6 6 6-6" />
+      </svg>
     </div>
   );
 
@@ -123,7 +125,7 @@ export default function AgendaPage(){
           <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
             <b style={{fontSize:"14px"}}>Tarefas do dia</b>
             <div onClick={()=>{setForm({data:toISO(dataSel), hora:"08:30", desc:"", pet:""}); setPopup(true);}} style={{width:"20px", height:"20px", borderRadius:"50%", border:"1.5px solid #000", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", background:"#fff"}}>
-              <img src="/maistarefas.png" alt="+" style={{width:"12px", height:"12px"}} />
+              <span style={{fontSize:"12px", lineHeight:1}}>+</span>
             </div>
           </div>
           <small style={{fontSize:"10px", color:"#888", display:"block", marginBottom:"16px"}}>{modo==="hoje"? fmtBR(dataSel) : modo==="essa"? `${fmtBR(inicioSemana(hoje))} - ${fmtBR(fimSemana(hoje))}` : `${fmtBR(inicioSemana(proxSemanaRef))} - ${fmtBR(fimSemana(proxSemanaRef))}`}</small>
