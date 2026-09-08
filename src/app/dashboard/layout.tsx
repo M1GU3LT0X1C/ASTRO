@@ -16,9 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const fazerBusca = () => {
     if (!busca.trim()) return;
-    // salva global e leva pra Meus Pets filtrado
     localStorage.setItem("astro_busca", busca);
-    window.dispatchEvent(new Event("astro-busca"));
     router.push(`/dashboard/meus-pets?busca=${encodeURIComponent(busca)}`);
   };
 
@@ -30,8 +28,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <header className={styles.topbar}>
             <div className={styles.busca}>
               <img src="/lupa.svg" alt="buscar" className={styles.lupaIcone} onClick={fazerBusca} style={{cursor:"pointer"}} />
-              <input 
-                placeholder="Procure pets, clínicas..." 
+              <input
+                placeholder="Procure pets..."
                 value={busca}
                 onChange={(e)=>setBusca(e.target.value)}
                 onKeyDown={(e)=> e.key === "Enter" && fazerBusca()}
