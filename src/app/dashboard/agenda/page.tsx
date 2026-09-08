@@ -23,10 +23,7 @@ export default function AgendaPage(){
   const fmtBR = (d:Date)=> d.toLocaleDateString("pt-BR",{day:"numeric", month:"long", year:"numeric"});
   const inicioSemana = (d:Date)=>{ const dia=d.getDay(); const diff=d.getDate()-(dia===0?6:dia-1); return new Date(d.getFullYear(), d.getMonth(), diff); };
   const fimSemana = (d:Date)=>{ const i=inicioSemana(d); return new Date(i.getFullYear(), i.getMonth(), i.getDate()+6); };
-  const estaNaSemana = (dataISO:string, ref:Date)=>{
-    const dt = new Date(dataISO+"T00:00:00");
-    return dt>=inicioSemana(ref) && dt<=fimSemana(ref);
-  };
+  const estaNaSemana = (dataISO:string, ref:Date)=> new Date(dataISO+"T00:00:00")>=inicioSemana(ref) && new Date(dataISO+"T00:00:00")<=fimSemana(ref);
   const diasNoMes = (d:Date)=> new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
   const primeiroDia = (d:Date)=>{ const v=new Date(d.getFullYear(), d.getMonth(), 1).getDay(); return v===0?6:v-1; };
 
@@ -37,9 +34,21 @@ export default function AgendaPage(){
     return estaNaSemana(t.data, prox);
   }).sort((a,b)=> (a.data+a.hora).localeCompare(b.data+b.hora));
 
-  const selecionarHoje = ()=>{ const h=new Date(); setDataSel(h); setMesAtual(h); setModo("hoje"); };
-  const selecionarEssa = ()=>{ setModo("essa"); setDataSel(inicioSemana(hoje)); };
-  const selecionarProxima = ()=>{ const p=new Date(); p.setDate(hoje.getDate()+7); setModo("proxima"); setDataSel(inicioSemana(p)); setMesAtual(p); };
+  // COMPONENTE SETA COM SEU PNG
+  const Seta = ({dir, onClick}:{dir:"left"|"right", onClick:()=>void})=>(
+    <div onClick={onClick} style={{width:"26px", height:"26px", borderRadius:"50%", background:"#fff", border:"1px solid #f0e8ff", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
+      <img
+        src="/seta.png"
+        alt=""
+        style={{
+          width:"10px",
+          height:"10px",
+          objectFit:"contain",
+          transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)"
+        }}
+      />
+    </div>
+  );
 
   return(
     <div style={{background:"#f6f4ff", minHeight:"100vh", padding:"10px", display:"flex", justifyContent:"center"}}>
@@ -49,10 +58,10 @@ export default function AgendaPage(){
     .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
     .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
     .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
-    .seta{ width:24px; height:24px; border-radius:999px; background:#fff; border:1px solid #e9e2ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; font-size:12px; line-height:1; }
-    .seta:hover{ background:#1a125f; color:#fff; border-color:#1a125f; }
     .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; }
     .taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 10px 8px 12px; position:relative; }
+    .xbtn{ width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+    .xbtn:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
        @media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
       `}</style>
 
@@ -62,8 +71,8 @@ export default function AgendaPage(){
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
               <div><b style={{fontSize:"13px"}}>Reagendamento Rápido</b><br/><small style={{fontSize:"10px"}}>{fmtBR(hoje)}</small></div>
               <div style={{display:"flex", gap:"6px"}}>
-                <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))}>‹</div>
-                <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()+1,1))}>›</div>
+                <Seta dir="left" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))} />
+                <Seta dir="right" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()+1,1))} />
               </div>
             </div>
           </div>
@@ -71,12 +80,12 @@ export default function AgendaPage(){
           <div className="cal">
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px"}}>
               <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
-                <img src="/agendapets.png" alt="" style={{width:"18px", height:"18px", objectFit:"contain"}} />
+                <img src="/agendapets.png" alt="" style={{width:"18px", height:"18px"}} />
                 <b style={{fontSize:"12px"}}>{mesAtual.toLocaleDateString("pt-BR",{month:"long", year:"numeric"})}</b>
               </div>
               <div style={{display:"flex", gap:"6px"}}>
-                <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))}>‹</div>
-                <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()+1,1))}>›</div>
+                <Seta dir="left" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))} />
+                <Seta dir="right" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()+1,1))} />
               </div>
             </div>
 
@@ -97,9 +106,9 @@ export default function AgendaPage(){
             </div>
 
             <div style={{display:"flex", gap:"6px", marginTop:"12px", justifyContent:"center"}}>
-              <button className="chip" onClick={selecionarHoje} style={{background: modo==="hoje"?"#1a125f":"#fff", color: modo==="hoje"?"#fff":"#000"}}>Hoje</button>
-              <button className="chip" onClick={selecionarEssa} style={{background: modo==="essa"?"#1a125f":"#fff", color: modo==="essa"?"#fff":"#000"}}>Essa semana</button>
-              <button className="chip" onClick={selecionarProxima} style={{background: modo==="proxima"?"#1a125f":"#fff", color: modo==="proxima"?"#fff":"#000"}}>Próxima semana</button>
+              <button className="chip" onClick={()=>{const h=new Date(); setDataSel(h); setMesAtual(h); setModo("hoje");}} style={{background: modo==="hoje"?"#1a125f":"#fff", color: modo==="hoje"?"#fff":"#000"}}>Hoje</button>
+              <button className="chip" onClick={()=>{setModo("essa"); setDataSel(inicioSemana(hoje));}} style={{background: modo==="essa"?"#1a125f":"#fff", color: modo==="essa"?"#fff":"#000"}}>Essa semana</button>
+              <button className="chip" onClick={()=>{const p=new Date(); p.setDate(hoje.getDate()+7); setModo("proxima"); setDataSel(inicioSemana(p)); setMesAtual(p);}} style={{background: modo==="proxima"?"#1a125f":"#fff", color: modo==="proxima"?"#fff":"#000"}}>Próxima semana</button>
             </div>
           </div>
         </div>
@@ -108,21 +117,20 @@ export default function AgendaPage(){
           <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
             <b style={{fontSize:"14px"}}>Tarefas do dia</b>
             <div onClick={()=>{setForm({data:toISO(dataSel), hora:"08:30", desc:"", pet:""}); setPopup(true);}} style={{width:"20px", height:"20px", borderRadius:"50%", border:"1.5px solid #000", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", background:"#fff"}}>
-              <img src="/maistarefas.png" alt="+" style={{width:"12px", height:"12px", objectFit:"contain"}} onError={(e:any)=>{e.target.outerHTML='<span style="font-size:12px;line-height:1">+</span>'}} />
+              <img src="/maistarefas.png" alt="+" style={{width:"12px", height:"12px"}} />
             </div>
           </div>
           <small style={{fontSize:"10px", color:"#888", display:"block", marginBottom:"16px"}}>{fmtBR(dataSel)}</small>
 
           {tarefasVisiveis.length===0? (
             <div style={{height:"400px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"#aaa"}}>
-              <small style={{fontSize:"11px"}}>Nenhuma tarefa para esse dia</small>
-              <small style={{fontSize:"10px", marginTop:"4px"}}>Clique no + ao lado do título para adicionar</small>
+              <small style={{fontSize:"11px"}}>Nenhuma tarefa</small>
             </div>
           ) : (
             <div style={{display:"flex", flexDirection:"column", gap:"12px"}}>
               {tarefasVisiveis.map(t=>(
                 <div key={t.id} style={{display:"flex", gap:"10px", alignItems:"center"}}>
-                  <div style={{width:"44px", flexShrink:0, textAlign:"left"}}>
+                  <div style={{width:"44px", flexShrink:0}}>
                     <b style={{fontSize:"11px"}}>{t.hora}</b><br/>
                     <small style={{fontSize:"8px", color:"#888"}}>{new Date(t.data+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit", month:"short"})}</small>
                   </div>
@@ -132,25 +140,7 @@ export default function AgendaPage(){
                       <span style={{fontSize:"10px", marginLeft:"6px"}}>{t.desc}</span>
                       <small style={{fontSize:"8px", color:"#666", display:"block"}}>{t.hora} • Consulta</small>
                     </div>
-                    {/* X ARRUMADO */}
-                    <div
-                      onClick={()=>salvar(tarefas.filter(x=>x.id!==t.id))}
-                      title="Excluir tarefa"
-                      style={{
-                        width:"22px",
-                        height:"22px",
-                        borderRadius:"50%",
-                        background:"#fff",
-                        border:"1px solid #e0d4ff",
-                        display:"flex",
-                        alignItems:"center",
-                        justifyContent:"center",
-                        cursor:"pointer",
-                        flexShrink:0,
-                        marginLeft:"8px",
-                        transition:".2s"
-                      }}
-                    >
+                    <div className="xbtn" onClick={()=>salvar(tarefas.filter(x=>x.id!==t.id))}>
                       <span style={{fontSize:"10px", fontWeight:700, lineHeight:1}}>✕</span>
                     </div>
                   </div>
@@ -168,7 +158,7 @@ export default function AgendaPage(){
             <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
               <input type="date" value={form.data} onChange={e=>setForm({...form,data:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff"}} />
               <input type="time" value={form.hora} onChange={e=>setForm({...form,hora:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff"}} />
-              <input placeholder="Pet (opcional)" value={form.pet} onChange={e=>setForm({...form,pet:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff"}} />
+              <input placeholder="Pet" value={form.pet} onChange={e=>setForm({...form,pet:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff"}} />
               <textarea placeholder="Descrição..." value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff", minHeight:"70px"}} />
               <div style={{display:"flex", gap:"8px"}}>
                 <button onClick={()=>setPopup(false)} style={{flex:1, padding:"10px", borderRadius:"999px", border:"1px solid #eee", background:"#fff"}}>Cancelar</button>
