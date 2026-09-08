@@ -2,204 +2,169 @@
 import { useState, useEffect } from "react";
 
 type Tarefa = { id:string, data:string, hora:string, desc:string, pet?:string };
+type Modo = "hoje"|"essa"|"proxima";
 
 export default function AgendaPage(){
   const [hoje] = useState(new Date());
   const [mesAtual, setMesAtual] = useState(new Date());
   const [dataSel, setDataSel] = useState(new Date());
+  const [modo, setModo] = useState<Modo>("hoje");
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [popup, setPopup] = useState(false);
   const [form, setForm] = useState({data:"", hora:"08:30", desc:"", pet:""});
-  const [hoverSeta, setHoverSeta] = useState<"prev"|"next"|null>(null);
 
   useEffect(()=>{
-    const salvas = JSON.parse(localStorage.getItem("tarefas-agenda")||"[]");
-    setTarefas(salvas);
-    const d = new Date();
-    setForm(f=>({...f, data: d.toISOString().split("T")[0]}));
+    setTarefas(JSON.parse(localStorage.getItem("tarefas-agenda")||"[]"));
+    setForm(f=>({...f, data: new Date().toISOString().split("T")[0]}));
   },[]);
 
-  const salvar = (novas:Tarefa[])=>{
-    setTarefas(novas);
-    localStorage.setItem("tarefas-agenda", JSON.stringify(novas));
+  const salvar = (n:Tarefa[])=>{ setTarefas(n); localStorage.setItem("tarefas-agenda", JSON.stringify(n)); };
+  const toISO = (d:Date)=> d.toISOString().split("T")[0];
+  const fmtBR = (d:Date)=> d.toLocaleDateString("pt-BR",{day:"numeric", month:"long", year:"numeric"});
+
+  // pega inicio da semana (segunda)
+  const inicioSemana = (d:Date)=>{ const dia=d.getDay(); const diff=d.getDate()-(dia===0?6:dia-1); return new Date(d.getFullYear(), d.getMonth(), diff); };
+  const fimSemana = (d:Date)=>{ const i=inicioSemana(d); return new Date(i.getFullYear(), i.getMonth(), i.getDate()+6); };
+
+  const estaNaSemana = (dataISO:string, ref:Date)=>{
+    const dt = new Date(dataISO+"T00:00:00");
+    const ini = inicioSemana(ref);
+    const fim = fimSemana(ref);
+    return dt>=ini && dt<=fim;
   };
 
   const diasNoMes = (d:Date)=> new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
-  const primeiroDia = (d:Date)=> new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  const primeiroDia = (d:Date)=>{ const v=new Date(d.getFullYear(), d.getMonth(), 1).getDay(); return v===0?6:v-1; };
 
-  const formatarDataBR = (d:Date)=> d.toLocaleDateString("pt-BR",{day:"numeric", month:"long", year:"numeric"});
-  const toISO = (d:Date)=> d.toISOString().split("T")[0];
+  // filtra de acordo com modo
+  let tarefasVisiveis = tarefas.filter(t=>{
+    if(modo==="hoje") return t.data===toISO(dataSel);
+    if(modo==="essa") return estaNaSemana(t.data, hoje);
+    if(modo==="proxima"){ const prox = new Date(hoje); prox.setDate(prox.getDate()+7); return estaNaSemana(t.data, prox); }
+    return false;
+  }).sort((a,b)=> (a.data+a.hora).localeCompare(b.data+b.hora));
 
-  const horarios = Array.from({length:15}, (_,i)=>{
-    const h = i+6; // 06:00 as 20:00
-    return `${String(h).padStart(2,"0")}:00`;
-  });
-
-  const tarefasDoDia = tarefas.filter(t=> t.data === toISO(dataSel));
-
-  const adicionar = ()=>{
-    if(!form.desc.trim()) return;
-    const nova: Tarefa = { id: Date.now().toString(),...form };
-    salvar([...tarefas, nova]);
-    setPopup(false);
-    setForm({data: toISO(dataSel), hora:"08:30", desc:"", pet:""});
-  };
-
-  const abrirPopup = (hora?:string)=>{
-    setForm({data: toISO(dataSel), hora: hora||"08:30", desc:"", pet:""});
-    setPopup(true);
-  };
+  const selecionarHoje = ()=>{ const h=new Date(); setDataSel(h); setMesAtual(h); setModo("hoje"); };
+  const selecionarEssa = ()=>{ setModo("essa"); setDataSel(inicioSemana(hoje)); };
+  const selecionarProxima = ()=>{ const p=new Date(); p.setDate(hoje.getDate()+7); setModo("proxima"); setDataSel(inicioSemana(p)); setMesAtual(p); };
 
   return(
     <div style={{background:"#f6f4ff", minHeight:"100vh", padding:"10px", display:"flex", justifyContent:"center"}}>
       <style>{`
-       .wrap{ width:100%; max-width:1200px; display:grid; grid-template-columns:320px 1fr; gap:14px; }
-       .card{ background:#fff; border-radius:18px; padding:14px; border:1px solid #ece8f0; }
-       .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
-       .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
-       .seta{ width:26px; height:26px; border-radius:999px; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; background:#fff; }
-       .tarefa{ background:#e9e2ff; border-radius:12px; padding:10px 12px; border-left:4px solid #1a125f; min-height:40px; }
-        @media(max-width:900px){.wrap{ grid-template-columns:1fr; } }
+      .wrap{ width:100%; max-width:1200px; display:flex; gap:14px; }
+      .left{ width:360px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
+      .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:14px; min-height:600px; min-width:0; }
+      .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
+      .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
+      .seta{ width:28px; height:28px; border-radius:999px; background:#fff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+      .seta:hover{ background:#1a125f; color:#fff; }
+      .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
+      .taskInside{ background:#e9e2ff; border-radius:12px; padding:0; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding-left:12px; }
+       @media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
       `}</style>
 
       <div className="wrap">
-        <div style={{display:"flex", flexDirection:"column", gap:"14px"}}>
-          {/* REAGENDAMENTO RAPIDO */}
+        <div className="left">
           <div className="reag">
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-              <div><b style={{fontSize:"13px"}}>Reagendamento Rápido</b><br/><small style={{fontSize:"10px"}}>{formatarDataBR(hoje)}</small></div>
+              <div><b style={{fontSize:"13px"}}>Reagendamento Rápido</b><br/><small style={{fontSize:"10px"}}>{fmtBR(hoje)}</small></div>
               <div style={{display:"flex", gap:"6px"}}>
-                <div className="seta" style={{background: hoverSeta==="prev"?"#1a125f":"#fff", color: hoverSeta==="prev"?"#fff":"#000"}} onMouseEnter={()=>setHoverSeta("prev")} onMouseLeave={()=>setHoverSeta(null)} onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))}>‹</div>
-                <div className="seta" style={{background: hoverSeta==="next"?"#1a125f":"#fff", color: hoverSeta==="next"?"#fff":"#000"}} onMouseEnter={()=>setHoverSeta("next")} onMouseLeave={()=>setHoverSeta(null)} onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()+1,1))}>›</div>
+                <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))}>‹</div>
+                <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()+1,1))}>›</div>
               </div>
-            </div>
-
-            <div style={{display:"flex", gap:"10px", marginTop:"12px", overflowX:"auto"}}>
-              {[
-                {nome:"Check-up do Vader", tipo:"Clínica Vet. Mascote"},
-                {nome:"Exame da Coca-c...", tipo:"Clínica Vet. Mascote"},
-              ].map((r,i)=>(
-                <div key={i} style={{background:"#fff", borderRadius:"12px", padding:"10px", minWidth:"140px", flexShrink:0}}>
-                  <small style={{fontSize:"10px", fontWeight:700}}>{r.nome}</small><br/>
-                  <small style={{fontSize:"8px", color:"#888"}}>{r.tipo}</small>
-                  <div style={{marginTop:"8px", display:"flex", flexDirection:"column", gap:"4px"}}>
-                    <button style={{background:"#1a125f", color:"#fff", border:"none", borderRadius:"999px", padding:"5px 8px", fontSize:"8px"}}>Consultar Localização</button>
-                    <button style={{background:"#ff4b7a", color:"#fff", border:"none", borderRadius:"999px", padding:"5px 8px", fontSize:"8px"}}>Remarcar evento</button>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
 
-          {/* CALENDARIO */}
           <div className="cal">
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px"}}>
-              <b style={{fontSize:"13px"}}>📅 {formatarDataBR(mesAtual).replace(/ de \d+/,"")}, {mesAtual.getFullYear()}</b>
+              <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
+                <img src="/agendapets.png" alt="" style={{width:"18px", height:"18px"}} />
+                <b style={{fontSize:"13px"}}>{mesAtual.toLocaleDateString("pt-BR",{month:"long", year:"numeric"})}</b>
+              </div>
               <div style={{display:"flex", gap:"6px"}}>
                 <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()-1,1))}>‹</div>
                 <div className="seta" onClick={()=>setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth()+1,1))}>›</div>
               </div>
             </div>
 
-            <div style={{display:"flex", gap:"6px", marginBottom:"6px"}}>
-              {["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(d=><small key={d} style={{flex:1, textAlign:"center", fontSize:"9px", fontWeight:700}}>{d}</small>)}
+            <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:"2px"}}>
+              {["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(d=><small key={d} style={{textAlign:"center", fontSize:"9px", fontWeight:700}}>{d}</small>)}
             </div>
-
-            <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:"4px"}}>
-              {Array.from({length:primeiroDia(mesAtual)===0?6:primeiroDia(mesAtual)-1}).map((_,i)=><div key={"v"+i}></div>)}
+            <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:"4px", marginTop:"6px"}}>
+              {Array.from({length:primeiroDia(mesAtual)}).map((_,i)=><div key={"e"+i}></div>)}
               {Array.from({length:diasNoMes(mesAtual)}).map((_,i)=>{
-                const dia = i+1;
-                const data = new Date(mesAtual.getFullYear(), mesAtual.getMonth(), dia);
-                const isHoje = toISO(data)===toISO(hoje);
-                const isSel = toISO(data)===toISO(dataSel);
+                const dia=i+1;
+                const dt=new Date(mesAtual.getFullYear(), mesAtual.getMonth(), dia);
+                const isHoje=toISO(dt)===toISO(hoje);
+                const isSel=toISO(dt)===toISO(dataSel) && modo==="hoje";
+                const isInSemana = modo!=="hoje" && estaNaSemana(toISO(dt), modo==="essa"?hoje: new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()+7));
                 return(
-                  <div key={dia} onClick={()=>setDataSel(data)} style={{
-                    height:"28px", borderRadius:"999px", display:"flex", alignItems:"center", justifyContent:"center",
-                    fontSize:"11px", cursor:"pointer",
-                    background: isSel?"#1a125f": isHoje?"#fff":"transparent",
-                    color: isSel?"#fff": isHoje?"#1a125f":"#000",
-                    fontWeight: isHoje||isSel?700:400,
-                    border: isHoje?"1px solid #1a125f":"none"
-                  }}>{dia}</div>
+                  <div key={dia} onClick={()=>{setDataSel(dt); setModo("hoje");}} style={{height:"30px", borderRadius:"999px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"11px", cursor:"pointer", background:isSel?"#1a125f": isInSemana?"#fff":"transparent", color:isSel?"#fff": isHoje?"#1a125f":"#000", fontWeight:isSel||isHoje||isInSemana?700:400, border:isHoje?"1.5px solid #1a125f": isInSemana?"1px dashed #1a125f":"none"}}>{dia}</div>
                 )
               })}
             </div>
 
-            <div style={{display:"flex", gap:"6px", marginTop:"10px", justifyContent:"center"}}>
-              <button onClick={()=>{setDataSel(new Date()); setMesAtual(new Date());}} style={{background:"#1a125f", color:"#fff", border:"none", borderRadius:"999px", padding:"6px 12px", fontSize:"9px"}}>Hoje</button>
-              <button style={{background:"#fff", border:"none", borderRadius:"999px", padding:"6px 12px", fontSize:"9px"}}>Essa semana</button>
-              <button style={{background:"#fff", border:"none", borderRadius:"999px", padding:"6px 12px", fontSize:"9px"}}>Próxima semana</button>
+            <div style={{display:"flex", gap:"6px", marginTop:"12px", justifyContent:"center"}}>
+              <button className="chip" onClick={selecionarHoje} style={{background: modo==="hoje"?"#1a125f":"#fff", color: modo==="hoje"?"#fff":"#000"}}>Hoje</button>
+              <button className="chip" onClick={selecionarEssa} style={{background: modo==="essa"?"#1a125f":"#fff", color: modo==="essa"?"#fff":"#000"}}>Essa semana</button>
+              <button className="chip" onClick={selecionarProxima} style={{background: modo==="proxima"?"#1a125f":"#fff", color: modo==="proxima"?"#fff":"#000"}}>Próxima semana</button>
             </div>
+            {modo!=="hoje" && <small style={{fontSize:"9px", color:"#555", display:"block", textAlign:"center", marginTop:"8px"}}>Mostrando {tarefasVisiveis.length} tarefas da semana</small>}
           </div>
         </div>
 
-        {/* TAREFAS DO DIA */}
-        <div className="card" style={{minHeight:"600px"}}>
+        <div className="right">
           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"14px"}}>
-            <div><b style={{fontSize:"13px"}}>Tarefas do dia</b><br/><small style={{fontSize:"10px", color:"#888"}}>{formatarDataBR(dataSel)}</small></div>
-            <div onClick={()=>abrirPopup()} style={{width:"32px", height:"32px", background:"#1a125f", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
-              <img src="/maistarefas.png" alt="+" style={{width:"16px", height:"16px"}} onError={(e:any)=>{e.target.outerHTML='<span style="color:#fff;font-size:18px">+</span>'}} />
+            <div>
+              <b style={{fontSize:"14px"}}>Tarefas {modo==="hoje"?"do dia": modo==="essa"?"dessa semana":"da próxima semana"}</b><br/>
+              <small style={{fontSize:"10px", color:"#888"}}>{modo==="hoje"? fmtBR(dataSel): modo==="essa"? `${fmtBR(inicioSemana(hoje))} - ${fmtBR(fimSemana(hoje))}`: `${fmtBR(inicioSemana(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()+7)))} - ${fmtBR(fimSemana(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()+7)))}`}</small>
+            </div>
+            <div onClick={()=>{setForm({data:toISO(dataSel), hora:"08:30", desc:"", pet:""}); setPopup(true);}} style={{width:"36px", height:"36px", borderRadius:"50%", background:"#1a125f", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
+              <img src="/maistarefas.png" alt="+" style={{width:"18px", height:"18px"}} />
             </div>
           </div>
 
-          <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
-            {horarios.map(h=>{
-              const tarefasHora = tarefasDoDia.filter(t=> t.hora===h || t.hora.startsWith(h.split(":")[0]+":"));
-              return(
-                <div key={h} style={{display:"flex", gap:"10px", alignItems:"flex-start"}}>
-                  <div style={{width:"50px", flexShrink:0, paddingTop:"6px"}}>
-                    <b style={{fontSize:"11px"}}>{h}</b><br/><small style={{fontSize:"8px", color:"#888"}}>{h}:00</small>
+          {tarefasVisiveis.length===0? (
+            <div style={{height:"400px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"#aaa"}}>
+              <small style={{fontSize:"11px"}}>Nenhuma tarefa {modo==="hoje"?"para esse dia":"nessa semana"}</small>
+              <small style={{fontSize:"10px", marginTop:"4px"}}>Clique no + para adicionar</small>
+            </div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:"12px"}}>
+              {tarefasVisiveis.map(t=>(
+                <div key={t.id} style={{display:"flex", gap:"10px", alignItems:"center"}}>
+                  <div style={{width:"52px", flexShrink:0}}>
+                    <b style={{fontSize:"12px"}}>{t.hora}</b><br/>
+                    <small style={{fontSize:"8px", color:"#888"}}>{new Date(t.data+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit", month:"short"})}</small>
                   </div>
-                  <div style={{flex:1, display:"flex", flexDirection:"column", gap:"6px"}}>
-                    {tarefasHora.length===0? (
-                      <div onClick={()=>abrirPopup(h)} style={{background:"#e9e2ff", borderRadius:"12px", height:"42px", cursor:"pointer", border:"1px dashed #cbb8ff", opacity:.6}}></div>
-                    ) : tarefasHora.map(t=>(
-                      <div key={t.id} className="tarefa">
-                        <div style={{display:"flex", justifyContent:"space-between"}}>
-                          <b style={{fontSize:"11px"}}>{t.pet||"Tarefa"}</b>
-                          <small style={{fontSize:"9px", color:"#666", cursor:"pointer"}} onClick={()=>{ salvar(tarefas.filter(x=>x.id!==t.id)) }}>✕</small>
-                        </div>
-                        <small style={{fontSize:"10px"}}>{t.desc}</small><br/>
-                        <small style={{fontSize:"8px", color:"#666"}}>{t.hora}</small>
-                      </div>
-                    ))}
+                  {/* BARRA IGUAL SEU PRINT - INFOS DENTRO */}
+                  <div className="taskInside" style={{flex:1}}>
+                    <div style={{flex:1}}>
+                      <b style={{fontSize:"11px"}}>{t.pet||"Tarefa"}</b>
+                      <span style={{fontSize:"10px", marginLeft:"8px"}}>{t.desc}</span>
+                      <small style={{fontSize:"8px", color:"#666", display:"block"}}>{t.hora} • {t.pet?"Consulta":"Lembrete"}</small>
+                    </div>
+                    <span onClick={()=>salvar(tarefas.filter(x=>x.id!==t.id))} style={{padding:"0 10px", cursor:"pointer", fontSize:"12px"}}>✕</span>
                   </div>
                 </div>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* POPUP */}
       {popup && (
         <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:9999, padding:"12px"}}>
           <div style={{background:"#fff", borderRadius:"20px", padding:"18px", width:"100%", maxWidth:"360px"}}>
-            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"14px"}}>
-              <b style={{fontSize:"14px"}}>Nova Tarefa</b>
-              <span onClick={()=>setPopup(false)} style={{cursor:"pointer"}}>✕</span>
-            </div>
-
+            <div style={{display:"flex", justifyContent:"space-between", marginBottom:"12px"}}><b>Nova Tarefa</b><span onClick={()=>setPopup(false)} style={{cursor:"pointer"}}>✕</span></div>
             <div style={{display:"flex", flexDirection:"column", gap:"10px"}}>
-              <div>
-                <small style={{fontSize:"10px"}}>Data</small>
-                <input type="date" value={form.data} onChange={e=>setForm({...form, data:e.target.value})} style={{width:"100%", padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff", fontSize:"12px"}} />
-              </div>
-              <div>
-                <small style={{fontSize:"10px"}}>Hora</small>
-                <input type="time" value={form.hora} onChange={e=>setForm({...form, hora:e.target.value})} style={{width:"100%", padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff", fontSize:"12px"}} />
-              </div>
-              <div>
-                <small style={{fontSize:"10px"}}>Pet (opcional)</small>
-                <input placeholder="Ex: Vader, Coca-Cola..." value={form.pet} onChange={e=>setForm({...form, pet:e.target.value})} style={{width:"100%", padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff", fontSize:"12px"}} />
-              </div>
-              <div>
-                <small style={{fontSize:"10px"}}>Descrição *</small>
-                <textarea placeholder="Ex: Consulta veterinária, vacina, banho..." value={form.desc} onChange={e=>setForm({...form, desc:e.target.value})} style={{width:"100%", padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff", fontSize:"12px", minHeight:"70px"}} />
-              </div>
-              <div style={{display:"flex", gap:"8px", marginTop:"8px"}}>
-                <button onClick={()=>setPopup(false)} style={{flex:1, padding:"10px", borderRadius:"999px", border:"1px solid #ece8f0", background:"#fff", fontSize:"12px"}}>Cancelar</button>
-                <button onClick={adicionar} style={{flex:1, padding:"10px", borderRadius:"999px", border:"none", background:"#1a125f", color:"#fff", fontSize:"12px", fontWeight:700}}>Salvar Tarefa</button>
+              <input type="date" value={form.data} onChange={e=>setForm({...form,data:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff"}} />
+              <input type="time" value={form.hora} onChange={e=>setForm({...form,hora:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff"}} />
+              <input placeholder="Pet (opcional)" value={form.pet} onChange={e=>setForm({...form,pet:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff"}} />
+              <textarea placeholder="Descrição..." value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff", minHeight:"70px"}} />
+              <div style={{display:"flex", gap:"8px"}}>
+                <button onClick={()=>setPopup(false)} style={{flex:1, padding:"10px", borderRadius:"999px", border:"1px solid #eee", background:"#fff"}}>Cancelar</button>
+                <button onClick={()=>{ if(!form.desc.trim()) return; salvar([...tarefas,{id:Date.now().toString(),...form}]); setPopup(false); }} style={{flex:1, padding:"10px", borderRadius:"999px", border:"none", background:"#1a125f", color:"#fff", fontWeight:700}}>Salvar</button>
               </div>
             </div>
           </div>
