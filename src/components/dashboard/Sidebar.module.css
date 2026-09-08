@@ -6,6 +6,9 @@
   padding: 16px 12px;
   transition: all 0.3s ease;
   flex-shrink: 0;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
 }
 .sidebar.fechado {
   width: 72px;
@@ -111,10 +114,14 @@
   height: 20px;
   object-fit: contain;
   flex-shrink: 0;
+  filter: brightness(0);
 }
 .fechado .iconeVetor {
   width: 22px;
   height: 22px;
+}
+.item.ativo .iconeVetor {
+  filter: brightness(0);
 }
 
 .label { white-space: nowrap; }
@@ -135,22 +142,37 @@
   padding: 8px;
 }
 
-.iconeVetor {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  flex-shrink: 0;
-  filter: brightness(0); /* deixa tudo preto */
-}
+.overlay{ display:none; }
 
-/* quando tá ativo continua preto, só o texto fica rosa */
-.item.ativo .iconeVetor {
-  filter: brightness(0);
-}
-
-.item.ativo {
-  background: #fff;
-  color: #e63d68;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+/* ===== FIX MOBILE QUE FALTAVA ===== */
+@media (max-width: 768px){
+  .sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    z-index:1000;
+    height:100dvh;
+    background:#f3f1f8;
+  }
+  .sidebar.fechado{
+    transform:translateX(0);
+    width:70px;
+  }
+  .sidebar.aberto{
+    width:280px;
+    box-shadow:4px 0 30px rgba(0,0,0,0.25);
+  }
+  .sidebar.fechado .nomeOng,
+  .sidebar.fechado .label,
+  .sidebar.fechado .voltar{
+    display:none;
+  }
+  .overlay{
+    display:block;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    z-index:999;
+    backdrop-filter:blur(2px);
+  }
 }
