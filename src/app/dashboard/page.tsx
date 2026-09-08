@@ -12,10 +12,33 @@ export default function DashboardPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
-      const pessoaSalva = localStorage.getItem("pessoa_nome") || user.user_metadata?.full_name || user.email?.split("@")[0] || "explorador";
+      const ultimoUser = localStorage.getItem("ultimo_user_id");
+      if (ultimoUser && ultimoUser!== user.id) localStorage.clear();
+      localStorage.setItem("ultimo_user_id", user.id);
+
+      const perfilPendente = localStorage.getItem("astro_perfil_pendente");
+      if (perfilPendente) {
+        const { data: existe } = await supabase.from("ongs").select("id").eq("usuario_id", user.id).maybeSingle();
+        if (!existe) {
+          await supabase.from("ongs").insert({
+            usuario_id: user.id,
+            nome_organizacao: localStorage.getItem("temp_ong_nome") || user.user_metadata.full_name || user.email?.split("@")[0] || "Minha ONG",
+            tipo_perfil: perfilPendente, documento: "", telefone: "", cep: "", regiao: "",
+            descricao: `Criado via Google - ${perfilPendente}`,
+          });
+        }
+        localStorage.removeItem("astro_perfil_pendente");
+        localStorage.removeItem("temp_ong_nome");
+      }
+
+      const nomeGoogle = user.user_metadata?.full_name || "";
+      const pessoaSalva = localStorage.getItem("pessoa_nome") || nomeGoogle || user.email?.split("@")[0] || "explorador";
       setNomePessoa(pessoaSalva);
-      const { data: ong } = await supabase.from("ongs").select("id").eq("usuario_id", user.id).maybeSingle();
+      localStorage.setItem("pessoa_nome", pessoaSalva);
+
+      const { data: ong } = await supabase.from("ongs").select("id, nome_organizacao").eq("usuario_id", user.id).maybeSingle();
       if (ong) {
+        localStorage.setItem("ong_nome", ong.nome_organizacao);
         const { data: pets } = await supabase.from("animais").select("*").eq("ong_id", ong.id).order("created_at", { ascending: false });
         setAnimais(pets || []);
       }
@@ -34,7 +57,9 @@ export default function DashboardPage() {
           <p>Que tal fazer um Check-in para ganhar pontos?</p>
         </div>
         <div className={styles.lembretes}>
-          <div className={styles.lembretesTitulo}>Lembretes</div>
+          <div className={styles.lembretesTitulo}>
+            <img src="/lembrete.png" alt="lembretes" className={styles.iconeLembreteTitulo} /> Lembretes
+          </div>
           <div className={styles.lembreteItem} style={{color:'#999', fontStyle:'italic'}}>Nenhum lembrete por enquanto.</div>
         </div>
       </div>
@@ -44,7 +69,9 @@ export default function DashboardPage() {
         <div className={styles.cardRosa}><strong>{animais.length}</strong><span>Interesses para adoção</span></div>
       </div>
       <div className={styles.petsGrid}>
-        {animais.map((pet)=>(
+        {animais.length===0? (
+          <div className={styles.vazio}><p>Nenhum pet cadastrado ainda.</p><span>Vai em <b>Novo Pet</b>.</span></div>
+        ) : animais.map((pet)=>(
           <div key={pet.id} className={styles.petCard}>
             <img src={pet.foto_url || "/logo-gato.png"} alt={pet.nome} className={styles.petFoto} />
             <h3>{pet.nome}</h3><small>{pet.especie} - {pet.porte}</small>

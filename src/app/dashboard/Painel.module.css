@@ -1,22 +1,30 @@
-.painelContainer{ display:flex; flex-direction:column; gap:20px; width:100%; }
-.topRow{ display:flex; gap:20px; align-items:flex-start; }
-.boasVindas{ flex:1.2; background:#fff; border:1px solid #e9e0ff; border-radius:20px; padding:22px 26px; }
-.boasVindas h1{ font-size:18px; font-weight:800; color:#111; line-height:1.3; word-break:break-word; }
-.boasVindas p{ font-size:13px; color:#666; margin-top:6px; }
-.lembretes{ flex:0.8; display:flex; flex-direction:column; gap:10px; }
-.lembretesTitulo{ font-size:13px; font-weight:800; color:#111; display:flex; align-items:center; gap:6px; }
-.lembreteItem{ background:#fff; border:1px solid #eee; border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:10px; font-size:11px; color:#333; }
-.metricas{ display:flex; gap:14px; }
-.cardVerde,.cardRoxo,.cardRosa{ flex:1; border-radius:12px; padding:16px 18px; color:#fff; display:flex; flex-direction:column; }
-.cardVerde{ background:#1ba97c; }.cardRoxo{ background:#2d2a6b; }.cardRosa{ background:#e63d68; }
-.metricas strong{ font-size:18px; font-weight:800; }.metricas span{ font-size:11px; margin-top:4px; opacity:0.9; }
-.petsGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:8px; }
-.petCard{ background:#fff; border:1px solid #eee; border-radius:18px; padding:18px 14px; text-align:center; }
-.petFoto{ width:88px; height:88px; border-radius:50%; object-fit:cover; background:#f5f2ff; margin:0 auto 10px; display:block; }
-
-@media (max-width:768px){
- .topRow{ flex-direction:column; }
- .metricas{ flex-direction:column; }
- .petsGrid{ grid-template-columns:1fr 1fr; gap:10px; }
- .boasVindas h1{ font-size:17px; }
+.painelContainer { display: flex; flex-direction: column; gap: 20px; width:100%; }
+.topRow { display: flex; gap: 20px; align-items: flex-start; }
+.boasVindas { flex: 1.2; background: #fff; border: 1px solid #e9e0ff; border-radius: 20px; padding: 22px 26px; }
+.boasVindas h1 { font-size: 18px; font-weight: 800; color: #111; line-height: 1.3; }
+.boasVindas p { font-size: 13px; color: #666; margin-top: 6px; }
+.lembretes { flex: 0.8; display: flex; flex-direction: column; gap: 10px; }
+.lembretesTitulo { font-size: 13px; font-weight: 800; color: #111; display: flex; align-items: center; gap: 6px; }
+.iconeLembreteTitulo { width: 18px; height: 18px; object-fit: contain; }
+.lembreteItem { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: #333; }
+.avatarLembrete { width: 28px; height: 28px; background: #e0d8ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.avatarLembreteCoracao { width: 28px; height: 28px; background: #ffe1e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.metricas { display: flex; gap: 14px; }
+.cardVerde,.cardRoxo,.cardRosa { flex: 1; border-radius: 12px; padding: 16px 18px; color: #fff; display: flex; flex-direction: column; }
+.cardVerde { background: #1ba97c; }.cardRoxo { background: #2d2a6b; }.cardRosa { background: #e63d68; }
+.metricas strong { font-size: 18px; font-weight: 800; }.metricas span { font-size: 11px; margin-top: 4px; opacity: 0.9; }
+.petsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 8px; }
+.petCard { background: #fff; border: 1px solid #eee; border-radius: 18px; padding: 18px 14px; text-align: center; position: relative; }
+.tresPontinhos { position: absolute; top: 10px; right: 12px; background: none; border: none; cursor: pointer; font-size: 18px; }
+.petFoto { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: #f5f2ff; margin: 0 auto 10px; display: block; }
+.petCard h3 { font-size: 14px; font-weight: 700; color: #111; }.petCard small { font-size: 11px; color: #666; }
+.petStats { font-size: 10px; color: #e63d68; margin-top: 12px; line-height: 1.3; font-weight: 500; }
+.loading { padding: 24px; }
+.vazio{ grid-column:1/-1; text-align:center; padding:20px; color:#888; border:1px dashed #ddd; border-radius:12px; background:#faf9ff; }
+@media (max-width: 1100px) {.topRow { flex-direction: column; }.petsGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px){
+.petsGrid{ grid-template-columns:1fr 1fr; gap:10px; }
+.metricas{ flex-direction:column; }
+.boasVindas h1{ font-size:16px; }
+.topRow{ flex-direction:column; }
 }
