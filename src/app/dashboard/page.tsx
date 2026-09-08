@@ -1,22 +1,62 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import styles from "./Painel.module.css";
 
 export default function DashboardPage() {
-  const [nome, setNome] = useState("AstroTeste");
+  const router = useRouter();
+  const [nome, setNome] = useState("Astro");
   const [animais, setAnimais] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // === LÓGICA DO GOOGLE QUE FALTAVA ===
+      const perfilPendente = localStorage.getItem("astro_perfil_pendente");
+
+      if (perfilPendente) {
+        // vê se já existe ong pra esse usuario do google
+        const { data: existe } = await supabase
+         .from("ongs")
+         .select("id")
+         .eq("usuario_id", user.id)
+         .maybeSingle();
+
+        if (!existe) {
+          const { error } = await supabase.from("ongs").insert({
+            usuario_id: user.id,
+            nome_organizacao: user.user_metadata.full_name || user.email?.split("@")[0] || "Minha ONG",
+            tipo_perfil: perfilPendente,
+            documento: "",
+            telefone: "",
+            cep: "",
+            regiao: "",
+            descricao: `Criado via Google - ${perfilPendente}`,
+          });
+          if (error) console.log("erro ao criar ong google:", error);
+        }
+        localStorage.removeItem("astro_perfil_pendente");
+        // limpa cookie também
+        document.cookie = "astro_perfil_pendente=; path=/; max-age=0";
+      }
+      // === FIM LÓGICA GOOGLE ===
+
       const salvo = localStorage.getItem("ong_nome");
       if (salvo) setNome(salvo);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
+
       const { data: ong } = await supabase.from("ongs").select("id, nome_organizacao").eq("usuario_id", user.id).maybeSingle();
+
       if (ong) {
         setNome(ong.nome_organizacao);
+        localStorage.setItem("ong_nome", ong.nome_organizacao);
         const { data: pets } = await supabase.from("animais").select("*").eq("ong_id", ong.id).order("created_at", { ascending: false });
         setAnimais(pets || []);
       }
@@ -46,13 +86,13 @@ export default function DashboardPage() {
       </div>
 
       <div className={styles.metricas}>
-        <div className={styles.cardVerde}><strong>+{animais.length > 0 ? 35 : 0}%</strong><span>Alcance no bairro este mês</span></div>
+        <div className={styles.cardVerde}><strong>+{animais.length > 0? 35 : 0}%</strong><span>Alcance no bairro este mês</span></div>
         <div className={styles.cardRoxo}><strong>R$ {animais.length * 120},00</strong><span>Economizados em saúde</span></div>
         <div className={styles.cardRosa}><strong>{animais.length}</strong><span>Interesses para adoção</span></div>
       </div>
 
       <div className={styles.petsGrid}>
-        {animais.length === 0 ? (
+        {animais.length === 0? (
           <div className={styles.vazio}>
             <p>Nenhum pet cadastrado ainda.</p>
             <span>Vai em <b>Novo Pet</b>.</span>
