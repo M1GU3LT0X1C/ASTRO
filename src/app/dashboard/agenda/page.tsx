@@ -39,10 +39,9 @@ export default function AgendaPage(){
     return estaNaSemana(t.data, prox);
   }).sort((a,b)=> (a.data+a.hora).localeCompare(b.data+b.hora));
 
-  // SETA IGUALZINHO O X - centralizada perfeita
   const Seta = ({dir, onClick}:{dir:"left"|"right", onClick:()=>void})=>(
     <div className="seta" onClick={onClick}>
-      <span style={{fontSize:"12px", fontWeight:700, lineHeight:1, transform:"translateY(-1px)"}}>{dir==="left"?"‹":"›"}</span>
+      <span style={{fontSize:"13px", fontWeight:700, lineHeight:1, display:"block", transform:"translateY(-0.5px)"}}>{dir==="left"?"‹":"›"}</span>
     </div>
   );
 
@@ -56,11 +55,11 @@ export default function AgendaPage(){
 .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
 .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
 .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
-.seta{ width:26px; height:26px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s; }
+.seta{ width:24px; height:24px; min-width:24px; min-height:24px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s; line-height:1; }
 .seta:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
 .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
-.taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 32px 8px 12px; position:relative; }
-.xbtn{ position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+.taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:10px 40px 10px 14px; position:relative; }
+.xbtn{ position:absolute; top:10px; right:10px; width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; line-height:1; }
 .xbtn:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
 @media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
       `}</style>
@@ -148,7 +147,7 @@ export default function AgendaPage(){
                       <small style={{fontSize:"8px", color:"#666", display:"block"}}>{t.hora} • Consulta</small>
                     </div>
                     <div className="xbtn" onClick={()=>salvar(tarefas.filter(x=>x.id!==t.id))}>
-                      <span style={{fontSize:"10px", fontWeight:700, lineHeight:1}}>✕</span>
+                      <span style={{fontSize:"11px", fontWeight:700, lineHeight:1, display:"block"}}>✕</span>
                     </div>
                   </div>
                 </div>
