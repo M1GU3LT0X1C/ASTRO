@@ -32,7 +32,7 @@ function SelectBonito({ id, label, value, onChange, options, openId, setOpenId }
               return(
                 <div key={opt.value}
                   onClick={()=>{ if(isSel){ onChange(""); } else { onChange(opt.value); } setOpenId(null); }}
-                  style={{padding:"11px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",background: isSel? "#ece8ff" : "#fff",fontWeight: isSel? 800 : 500,fontSize:"13px", color:"#201a4a", borderLeft: isSel? "3px solid #201a4a" : "3px solid transparent"}}>
+                  style={{padding:"11px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",background: isSel? "#ece8ff" : "#fff",fontWeight: isSel? 800 : 500,fontSize:"13px", color:"#201a4a"}}>
                   {opt.label} {isSel && <span>✓</span>}
                 </div>
               )
@@ -52,8 +52,16 @@ export default function NovoPage(){
   const [checks,setChecks]=useState({castrado:false,vacinado:false,vermifugado:false,cuidados:false});
   const [temps,setTemps]=useState<string[]>([]); const [loading,setLoading]=useState(false);
 
+  // VALIDAÇÕES
+  const onNome = (v:string)=> setNome(v.replace(/[0-9]/g,"")); // não deixa número
+  const onTipo = (v:string)=> setTipo(v.replace(/[0-9]/g,"")); // não deixa número
+  const onIdade = (v:string)=> setIdade(v.replace(/[^0-9]/g,"")); // só número
+
   const publicar=async()=>{
-    if(!nome) return alert("Nome obrigatório");
+    if(!nome.trim()) return alert("Nome obrigatório (sem números)");
+    if(!/^[A-Za-zÀ-ÿ\s]+$/.test(nome)) return alert("Nome do pet não pode ter números");
+    if(!/^[A-Za-zÀ-ÿ\s]+$/.test(tipo) && tipo) return alert("Tipo de pet não pode ter números");
+    if(!idade) return alert("Idade obrigatória");
     setLoading(true);
     try{
       const { data:{user} }=await supabase.auth.getUser();
@@ -68,7 +76,7 @@ export default function NovoPage(){
         foto_url = supabase.storage.from("animais-fotos").getPublicUrl(nomeArquivo).data.publicUrl;
       }
       const { error } = await supabase.from("animais").insert({
-        ong_id: ong.id, nome, idade: Number(idade)||0, tipo,
+        ong_id: ong.id, nome: nome.trim(), idade: Number(idade)||0, tipo: tipo.trim(),
         porte: porte||"medio", sexo: sexo||"macho", especie: especie||"cachorro",
         castrado: checks.castrado, vacinado: checks.vacinado,
         vermifugado: checks.vermifugado, cuidados_especiais: checks.cuidados,
@@ -84,13 +92,14 @@ export default function NovoPage(){
   return(
     <div style={{display:"flex",justifyContent:"center",padding:"12px",background:"#f6f4ff",minHeight:"100vh"}} onClick={()=>setOpenSelect(null)}>
       <style>{`
-      .cardNovo{ background:#fff; border-radius:22px; padding:20px; display:flex; gap:20px; width:100%; max-width:900px; border:1px solid #ece8f8; flex-direction:column; }
-      .linhaNovo{ display:flex; gap:20px; flex-direction:column; width:100%; }
-      .gridTemps{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px 8px; width:100%; max-width:360px; align-self:center; margin-top:10px; }
+     .cardNovo{ background:#fff; border-radius:22px; padding:20px; display:flex; width:100%; max-width:900px; border:1px solid #ece8f8; flex-direction:column; }
+     .linhaNovo{ display:flex; gap:20px; flex-direction:column; width:100%; }
+     .gridTemps{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px 12px; width:100%; max-width:340px; align-self:center; margin-top:12px; }
+     .gridTemps > :last-child{ grid-column:2; } /* 3x3x3x1 - último no meio */
        @media(min-width:768px){
-        .cardNovo{ padding:36px; }
-        .linhaNovo{ flex-direction:row; gap:44px; }
-        .gridTemps{ grid-template-columns:repeat(5,1fr); max-width:460px; gap:20px 8px; }
+       .cardNovo{ padding:36px; }
+       .linhaNovo{ flex-direction:row; gap:44px; }
+       .gridTemps{ max-width:360px; }
        }
       `}</style>
       <div className="cardNovo" onClick={e=>e.stopPropagation()}>
@@ -103,12 +112,12 @@ export default function NovoPage(){
             <span style={{fontSize:"13px",fontWeight:800,color:"#201a4a"}}>Adicionar foto</span>
           </div>
           <div style={{flex:1,display:"flex",flexDirection:"column",gap:"16px", minWidth:0}}>
-            <div style={{display:"flex",gap:"12px"}} className="gridNomeTop">
-              <style>{`.gridNomeTop{flex-direction:column} @media(min-width:500px){.gridNomeTop{flex-direction:row!important}}`}</style>
-              <input style={{flex:1,height:"38px",border:"1.6px solid #201a4a",borderRadius:"999px",padding:"0 18px",outline:"none"}} placeholder="Nome do Pet" value={nome} onChange={e=>setNome(e.target.value)}/>
-              <input style={{flex:1,height:"38px",border:"1.6px solid #201a4a",borderRadius:"999px",padding:"0 18px",outline:"none"}} placeholder="Idade" value={idade} onChange={e=>setIdade(e.target.value)}/>
+            <div style={{display:"flex",gap:"12px",flexDirection:"column"}} className="top2">
+              <style>{`@media(min-width:500px){.top2{flex-direction:row!important}}`}</style>
+              <input style={{flex:1,height:"38px",border:"1.6px solid #201a4a",borderRadius:"999px",padding:"0 18px",outline:"none"}} placeholder="Nome do Pet" value={nome} onChange={e=>onNome(e.target.value)}/>
+              <input style={{flex:1,height:"38px",border:"1.6px solid #201a4a",borderRadius:"999px",padding:"0 18px",outline:"none"}} placeholder="Idade" inputMode="numeric" value={idade} onChange={e=>onIdade(e.target.value)}/>
             </div>
-            <input style={{height:"38px",border:"1.6px solid #201a4a",borderRadius:"999px",padding:"0 18px",outline:"none",width:"100%"}} placeholder="Tipo de pet" value={tipo} onChange={e=>setTipo(e.target.value)}/>
+            <input style={{height:"38px",border:"1.6px solid #201a4a",borderRadius:"999px",padding:"0 18px",outline:"none",width:"100%"}} placeholder="Tipo de pet" value={tipo} onChange={e=>onTipo(e.target.value)}/>
             <div style={{border:"1.6px solid #201a4a",borderRadius:"16px",padding:"2px 20px",background:"#fff",display:"flex",flexDirection:"column"}}>
               <div style={{borderBottom:"1px solid #f1edff"}}><SelectBonito id="porte" label="Porte" value={porte} onChange={setPorte} openId={openSelect} setOpenId={setOpenSelect} options={[{value:"pequeno",label:"Pequeno"},{value:"medio",label:"Médio"},{value:"grande",label:"Grande"}]}/></div>
               <div style={{borderBottom:"1px solid #f1edff"}}><SelectBonito id="sexo" label="Sexo" value={sexo} onChange={setSexo} openId={openSelect} setOpenId={setOpenSelect} options={[{value:"macho",label:"Macho"},{value:"femea",label:"Fêmea"}]}/></div>
@@ -120,7 +129,7 @@ export default function NovoPage(){
               <div style={{display:"flex",justifyContent:"space-between",height:"44px",alignItems:"center",borderBottom:"1px solid #f1edff",fontSize:"13px",color:"#201a4a"}}>Vermifugado<button onClick={()=>setChecks({...checks,vermifugado:!checks.vermifugado})} style={{width:"34px",height:"18px",background:checks.vermifugado?"#201a4a":"#ddd",borderRadius:"999px",border:"none",position:"relative",cursor:"pointer"}}><i style={{position:"absolute",top:"2px",left:checks.vermifugado?"18px":"2px",width:"14px",height:"14px",background:"#fff",borderRadius:"50%",transition:".2s"}}/></button></div>
               <div style={{display:"flex",justifyContent:"space-between",height:"44px",alignItems:"center",fontSize:"13px",color:"#201a4a"}}>Cuidados especiais<button onClick={()=>setChecks({...checks,cuidados:!checks.cuidados})} style={{width:"34px",height:"18px",background:checks.cuidados?"#201a4a":"#ddd",borderRadius:"999px",border:"none",position:"relative",cursor:"pointer"}}><i style={{position:"absolute",top:"2px",left:checks.cuidados?"18px":"2px",width:"14px",height:"14px",background:"#fff",borderRadius:"50%",transition:".2s"}}/></button></div>
             </div>
-            {/* GRID QUE NÃO CORTA NO MOBILE */}
+
             <div className="gridTemps">
               {[["energetico","raio","Energético"],["timido","timido","Tímido"],["preguicoso","preguicoso","Preguiçoso"],["medroso","medroso","Medroso"],["sociavel","sociavel","Sociável"],["afetivo","afetivo","Afetivo"],["apegado","apegado","Apegado"],["curioso","curioso","Curioso"],["protetor","protetor","Protetor"],["independente","independente","Independente"]].map(([id,file,label])=>(
                 <button key={id} onClick={()=>setTemps(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])} style={{background:"transparent",border:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:"6px",cursor:"pointer"}}>
