@@ -9,8 +9,8 @@ import styles from "./Sidebar.module.css";
 const menu = [
   { label: "Painel", href: "/dashboard", icon: "/painel-vetor.png", activeIcon: "/painel-vetor.png" },
   { label: "Meus Pets", href: "/dashboard/meus-pets", icon: "/gato-meuspets.png" },
-  { label: "Novo Pet", href: "/dashboard/novo", icon: "/mais-novo-pet.png" },
-  { label: "Recompensas", href: "/dashboard/recompensas", icon: "/balao-dashboard.png" },
+  { label: "Novo Pet", href: "/dashboard/novo-pet", icon: "/mais-novo-pet.png" },
+  { label: "Recompensas", href: "/dashboard/recompensas", icon: "/recompensa.png" },
   { label: "Métricas", href: "/dashboard/metricas", icon: "/metricas.png" },
   { label: "Agenda", href: "/dashboard/agenda", icon: "/agenda.png" },
   { label: "Mensagens", href: "/dashboard/mensagens", icon: "/balao-dashboard.png" },

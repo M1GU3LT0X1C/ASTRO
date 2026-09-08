@@ -1,201 +1,310 @@
-/* =========================
-   PÁGINA
-========================= */
 .cadastro {
-  width: 100%;
-  padding: 42px 28px 65px;
-  background: #fffdfd;
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 40px 20px;
+  overflow-x: hidden;
 }
 .conteudo {
-  width: 100%;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
 }
-
-/* =========================
-   INTRODUÇÃO
-========================= */
-.introducao { text-align: center; }
+.introducao {
+  text-align: center;
+  margin-bottom: 30px;
+}
 .introducao h1 {
-  max-width: 850px;
-  margin: 0 auto;
-  color: #e63d68;
-  font-size: 23px;
+  color: #1a0b5c;
+  font-size: 22px;
+  max-width: 800px;
+  margin: 0 auto 12px;
+  line-height: 1.35;
   font-weight: 700;
-  line-height: 1.2;
 }
 .introducao p {
-  margin: 38px 0 0;
-  color: #333333;
-  font-size: 18px;
-  font-weight: 400;
+  font-size: 16px;
+  color: #333;
+}
+.dicaScroll {
+  display: none;
 }
 
-/* =========================
-   PERFIS
-========================= */
+/* PC - 4 CARDS */
 .perfis {
-  width: 100%;
-  margin-top: 42px;
   display: grid;
-  grid-template-columns: repeat(4, 170px);
-  justify-content: center;
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1020px;
+  margin: 0 auto;
 }
 .perfilCard {
-  width: 170px;
-  min-height: 300px;
-  padding: 30px 16px 28px;
+  background: #efecf9;
+  border: 2px solid #efecf9;
+  border-radius: 28px;
+  padding: 28px 18px 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #dedbea;
-  border: 2px solid #15056f;
-  border-radius: 22px;
-  color: #15056f;
-  font-family: inherit;
-  cursor: pointer;
-  transition: 0.2s;
+  min-height: 300px;
+  box-sizing: border-box;
 }
-.perfilCard:hover { transform: translateY(-3px); }
-.perfilIcone { width: 66px; height: 66px; margin-bottom: 14px; object-fit: contain; }
-.perfilCard h2 {
-  min-height: 48px;
-  margin: 0 0 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: inherit;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.08;
-  text-align: center;
-}
-.perfilCard p {
-  max-width: 145px;
-  margin: 0;
-  color: #222222;
-  font-size: 13px;
-  line-height: 1.25;
-  text-align: center;
+.perfilCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(26, 11, 92, 0.1);
 }
 .perfilSelecionado {
-  background: #f5bdcc;
-  border-color: #e63d68;
-  color: #e63d68;
-  transform: translateY(-3px);
+  background: #ffb3c6 !important;
+  border-color: #e63d68 !important;
+  color: #1a0b5c !important;
+  box-shadow: 0 8px 20px rgba(230,61,104,0.25);
 }
-.perfilSelecionado p { color: #222222; }
+.perfilSelecionado h2,
+.perfilSelecionado p {
+  color: #1a0b5c !important;
+}
+.perfilIcone {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 16px;
+  object-fit: contain;
+}
+.perfilCard h2 {
+  color: #1a0b5c;
+  font-size: 18px;
+  margin: 8px 0 10px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+.perfilCard p {
+  font-size: 13px;
+  color: #2b2b2b;
+  line-height: 1.35;
+  margin: 0;
+}
+.tag {
+  margin-top: auto;
+  background: #1a0b5c;
+  color: white;
+  font-size: 10px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.dots {
+  display: none;
+}
 
-/* =========================
-   FORMULÁRIO
-========================= */
+/* FORM */
 .formulario {
-  width: 100%;
-  max-width: 700px;
-  margin: 85px auto 0;
+  max-width: 620px;
+  margin: 42px auto 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 14px;
 }
-.inputGrande {
-  width: 100%;
-  height: 42px;
-  margin-bottom: 14px;
-  padding: 0 16px;
-  background: #f3b6c7;
-  border: 1.5px solid #e63d68;
+.inputGrande,
+.inputMetade,
+.inputSenha,
+.selectBonito {
+  background: #ffb3c6;
+  border: 1.5px solid #ffb3c6;
   border-radius: 999px;
-  color: #111111;
-  font-size: 12px;
+  padding: 16px 22px;
+  font-size: 14px;
   outline: none;
-}
-.inputGrande::placeholder { color: #666666; }
-.inputGrande:focus { background: #fff; box-shadow: 0 0 0 3px rgba(230, 61, 104, 0.1); }
-
-/* =========================
-   LINHA DE INPUTS
-========================= */
-.linhaInputs {
   width: 100%;
+  box-sizing: border-box;
+  color: #1a0b5c;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.inputGrande::placeholder,
+.inputMetade::placeholder,
+.inputSenha::placeholder {
+  color: rgba(26,11,92,0.55);
+}
+.linhaInputs {
   display: flex;
   gap: 14px;
-  margin-bottom: 14px;
 }
-
-/* =========================
-   INPUT COM OLHINHO - VERSÃO FINAL
-========================= */
+.inputMetade {
+  flex: 1;
+}
 .inputComOlho {
-  width: 50%;
-  height: 42px;
+  flex: 1;
+  position: relative;
   display: flex;
   align-items: center;
-  background: #f3b6c7;
-  border: 1.5px solid #e63d68;
-  border-radius: 999px;
 }
-
-.inputComOlho:focus-within {
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(230, 61, 104, 0.1);
+.inputComOlho .inputSenha {
+  padding-right: 50px;
 }
-
-.inputSenha {
-  flex: 1;
-  height: 100%;
-  border: none;
-  background: transparent;
-  outline: none;
-  padding-left: 16px;
-  color: #111;
-  font-size: 12px;
-}
-
 .botaoOlho {
-  width: 38px;
-  height: 38px;
+  position: absolute;
+  right: 18px;
+  background: none;
   border: none;
-  background: transparent;
-  color: #e63d68;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.selectWrapper {
+  position: relative;
+  width: 100%;
+}
+.selectWrapper::after {
+  content: "⌄";
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-65%);
+  color: #1a0b5c;
+  font-size: 20px;
+  pointer-events: none;
+  font-weight: 300;
+}
+.selectBonito {
+  cursor: pointer;
+  padding-right: 45px;
+}
+.selectBonito option {
+  background: white;
+  color: #1a0b5c;
+}
+.botaoContinuar,
+.botaoGoogle {
+  border-radius: 999px;
+  padding: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  margin-top: 6px;
+  font-size: 15px;
+}
+.botaoContinuar {
+  background: #1a0b5c;
+  color: white;
+}
+.botaoContinuar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.botaoGoogle {
+  background: white;
+  border: 1.5px solid #e5e5e5;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  gap: 10px;
+  color: #1a0b5c;
 }
-
+.voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #efecf9;
+  border: 1.5px solid #efecf9;
+  color: #1a0b5c;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  margin-bottom: 22px;
+}
+.voltar:hover {
+  background: #1a0b5c;
+  color: white;
+  border-color: #1a0b5c;
+  transform: translateX(-2px);
+}
+.divisor {
+  text-align: center;
+  color: #9a9a9a;
+  font-size: 13px;
+  position: relative;
+  margin: 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.divisor::before,
+.divisor::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 42%;
+  height: 1px;
+  background: #eee;
+}
+.divisor::before { left: 0; }
+.divisor::after { right: 0; }
 .erroSenha {
   color: #e63d68;
-  font-size: 13px;
-  margin-bottom: 12px;
-  font-weight: 600;
+  font-size: 12px;
   text-align: center;
-  width: 100%;
+  font-weight: 600;
 }
 
-.botaoContinuar {
-  min-width: 180px;
-  height: 50px;
-  margin-top: 30px;
-  padding: 0 34px;
-  background: #15056f;
-  color: white;
-  border: none;
-  border-radius: 999px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
+/* SENHA */
+.inputOk {
+  border-color: #1ab86e !important;
+  background: #c8f7d8 !important;
 }
-.botaoContinuar:hover { background: #251296; }
+.inputErro {
+  border-color: #e63d68 !important;
+  background: #ffd1dc !important;
+}
+.senhaChecklist {
+  background: #f9f6ff;
+  border: 1.5px solid #efecf9;
+  border-radius: 20px;
+  padding: 12px 18px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.forcaBarra {
+  height: 6px;
+  background: #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.forcaPreenchimento {
+  height: 100%;
+  transition: all 0.3s;
+}
+.checkOk { color: #1ab86e; font-weight: 700; }
+.checkErro { color: #999; }
 
-@media (max-width: 900px) {
-  .perfis { grid-template-columns: repeat(2, 170px); }
-}
-@media (max-width: 600px) {
-  .cadastro { padding: 35px 22px 50px; }
-  .perfis { grid-template-columns: 1fr; }
-  .perfilCard { max-width: 260px; margin: 0 auto; }
-  .linhaInputs { flex-direction: column; }
-  .inputComOlho { width: 100%; }
+@media (max-width: 768px) {
+  .cadastro { padding: 24px 0 30px; }
+  .conteudo { padding: 0; }
+  .introducao { padding: 0 20px; }
+  .introducao h1 { font-size: 18px; }
+  .dicaScroll { display: block; font-size: 13px; color: #e63d68; margin-top: 12px; animation: pisca 1.6s infinite; }
+  .perfis {
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 20px;
+    scroll-padding-right: 20px;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+    padding: 10px 20px 22px 20px !important;
+    margin: 0 !important;
+  }
+  .perfis::-webkit-scrollbar { display: none; }
+  .perfilCard { min-width: 74vw; max-width: 74vw; scroll-snap-align: center; scroll-snap-stop: always; flex-shrink: 0; min-height: 310px; }
+  .perfis::after { content: ""; min-width: 6px; flex-shrink: 0; }
+  .dots { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
+  .dots span { width: 8px; height: 8px; background: #e8d5f2; border-radius: 50%; }
+  .formulario { padding: 0 20px; }
+  .linhaInputs { flex-direction: column; gap: 14px; }
+  @keyframes pisca { 0%,100%{opacity:0.45} 50%{opacity:1} }
 }
