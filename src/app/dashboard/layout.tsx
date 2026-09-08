@@ -1,15 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import styles from "./dashboard.module.css";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [nomeOng, setNomeOng] = useState("AstroTeste");
+  const [busca, setBusca] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const salvo = localStorage.getItem("ong_nome");
     if (salvo) setNomeOng(salvo);
   }, []);
+
+  const fazerBusca = () => {
+    if (!busca.trim()) return;
+    // salva global e leva pra Meus Pets filtrado
+    localStorage.setItem("astro_busca", busca);
+    window.dispatchEvent(new Event("astro-busca"));
+    router.push(`/dashboard/meus-pets?busca=${encodeURIComponent(busca)}`);
+  };
 
   return (
     <div className={styles.container}>
@@ -18,11 +29,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className={styles.painel}>
           <header className={styles.topbar}>
             <div className={styles.busca}>
-              <img src="/lupa.svg" alt="buscar" className={styles.lupaIcone} />
-              <input placeholder="Procure clínicas próximas..." />
+              <img src="/lupa.svg" alt="buscar" className={styles.lupaIcone} onClick={fazerBusca} style={{cursor:"pointer"}} />
+              <input 
+                placeholder="Procure pets, clínicas..." 
+                value={busca}
+                onChange={(e)=>setBusca(e.target.value)}
+                onKeyDown={(e)=> e.key === "Enter" && fazerBusca()}
+              />
             </div>
             <div className={styles.direita}>
-              <button className={styles.iconBtn}>
+              <button className={styles.iconBtn} onClick={()=>router.push("/dashboard/mensagens")}>
                 <img src="/balao-dashboard.png" alt="msg" className={styles.iconeTopo} />
               </button>
               <button className={styles.iconBtn}>
