@@ -41,7 +41,18 @@ export default function AgendaPage(){
 
   const Seta = ({dir, onClick}:{dir:"left"|"right", onClick:()=>void})=>(
     <div className="seta" onClick={onClick}>
-      <img src="/seta.png" alt="" style={{width:"10px", height:"10px", objectFit:"contain", transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)"}} />
+      <img
+        src="/seta.png"
+        alt={dir}
+        style={{
+          width:"10px",
+          height:"10px",
+          display:"block",
+          objectFit:"contain",
+          transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)",
+          transformOrigin:"center center"
+        }}
+      />
     </div>
   );
 
@@ -55,13 +66,14 @@ export default function AgendaPage(){
 .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
 .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
 .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
-.seta{ width:26px; height:26px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+.seta{ width:28px; height:28px; min-width:28px; min-height:28px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s; line-height:1; padding:0; }
 .seta:hover{ background:#d5c8ff; border-color:#1a125f; }
+.seta img{ display:block; margin:0; }
 .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
 .taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 32px 8px 12px; position:relative; }
 .xbtn{ position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
 .xbtn:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
-       @media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
+@media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
       `}</style>
 
       <div className="wrap">
@@ -123,7 +135,7 @@ export default function AgendaPage(){
           <div style={{display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px"}}>
             <b style={{fontSize:"14px"}}>Tarefas do dia</b>
             <div onClick={()=>{setForm({data:toISO(dataSel), hora:"08:30", desc:"", pet:""}); setPopup(true);}} style={{width:"20px", height:"20px", borderRadius:"50%", border:"1.5px solid #000", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", background:"#fff"}}>
-              <img src="/maistarefas.png" alt="+" style={{width:"12px", height:"12px"}} />
+              <img src="/maistarefas.png" alt="+" style={{width:"12px", height:"12px", display:"block"}} />
             </div>
           </div>
           <small style={{fontSize:"10px", color:"#888", display:"block", marginBottom:"16px"}}>{modo==="hoje"? fmtBR(dataSel) : modo==="essa"? `${fmtBR(inicioSemana(hoje))} - ${fmtBR(fimSemana(hoje))}` : `${fmtBR(inicioSemana(proxSemanaRef))} - ${fmtBR(fimSemana(proxSemanaRef))}`}</small>
