@@ -134,3 +134,23 @@
 .fechado .voltar {
   padding: 8px;
 }
+
+.iconeVetor {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: brightness(0); /* deixa tudo preto */
+}
+
+/* quando tá ativo continua preto, só o texto fica rosa */
+.item.ativo .iconeVetor {
+  filter: brightness(0);
+}
+
+.item.ativo {
+  background: #fff;
+  color: #e63d68;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}

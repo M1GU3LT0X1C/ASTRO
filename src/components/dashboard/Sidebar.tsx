@@ -8,7 +8,7 @@ import styles from "./Sidebar.module.css";
 
 const menu = [
   { label: "Painel", href: "/dashboard", icon: "/painel-vetor.png", activeIcon: "/painel-vetor.png" },
-  { label: "Meus Pets", href: "/dashboard/pets", icon: "/gato-meuspets.png" },
+  { label: "Meus Pets", href: "/dashboard/meus-pets", icon: "/gato-meuspets.png" },
   { label: "Novo Pet", href: "/dashboard/novo", icon: "/mais-novo-pet.png" },
   { label: "Recompensas", href: "/dashboard/recompensas", icon: "/balao-dashboard.png" },
   { label: "Métricas", href: "/dashboard/metricas", icon: "/metricas.png" },
