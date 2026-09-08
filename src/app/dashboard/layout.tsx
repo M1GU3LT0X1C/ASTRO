@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className={styles.painel}>
           <header className={styles.topbar}>
             <div className={styles.busca}>
-              <img src="/lupa.svg" alt="buscar" className={styles.lupaIcone} onClick={fazerBusca} style={{cursor:"pointer"}} />
+              <img src="/lupa.svg" alt="buscar" className={styles.lupaIcone} onClick={fazerBusca} />
               <input
                 placeholder="Procure pets..."
                 value={busca}
@@ -36,12 +36,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               />
             </div>
             <div className={styles.direita}>
-              <button className={styles.iconBtn} onClick={()=>router.push("/dashboard/mensagens")}>
-                <img src="/balao-dashboard.png" alt="msg" className={styles.iconeTopo} />
-              </button>
-              <button className={styles.iconBtn}>
-                <img src="/sino-dashboard.png" alt="sino" className={styles.iconeTopo} />
-              </button>
               <div className={styles.bolinha}></div>
               <strong className={styles.nomeTopo}>{nomeOng}</strong>
             </div>

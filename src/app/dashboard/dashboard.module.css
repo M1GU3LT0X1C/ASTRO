@@ -71,15 +71,14 @@
 }
 .iconBtn:hover { background: #f3f0ff; }
 .iconeTopo { width: 20px; height: 20px; object-fit: contain; display: block; }
-.lupaIcone { width: 16px; height: 16px; object-fit: contain; opacity: 0.8; flex-shrink: 0; }
+.lupaIcone { width: 16px; height: 16px; object-fit: contain; opacity: 0.8; flex-shrink: 0; cursor:pointer; }
 
-/* MOBILE */
 @media (max-width: 768px){
   .main{ padding:0; margin-left:70px; }
   .painel{ border-radius:0; min-height:100dvh; }
   .topbar{ border-radius:0; padding:0 12px; height:58px; gap:8px; }
-  .busca{ width:42px; height:38px; padding:0; justify-content:center; border-radius:50%; }
-  .busca input{ display:none; }
+  .busca{ width:100%; max-width:190px; height:auto; padding:8px 12px; border-radius:20px; justify-content:flex-start; }
+  .busca input{ display:block !important; }
   .conteudo{ padding:14px; }
   .direita{ gap:8px; }
   .nomeTopo{ font-size:12px; max-width:90px; overflow:hidden; text-overflow:ellipsis; }
