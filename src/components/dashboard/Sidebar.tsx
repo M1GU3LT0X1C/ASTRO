@@ -20,24 +20,60 @@ const menu = [
 export function Sidebar() {
   const [aberto, setAberto] = useState(true);
   const pathname = usePathname();
-  const [nomeONG, setNomeONG] = useState("AstroTeste");
+  const [nomeONG, setNomeONG] = useState(""); // começa vazio
   const [fotoONG, setFotoONG] = useState("/logo-gato.png");
 
   useEffect(() => {
-    const nomeSalvo = localStorage.getItem("ong_nome");
-    const fotoSalva = localStorage.getItem("ong_foto");
-    if (nomeSalvo) setNomeONG(nomeSalvo);
-    if (fotoSalva) setFotoONG(fotoSalva);
+    async function carregarDados() {
+      // 1. tenta localStorage primeiro
+      const nomeSalvo = localStorage.getItem("ong_nome");
+      const fotoSalva = localStorage.getItem("ong_foto");
+      if (nomeSalvo) setNomeONG(nomeSalvo);
+      if (fotoSalva) setFotoONG(fotoSalva);
+
+      // 2. pega do Supabase Auth (Google)
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+      if (!user) return;
+
+      const nomeGoogle = user.user_metadata?.full_name;
+      const fotoGoogle = user.user_metadata?.avatar_url;
+
+      if (fotoGoogle) {
+        setFotoONG(fotoGoogle);
+        localStorage.setItem("ong_foto", fotoGoogle);
+      }
+
+      // 3. pega da tabela ongs o nome oficial
+      const { data: ong } = await supabase
+        .from("ongs")
+        .select("nome_organizacao, logo_url")
+        .eq("usuario_id", user.id)
+        .single();
+
+      if (ong?.nome_organizacao) {
+        setNomeONG(ong.nome_organizacao);
+        localStorage.setItem("ong_nome", ong.nome_organizacao);
+        if (ong.logo_url) {
+          setFotoONG(ong.logo_url);
+          localStorage.setItem("ong_foto", ong.logo_url);
+        }
+      } else if (nomeGoogle && !nomeSalvo) {
+        // fallback se ainda não tem ONG criada
+        setNomeONG(nomeGoogle);
+        localStorage.setItem("ong_nome", nomeGoogle);
+      }
+    }
+    carregarDados();
   }, []);
 
   return (
     <aside className={`${styles.sidebar} ${aberto ? styles.aberto : styles.fechado}`}>
-      {/* TOPO */}
       <div className={styles.topo}>
         {aberto ? (
           <>
             <img src={fotoONG} alt={nomeONG} className={styles.avatarTopo} />
-            <span className={styles.nomeOng}>{nomeONG}</span>
+            <span className={styles.nomeOng}>{nomeONG || "Carregando..."}</span>
           </>
         ) : (
           <img src={fotoONG} alt={nomeONG} className={styles.avatarTopoFechado} />
@@ -48,7 +84,6 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* MENU */}
       <nav className={styles.nav}>
         {menu.map((item) => {
           const ativo = pathname === item.href;
