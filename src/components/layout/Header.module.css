@@ -259,3 +259,205 @@
 .btnCadastro:active {
   opacity: 0.85;
 }
+
+/* ====== APENAS RESPONSIVIDADE ====== */
+.menuBtn {
+  display: none;
+}
+.mobileMenu {
+  display: none;
+}
+
+@media (max-width: 950px) {
+  .header {
+    grid-template-columns: 90px 1fr auto;
+    padding: 0 16px;
+  }
+  .nav {
+    gap: 24px; 
+  }
+  .busca {
+    width: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav,
+  .acoes {
+    display: none !important;
+  }
+  .menuBtn {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+  }
+  .mobileMenu {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 74px;
+    left: 0;
+    width: 100vw;
+    background: white;
+    padding: 20px;
+    gap: 0;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+  .mobileMenu a {
+    padding: 14px 0;
+    text-decoration: none;
+    color: black;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 16px;
+  }
+  .mobileAcoes {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 20px;
+  }
+  .mobileBusca {
+    position: relative;
+    width: 100%;
+    height: 40px;
+  }
+}
+
+/* ===== FIX DO ENTRAR / CADASTRO NO CELULAR ===== */
+@media (max-width: 768px) {
+  .mobileAcoes {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 20px;
+    width: 100%;
+  }
+
+  .mobileBusca {
+    position: relative;
+    width: 100%;
+    height: 48px;
+  }
+
+  .mobileBusca .buscaInput {
+    width: 100%;
+    height: 48px;
+    border: 2px solid #160877;
+    border-radius: 999px;
+    background: #e9e6f2;
+    padding: 0 16px 0 44px;
+    font-size: 14px;
+  }
+
+  .mobileAcoes .botoes {
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: 100%;
+  }
+
+  .mobileAcoes .btnEntrar,
+  .mobileAcoes .btnCadastro {
+    width: 100%;
+    height: 48px;
+    min-width: 0;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    justify-content: center;
+  }
+
+  .mobileAcoes .btnEntrar {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border: 2px solid #160877 !important;
+  }
+
+  .mobileAcoes .btnCadastro {
+    background: #e94e77 !important;
+    color: white !important;
+    border: 2px solid #e94e77 !important;
+  }
+
+  /* Remove o efeito de hover que tava bugando no mobile */
+  .botoes:has(.btnEntrar:hover) .btnEntrar,
+  .botoes:has(.btnCadastro:hover) .btnCadastro {
+    background: inherit !important;
+  }
+}
+
+/* EFEITINHO DE CLIQUE */
+.mobileMenu a {
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  border-radius: 12px;
+  padding-left: 12px !important;
+}
+
+.mobileMenu a:active {
+  transform: scale(0.96);
+  background: #f3f0ff;
+  color: #15056f;
+}
+
+.mobileMenu {
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menuBtn {
+  transition: transform 0.15s ease;
+}
+
+.menuBtn:active {
+  transform: scale(0.9) rotate(10deg);
+}
+
+.mobileMenu a:active {
+  transform: scale(0.96);
+  background: #f3f0ff;
+}
+
+.mobileMenu a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobileLink {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  font: inherit;
+  padding: 14px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobileLink:active {
+  transform: scale(0.98);
+  background: #f3f0ff;
+}

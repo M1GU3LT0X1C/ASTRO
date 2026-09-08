@@ -15,7 +15,6 @@
   background: #fffdfd;
 }
 
-
 /* =========================
    BLOCO 1 - HERO
 ========================= */
@@ -75,7 +74,6 @@
   font-weight: 400;
   line-height: 1.35;
 }
-
 
 /* =========================
    BOTÕES DO HERO
@@ -138,7 +136,6 @@
   transform: translateY(-1px);
 }
 
-
 /* =========================
    IMAGEM DO HERO
 ========================= */
@@ -163,7 +160,6 @@
   object-fit: contain;
 }
 
-
 /* ==========================================
    BLOCO 2 - COMO O ASTRO FUNCIONA
 ========================================== */
@@ -183,7 +179,6 @@
   margin: 0 auto;
 }
 
-
 /* =========================
    TÍTULO DO BLOCO 2
 ========================= */
@@ -197,7 +192,6 @@
   font-weight: 700;
   line-height: 1.2;
 }
-
 
 /* =========================
    GRID DO BLOCO 2
@@ -215,7 +209,6 @@
   row-gap: 20px;
 }
 
-
 /* =========================
    CARDS GERAIS
 ========================= */
@@ -229,7 +222,6 @@
 
   overflow: hidden;
 }
-
 
 /* =========================
    TÍTULOS DOS CARDS
@@ -252,7 +244,6 @@
   line-height: 1.15;
 }
 
-
 /* =========================
    TEXTO DOS CARDS
 ========================= */
@@ -264,7 +255,6 @@
   font-weight: 400;
   line-height: 1.3;
 }
-
 
 /* =========================
    ESTRELAS
@@ -285,7 +275,6 @@
   color: #15056f;
 }
 
-
 /* =========================
    CARD BRANCO
 ========================= */
@@ -302,7 +291,6 @@
   max-width: 500px;
 }
 
-
 /* =========================
    CARD ROSA
 ========================= */
@@ -318,7 +306,6 @@
 .cardPink p {
   max-width: 500px;
 }
-
 
 /* =========================
    CARD AZUL
@@ -337,13 +324,11 @@
   color: #ffffff;
 }
 
-
 /* TÍTULO DO CARD AZUL */
 
 .cardDark .cardTituloLinha {
   margin-bottom: 18px;
 }
-
 
 /* =========================
    PRIMEIRO PARÁGRAFO AZUL
@@ -358,7 +343,6 @@
   font-weight: 400;
   line-height: 1.3 !important;
 }
-
 
 /* =========================
    PARTE INFERIOR DO CARD AZUL
@@ -376,7 +360,6 @@
   gap: 28px;
 }
 
-
 /* SEGUNDO PARÁGRAFO */
 
 .cardDarkSegundoTexto {
@@ -386,7 +369,6 @@
   font-weight: 400;
   line-height: 1.3 !important;
 }
-
 
 /* =========================
    CUPOM
@@ -410,7 +392,6 @@
   object-fit: contain;
 }
 
-
 /* =========================
    BLOCO 3 - UNIVERSO PET
 ========================= */
@@ -421,6 +402,8 @@
   padding: 0 32px;
 
   background: #fffdfd;
+
+  box-sizing: border-box;
 }
 
 .universo {
@@ -441,6 +424,8 @@
   color: white;
 
   border-radius: 48px;
+
+  box-sizing: border-box;
 }
 
 .universoTexto {
@@ -465,7 +450,6 @@
 .universo p + p {
   margin-top: 2px;
 }
-
 
 /* =========================
    BOTÃO UNIVERSO
@@ -504,7 +488,6 @@
   transform: translateY(-1px);
 }
 
-
 /* =========================
    BLOCO 4 - IMPACTO
 ========================= */
@@ -517,6 +500,8 @@
   padding: 0 32px;
 
   background: #fffdfd;
+
+  box-sizing: border-box;
 }
 
 .impactoTitle {
@@ -530,7 +515,6 @@
   font-weight: 700;
 }
 
-
 /* =========================
    GRID - IMPACTO
 ========================= */
@@ -542,7 +526,6 @@
 
   gap: 28px;
 }
-
 
 /* =========================
    CARDS - IMPACTO
@@ -573,7 +556,6 @@
   border-color: #e63d68;
 }
 
-
 /* =========================
    ÍCONES - IMPACTO
 ========================= */
@@ -586,7 +568,6 @@
 
   object-fit: contain;
 }
-
 
 /* =========================
    TÍTULOS - IMPACTO
@@ -608,7 +589,6 @@
   color: #e63d68;
 }
 
-
 /* =========================
    TEXTOS - IMPACTO
 ========================= */
@@ -624,7 +604,6 @@
   font-weight: 400;
   line-height: 1.3;
 }
-
 
 /* ==========================================
    RESPONSIVIDADE - TABLET
@@ -649,7 +628,6 @@
   }
 }
 
-
 /* ==========================================
    RESPONSIVIDADE - TABLET PEQUENO
 ========================================== */
@@ -662,14 +640,13 @@
     padding: 40px 0;
   }
 
-
   /* HERO */
 
   .hero {
     flex-direction: column;
     align-items: flex-start;
 
-    padding: 0 30px;
+    padding: 0 20px;
   }
 
   .heroImage {
@@ -686,18 +663,17 @@
     flex-wrap: wrap;
   }
 
-
   /* BLOCO 2 */
 
   .comoFunciona {
-    padding: 40px 30px;
+    padding: 32px 16px;
   }
 
   .gridFunciona {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
 
-    gap: 20px;
+    gap: 16px;
   }
 
   .cardLight,
@@ -724,22 +700,42 @@
     height: 125px;
   }
 
+  /* BLOCO 3 - FIX DO TRONCHO */
 
-  /* BLOCO 3 */
+  .universoWrapper {
+    padding: 0 16px !important;
+
+    box-sizing: border-box;
+  }
 
   .universo {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
 
-    border-radius: 36px;
+    padding: 28px 20px !important;
+
+    gap: 20px;
+
+    border-radius: 24px !important;
+
+    width: 100% !important;
+
+    box-sizing: border-box;
+  }
+
+  .universoTexto {
+    max-width: 100% !important;
   }
 
   .btnUniverso {
-    min-width: 220px;
-    height: 58px;
+    width: 100% !important;
+    min-width: 0 !important;
+
+    height: 56px !important;
+
+    font-size: 16px !important;
   }
 }
-
 
 /* ==========================================
    RESPONSIVIDADE - CELULAR
@@ -753,11 +749,10 @@
     padding: 35px 0;
   }
 
-
   /* HERO */
 
   .heroText h1 {
-    font-size: 48px;
+    font-size: 42px;
   }
 
   .heroText h2 {
@@ -767,7 +762,6 @@
   .heroImage img {
     max-width: 290px;
   }
-
 
   /* BLOCO 2 */
 
@@ -782,7 +776,7 @@
   .card p,
   .cardDarkPrimeiroTexto,
   .cardDarkSegundoTexto {
-    font-size: 13px !important;
+    font-size: 14px !important;
   }
 
   .cardDarkInferior {
@@ -795,7 +789,6 @@
     justify-content: flex-start;
   }
 
-
   /* BLOCO 4 */
 
   .gridImpacto {
@@ -807,5 +800,9 @@
     max-width: 330px;
 
     margin: 0 auto;
+  }
+
+  .impacto {
+    padding: 0 16px;
   }
 }

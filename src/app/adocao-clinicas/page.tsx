@@ -17,7 +17,7 @@ export default function AdocaoEClinicasPage() {
           <p>Sua localização é usada exclusivamente para mapear ONGs e clínicas parceiras no seu bairro. O Astro não compartilha e nem faz uso indevido das suas informações.</p>
           <div className={styles.searchBox}>
             <input placeholder="Digite o seu endereço" />
-            <button>Mapear Região</button>
+            <button>Mapear<br/>Região</button>
           </div>
         </section>
 
