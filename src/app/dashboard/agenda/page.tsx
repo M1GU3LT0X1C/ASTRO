@@ -50,17 +50,17 @@ export default function AgendaPage(){
   return(
     <div style={{background:"#f6f4ff", minHeight:"100vh", padding:"10px", display:"flex", justifyContent:"center"}}>
       <style>{`
- .wrap{ width:100%; max-width:1200px; display:flex; gap:14px; }
- .left{ width:340px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
- .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
- .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
- .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
- .seta{ width:26px; height:26px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
- .seta:hover{ background:#d5c8ff; border-color:#1a125f; }
- .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
- .taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 32px 8px 12px; position:relative; }
- .xbtn{ position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
- .xbtn:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
+.wrap{ width:100%; max-width:1200px; display:flex; gap:14px; }
+.left{ width:340px; display:flex; flex-direction:column; gap:14px; flex-shrink:0; }
+.right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
+.reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
+.cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
+.seta{ width:26px; height:26px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+.seta:hover{ background:#d5c8ff; border-color:#1a125f; }
+.chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
+.taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 32px 8px 12px; position:relative; }
+.xbtn{ position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
+.xbtn:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
        @media(max-width:900px){.wrap{ flex-direction:column; }.left{ width:100%; } }
       `}</style>
 
