@@ -9,11 +9,12 @@ function Card({ title, subtitle, children, defaultOpen=true }: any){
         <div>
           <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
             <b style={{fontSize:"14px"}}>{title}</b>
-            <span style={{fontSize:"11px", transition:".2s", display:"inline-block", transform: open? "rotate(0deg)":"rotate(-90deg)"}}>▾</span>
+            <img src="/seta-baixo.svg" alt="" style={{width:"12px", height:"12px", transition:".2s", transform: open? "rotate(0deg)":"rotate(-90deg)"}} onError={(e:any)=> e.target.style.display='none'} />
+            <span style={{fontSize:"11px"}}>{open?"▾":"▸"}</span>
           </div>
           {subtitle && <small style={{fontSize:"11px", color:"#888"}}>{subtitle}</small>}
         </div>
-        <span style={{fontSize:"16px", color:"#999", letterSpacing:"2px", cursor:"pointer"}} onClick={(e)=>{e.stopPropagation(); (window as any).showAstroAlert?.({title:"Mais opções", desc:"Filtros de métricas em breve!"})}}>•••</span>
+        <img src="/3pontinhos.png" alt="..." style={{width:"18px", height:"18px", objectFit:"contain"}} onError={(e:any)=>{e.target.outerHTML='<span style="color:#999">•••</span>'}} />
       </div>
       {open && <div style={{marginTop:"14px"}}>{children}</div>}
     </div>
@@ -28,7 +29,7 @@ function capacidadeCor(pct:number){
 }
 
 export default function MetricasPage(){
-  const capacidade = 95; // 19/20 vagas
+  const capacidade = 95;
   const capInfo = capacidadeCor(capacidade);
   const alcance = [
     {d:"seg", v:54},
@@ -41,12 +42,12 @@ export default function MetricasPage(){
   ];
 
   const astros = [
-    {nome:"Coca-Cola", views:65, likes:20, msg:12, bandeira:"#0dbf6a", icon:"★"},
-    {nome:"Vader", views:40, likes:15, msg:8, bandeira:"#0dbf6a", icon:"★"},
-    {nome:"Biscoito", views:38, likes:12, msg:6, bandeira:"#ffde59", icon:"★"},
-    {nome:"Sonequinha", views:32, likes:11, msg:5, bandeira:"#ffde59", icon:"★"},
-    {nome:"Bibi", views:25, likes:11, msg:3, bandeira:"#ff8a2b", icon:"★"},
-    {nome:"Jambo", views:10, likes:5, msg:2, bandeira:"#ff1a3d", icon:"★"},
+    {nome:"Coca-Cola", views:65, likes:20, msg:12, bandeira:"/bandeiraverde.png"},
+    {nome:"Vader", views:40, likes:15, msg:8, bandeira:"/bandeiraverde.png"},
+    {nome:"Biscoito", views:38, likes:12, msg:6, bandeira:"/bandeiraamarela.png"},
+    {nome:"Sonequinha", views:32, likes:11, msg:5, bandeira:"/bandeiraamarela.png"},
+    {nome:"Bibi", views:25, likes:11, msg:3, bandeira:"/bandeiralaranja.png"},
+    {nome:"Jambo", views:10, likes:5, msg:2, bandeira:"/bandeiravermelha.png"},
   ];
 
   return(
@@ -58,20 +59,18 @@ export default function MetricasPage(){
         .statsGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         .yAxis{ display:flex; flex-direction:column-reverse; justify-content:space-between; height:120px; font-size:10px; color:#888; padding-right:6px; }
         @media(min-width:900px){ .grid{ display:grid; grid-template-columns:1fr 400px; gap:18px; } }
-        @media(max-width:900px){ .grid{ gap:14px; } .col{ gap:14px; } }
       `}</style>
 
       <div className="wrap">
         <div className="grid">
           <div className="col">
-            {/* ALCANCE COM EIXO 0-100 */}
             <Card title="Alcance" subtitle="Últimos 7 dias">
               <div style={{display:"flex", gap:"8px"}}>
                 <div className="yAxis"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span><span>70</span><span>80</span><span>90</span><span>100</span></div>
                 <div style={{flex:1, display:"flex", alignItems:"end", gap:"8px", height:"120px", borderLeft:"1px solid #e9e2ff", borderBottom:"1px solid #e9e2ff", paddingLeft:"8px"}}>
                   {alcance.map(a=>(
                     <div key={a.d} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:"6px"}}>
-                      <div title={`${a.v} visualizações`} style={{width:"100%", maxWidth:"32px", height:`${a.v}%`, background:"#1a125f", borderRadius:"6px 6px 0 0", minHeight:"8px"}}></div>
+                      <div style={{width:"100%", maxWidth:"32px", height:`${a.v}%`, background:"#1a125f", borderRadius:"6px 6px 0 0", minHeight:"8px"}}></div>
                       <small style={{fontSize:"10px", color:"#444"}}>{a.d}</small>
                     </div>
                   ))}
@@ -80,7 +79,7 @@ export default function MetricasPage(){
             </Card>
 
             <Card title="Economia em Saúde" subtitle="Últimos 7 dias">
-              <div style={{display:"flex", gap:"18px", alignItems:"center"}}>
+              <div style={{display:"flex", gap:"18px", alignItems:"center", flexWrap:"wrap"}}>
                 <div style={{width:"120px", height:"120px", borderRadius:"50%", background:"conic-gradient(#ff1a3d 0% 35%, #0dbf6a 35% 78%, #c85cff 78% 100%)", display:"flex", alignItems:"center", justifyContent:"center"}}>
                   <div style={{width:"70px", height:"70px", background:"#fff", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"12px", fontWeight:900}}>R$ 1.200</div>
                 </div>
@@ -114,7 +113,7 @@ export default function MetricasPage(){
 
           <div className="col">
             <div style={{background:"#e9e2ff", borderRadius:"20px", padding:"14px", display:"flex", flexDirection:"column", gap:"12px"}}>
-              <div style={{display:"flex", justifyContent:"space-between", padding:"4px"}}><b style={{fontSize:"14px"}}>Visão geral da base</b><span style={{color:"#aaa"}}>•••</span></div>
+              <div style={{display:"flex", justifyContent:"space-between", padding:"4px"}}><b style={{fontSize:"14px"}}>Visão geral da base</b><img src="/3pontinhos.png" alt="..." style={{width:"18px", height:"18px"}} /></div>
               <div className="statsGrid">
                 <div style={{background:"#fff", borderRadius:"14px", padding:"14px"}}>
                   <small style={{fontSize:"11px", fontWeight:700}}>Capacidade</small>
@@ -147,9 +146,9 @@ export default function MetricasPage(){
                       <div style={{width:"24px", height:"24px", borderRadius:"50%", background:"#ffb3c8", border:"2px solid #fff"}}></div>
                       <b style={{fontSize:"12px"}}>{a.nome}</b>
                     </div>
-                    <div style={{display:"flex", gap:"12px", fontSize:"10px", color:"#555", alignItems:"center"}}>
-                      <span>{a.views} visualizações</span><span>{a.likes} curtidas</span><span>{a.msg} mensagens</span>
-                      <span style={{width:"20px", height:"22px", background:a.bandeira, borderRadius:"4px", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:900, boxShadow:"0 2px 6px rgba(0,0,0,.2)"}}>{a.icon}</span>
+                    <div style={{display:"flex", gap:"10px", fontSize:"10px", color:"#555", alignItems:"center"}}>
+                      <span>{a.views} vis.</span><span>{a.likes} curt.</span><span>{a.msg} msg</span>
+                      <img src={a.bandeira} alt="bandeira" style={{width:"20px", height:"24px", objectFit:"contain"}} />
                     </div>
                   </div>
                 ))}
