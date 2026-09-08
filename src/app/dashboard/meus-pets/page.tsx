@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import styles from "./MeusPets.module.css";
 
@@ -23,7 +24,7 @@ const FILTROS = [
   "Grande","Médio","Macho","Gato","Cuidados Especiais"
 ];
 
-export default function MeusPetsPage() {
+function ConteudoMeusPets() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [busca, setBusca] = useState("");
   const [filtros, setFiltros] = useState<string[]>([]);
@@ -31,6 +32,13 @@ export default function MeusPetsPage() {
   const [menuOrdenar, setMenuOrdenar] = useState(false);
   const [mostrarFiltros, setMostrarFiltros] = useState(true);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+
+  // PEGA A BUSCA DA LUPA DE CIMA
+  useEffect(()=>{
+    const q = searchParams.get("busca") || localStorage.getItem("astro_busca") || "";
+    if(q) setBusca(q);
+  },[searchParams]);
 
   useEffect(() => {
     async function load() {
@@ -45,22 +53,22 @@ export default function MeusPetsPage() {
     load();
   }, []);
 
-  const addFiltro = (f: string) => setFiltros(p => p.includes(f) ? p : [...p, f]);
-  const removeFiltro = (f: string) => setFiltros(p => p.filter(x => x !== f));
+  const addFiltro = (f: string) => setFiltros(p => p.includes(f)? p : [...p, f]);
+  const removeFiltro = (f: string) => setFiltros(p => p.filter(x => x!== f));
 
   let filtrados = pets.filter(p => {
-    if (busca && !p.nome.toLowerCase().includes(busca.toLowerCase())) return false;
-    if (filtros.includes("Pequeno") && p.porte !== "pequeno") return false;
-    if (filtros.includes("Médio") && p.porte !== "medio") return false;
-    if (filtros.includes("Grande") && p.porte !== "grande") return false;
-    if (filtros.includes("Fêmea") && p.sexo !== "femea") return false;
-    if (filtros.includes("Macho") && p.sexo !== "macho") return false;
-    if (filtros.includes("Cachorro") && p.especie !== "cachorro") return false;
-    if (filtros.includes("Gato") && p.especie !== "gato") return false;
-    if (filtros.includes("Castrado(a)") && !p.castrado) return false;
-    if (filtros.includes("Vacinado(a)") && !p.vacinado) return false;
-    if (filtros.includes("Vermifugado(a)") && !p.vermifugado) return false;
-    if (filtros.includes("Cuidados Especiais") && !p.cuidados_especiais) return false;
+    if (busca &&!p.nome.toLowerCase().includes(busca.toLowerCase())) return false;
+    if (filtros.includes("Pequeno") && p.porte!== "pequeno") return false;
+    if (filtros.includes("Médio") && p.porte!== "medio") return false;
+    if (filtros.includes("Grande") && p.porte!== "grande") return false;
+    if (filtros.includes("Fêmea") && p.sexo!== "femea") return false;
+    if (filtros.includes("Macho") && p.sexo!== "macho") return false;
+    if (filtros.includes("Cachorro") && p.especie!== "cachorro") return false;
+    if (filtros.includes("Gato") && p.especie!== "gato") return false;
+    if (filtros.includes("Castrado(a)") &&!p.castrado) return false;
+    if (filtros.includes("Vacinado(a)") &&!p.vacinado) return false;
+    if (filtros.includes("Vermifugado(a)") &&!p.vermifugado) return false;
+    if (filtros.includes("Cuidados Especiais") &&!p.cuidados_especiais) return false;
     return true;
   });
 
@@ -80,9 +88,9 @@ export default function MeusPetsPage() {
           <button className={styles.ordenarBtn} onClick={() => setMenuOrdenar(!menuOrdenar)}>Ordenar <span>▼</span></button>
           {menuOrdenar && (
             <div className={styles.dropdown}>
-              <button className={ordenar === "recentes" ? styles.ativo : ""} onClick={() => { setOrdenar("recentes"); setMenuOrdenar(false); }}>Ordenar</button>
-              <button className={ordenar === "nome" ? styles.ativo : ""} onClick={() => { setOrdenar("nome"); setMenuOrdenar(false); }}>Nome A-Z</button>
-              <button className={ordenar === "idade" ? styles.ativo : ""} onClick={() => { setOrdenar("idade"); setMenuOrdenar(false); }}>Idade</button>
+              <button className={ordenar === "recentes"? styles.ativo : ""} onClick={() => { setOrdenar("recentes"); setMenuOrdenar(false); }}>Recentes</button>
+              <button className={ordenar === "nome"? styles.ativo : ""} onClick={() => { setOrdenar("nome"); setMenuOrdenar(false); }}>Nome A-Z</button>
+              <button className={ordenar === "idade"? styles.ativo : ""} onClick={() => { setOrdenar("idade"); setMenuOrdenar(false); }}>Idade</button>
             </div>
           )}
         </div>
@@ -90,19 +98,19 @@ export default function MeusPetsPage() {
 
       <div className={styles.filtroBox}>
         <div className={styles.filtroHeader}>
-          <button 
-            className={`${styles.btnFiltro} ${mostrarFiltros ? styles.btnFiltroAtivo : ""}`} 
+          <button
+            className={`${styles.btnFiltro} ${mostrarFiltros? styles.btnFiltroAtivo : ""}`}
             onClick={() => setMostrarFiltros(!mostrarFiltros)}
           >
             <img src="/filtro.png" alt="filtro" className={styles.iconeFiltro} />
             Filtro
           </button>
-          <button className={styles.btnLimpar} onClick={() => setFiltros([])}>Limpar Filtro</button>
+          <button className={styles.btnLimpar} onClick={() => { setFiltros([]); setBusca(""); localStorage.removeItem("astro_busca"); }}>Limpar Filtro</button>
         </div>
-        
+
         {mostrarFiltros && (
           <div className={styles.chipsArea}>
-            {FILTROS.map(f => filtros.includes(f) ? (
+            {FILTROS.map(f => filtros.includes(f)? (
               <div key={f} className={styles.chipActive}>
                 <span>{f}</span>
                 <button className={styles.bolinhaX} onClick={() => removeFiltro(f)}>✕</button>
@@ -114,7 +122,7 @@ export default function MeusPetsPage() {
         )}
       </div>
 
-      {filtrados.length === 0 ? (
+      {filtrados.length === 0? (
         <div className={styles.vazioBox}><p>Nenhum pet com esses filtros.<br/>Tenta limpar o filtro ou cadastrar em Novo Pet.</p></div>
       ) : (
         <div className={styles.grid}>
@@ -123,12 +131,20 @@ export default function MeusPetsPage() {
               <div className={styles.menu}>⋮</div>
               <img src={pet.foto_url || "/logo-gato.png"} alt={pet.nome} className={styles.foto} />
               <h3>{pet.nome}</h3>
-              <p>{pet.sexo === "femea" ? "Fêmea" : "Macho"} - {pet.idade} anos</p>
+              <p>{pet.sexo === "femea"? "Fêmea" : "Macho"} - {pet.idade} anos</p>
               <small className={styles.fav}>Clique para ver detalhes</small>
             </div>
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+export default function MeusPetsPage() {
+  return (
+    <Suspense fallback={<div style={{padding:24}}>Carregando pets...</div>}>
+      <ConteudoMeusPets />
+    </Suspense>
   );
 }
