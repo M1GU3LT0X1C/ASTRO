@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import styles from "./Sidebar.module.css";
 
 const menu = [
-  { label: "Painel", href: "/dashboard", icon: "/painel-vetor.png", activeIcon: "/painel-vetor.png" },
+  { label: "Painel", href: "/dashboard", icon: "/painel-vetor.png" },
   { label: "Meus Pets", href: "/dashboard/meus-pets", icon: "/gato-meuspets.png" },
   { label: "Novo Pet", href: "/dashboard/novo", icon: "/mais-novo-pet.png" },
   { label: "Recompensas", href: "/dashboard/recompensas", icon: "/recompensa.png" },
@@ -25,22 +24,18 @@ export function Sidebar() {
 
   useEffect(() => {
     async function carregarDados() {
-      // 1. localStorage - NOME DA ONG pros cantos
-      const nomeSalvo = localStorage.getItem("ong_nome");
-      const fotoSalva = localStorage.getItem("ong_foto");
-      if (nomeSalvo) setNomeONG(nomeSalvo);
-      if (fotoSalva) setFotoONG(fotoSalva);
-
-      // 2. Supabase
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (!user) return;
 
-      const fotoGoogle = user.user_metadata?.avatar_url;
-      if (fotoGoogle) {
-        setFotoONG(fotoGoogle);
-        localStorage.setItem("ong_foto", fotoGoogle);
+      const ultimoUser = localStorage.getItem("ultimo_user_id");
+      if (ultimoUser && ultimoUser!== user.id) {
+        localStorage.clear();
       }
+      localStorage.setItem("ultimo_user_id", user.id);
+
+      const fotoGoogle = user.user_metadata?.avatar_url;
+      if (fotoGoogle) setFotoONG(fotoGoogle);
 
       const { data: ong } = await supabase
        .from("ongs")
@@ -51,31 +46,25 @@ export function Sidebar() {
       if (ong?.nome_organizacao) {
         setNomeONG(ong.nome_organizacao);
         localStorage.setItem("ong_nome", ong.nome_organizacao);
-        // salva nome da pessoa separado pro centro se não existir
-        if (!localStorage.getItem("pessoa_nome")) {
-          const nomePessoa = user.user_metadata?.full_name || localStorage.getItem("ong_responsavel") || ong.nome_organizacao;
-          localStorage.setItem("pessoa_nome", nomePessoa);
-        }
+        const pessoaNome = user.user_metadata?.full_name || localStorage.getItem("ong_responsavel") || user.email?.split('@')[0] || "";
+        if (pessoaNome) localStorage.setItem("pessoa_nome", pessoaNome);
         if (ong.logo_url) {
           setFotoONG(ong.logo_url);
           localStorage.setItem("ong_foto", ong.logo_url);
         }
       } else {
-        // fallback explorador/guardiao
-        const nomePessoa = user.user_metadata?.full_name || user.email?.split('@')[0] || "";
-        if (nomePessoa) {
-          setNomeONG(nomePessoa);
-          if (!localStorage.getItem("pessoa_nome")) {
-            localStorage.setItem("pessoa_nome", nomePessoa);
-          }
-          if (!localStorage.getItem("ong_nome")) {
-            localStorage.setItem("ong_nome", nomePessoa);
-          }
-        }
+        const fallback = user.user_metadata?.full_name || user.email?.split('@')[0] || "Minha Base";
+        setNomeONG(fallback);
+        localStorage.setItem("ong_nome", fallback);
+        localStorage.setItem("pessoa_nome", fallback);
       }
     }
     carregarDados();
   }, []);
+
+  const fecharMobile = () => {
+    if (typeof window!== "undefined" && window.innerWidth <= 768) setAberto(false);
+  };
 
   return (
     <aside className={`${styles.sidebar} ${aberto? styles.aberto : styles.fechado}`}>
@@ -88,33 +77,23 @@ export function Sidebar() {
         ) : (
           <img src={fotoONG} alt={nomeONG} className={styles.avatarTopoFechado} />
         )}
-
         <button className={styles.hamburger} onClick={() => setAberto(!aberto)}>
           <img src="/3tracinhos.png" alt="menu" className={styles.tracinhos} />
         </button>
       </div>
-
       <nav className={styles.nav}>
         {menu.map((item) => {
           const ativo = pathname === item.href || (item.href!== "/dashboard" && pathname.startsWith(item.href));
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${styles.item} ${ativo? styles.ativo : ""}`}
-              title={!aberto? item.label : undefined}
-            >
+            <Link key={item.href} href={item.href} onClick={fecharMobile} className={`${styles.item} ${ativo? styles.ativo : ""}`}>
               <img src={item.icon} alt={item.label} className={styles.iconeVetor} />
               {aberto && <span className={styles.label}>{item.label}</span>}
             </Link>
           );
         })}
       </nav>
-
       <div className={styles.rodape}>
-        <Link href="/" className={styles.voltar}>
-          {aberto? "Voltar para o site" : "←"}
-        </Link>
+        <Link href="/" className={styles.voltar}>{aberto? "Voltar para o site" : "←"}</Link>
       </div>
     </aside>
   );
