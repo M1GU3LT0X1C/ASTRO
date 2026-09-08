@@ -20,7 +20,7 @@ export function Header() {
         <Link href="/">Início</Link>
         <Link href="/sobre-nos">Sobre nós</Link>
         <Link href="/adocao-clinicas">Adoção & Clínicas</Link>
-        <Link href="/">Ajuda</Link>
+        <Link href="/ajuda">Ajuda</Link>
       </nav>
 
 
