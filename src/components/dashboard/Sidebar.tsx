@@ -9,7 +9,7 @@ import styles from "./Sidebar.module.css";
 const menu = [
   { label: "Painel", href: "/dashboard", icon: "/painel-vetor.png", activeIcon: "/painel-vetor.png" },
   { label: "Meus Pets", href: "/dashboard/meus-pets", icon: "/gato-meuspets.png" },
-  { label: "Novo Pet", href: "/dashboard/novo-pet", icon: "/mais-novo-pet.png" },
+  { label: "Novo Pet", href: "/dashboard/novo", icon: "/mais-novo-pet.png" },
   { label: "Recompensas", href: "/dashboard/recompensas", icon: "/recompensa.png" },
   { label: "Métricas", href: "/dashboard/metricas", icon: "/metricas.png" },
   { label: "Agenda", href: "/dashboard/agenda", icon: "/agenda.png" },
@@ -20,57 +20,67 @@ const menu = [
 export function Sidebar() {
   const [aberto, setAberto] = useState(true);
   const pathname = usePathname();
-  const [nomeONG, setNomeONG] = useState(""); // começa vazio
+  const [nomeONG, setNomeONG] = useState("");
   const [fotoONG, setFotoONG] = useState("/logo-gato.png");
 
   useEffect(() => {
     async function carregarDados() {
-      // 1. tenta localStorage primeiro
+      // 1. localStorage - NOME DA ONG pros cantos
       const nomeSalvo = localStorage.getItem("ong_nome");
       const fotoSalva = localStorage.getItem("ong_foto");
       if (nomeSalvo) setNomeONG(nomeSalvo);
       if (fotoSalva) setFotoONG(fotoSalva);
 
-      // 2. pega do Supabase Auth (Google)
+      // 2. Supabase
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (!user) return;
 
-      const nomeGoogle = user.user_metadata?.full_name;
       const fotoGoogle = user.user_metadata?.avatar_url;
-
       if (fotoGoogle) {
         setFotoONG(fotoGoogle);
         localStorage.setItem("ong_foto", fotoGoogle);
       }
 
-      // 3. pega da tabela ongs o nome oficial
       const { data: ong } = await supabase
-        .from("ongs")
-        .select("nome_organizacao, logo_url")
-        .eq("usuario_id", user.id)
-        .single();
+       .from("ongs")
+       .select("nome_organizacao, logo_url")
+       .eq("usuario_id", user.id)
+       .single();
 
       if (ong?.nome_organizacao) {
         setNomeONG(ong.nome_organizacao);
         localStorage.setItem("ong_nome", ong.nome_organizacao);
+        // salva nome da pessoa separado pro centro se não existir
+        if (!localStorage.getItem("pessoa_nome")) {
+          const nomePessoa = user.user_metadata?.full_name || localStorage.getItem("ong_responsavel") || ong.nome_organizacao;
+          localStorage.setItem("pessoa_nome", nomePessoa);
+        }
         if (ong.logo_url) {
           setFotoONG(ong.logo_url);
           localStorage.setItem("ong_foto", ong.logo_url);
         }
-      } else if (nomeGoogle && !nomeSalvo) {
-        // fallback se ainda não tem ONG criada
-        setNomeONG(nomeGoogle);
-        localStorage.setItem("ong_nome", nomeGoogle);
+      } else {
+        // fallback explorador/guardiao
+        const nomePessoa = user.user_metadata?.full_name || user.email?.split('@')[0] || "";
+        if (nomePessoa) {
+          setNomeONG(nomePessoa);
+          if (!localStorage.getItem("pessoa_nome")) {
+            localStorage.setItem("pessoa_nome", nomePessoa);
+          }
+          if (!localStorage.getItem("ong_nome")) {
+            localStorage.setItem("ong_nome", nomePessoa);
+          }
+        }
       }
     }
     carregarDados();
   }, []);
 
   return (
-    <aside className={`${styles.sidebar} ${aberto ? styles.aberto : styles.fechado}`}>
+    <aside className={`${styles.sidebar} ${aberto? styles.aberto : styles.fechado}`}>
       <div className={styles.topo}>
-        {aberto ? (
+        {aberto? (
           <>
             <img src={fotoONG} alt={nomeONG} className={styles.avatarTopo} />
             <span className={styles.nomeOng}>{nomeONG || "Carregando..."}</span>
@@ -78,7 +88,7 @@ export function Sidebar() {
         ) : (
           <img src={fotoONG} alt={nomeONG} className={styles.avatarTopoFechado} />
         )}
-        
+
         <button className={styles.hamburger} onClick={() => setAberto(!aberto)}>
           <img src="/3tracinhos.png" alt="menu" className={styles.tracinhos} />
         </button>
@@ -86,13 +96,13 @@ export function Sidebar() {
 
       <nav className={styles.nav}>
         {menu.map((item) => {
-          const ativo = pathname === item.href;
+          const ativo = pathname === item.href || (item.href!== "/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`${styles.item} ${ativo ? styles.ativo : ""}`}
-              title={!aberto ? item.label : undefined}
+              className={`${styles.item} ${ativo? styles.ativo : ""}`}
+              title={!aberto? item.label : undefined}
             >
               <img src={item.icon} alt={item.label} className={styles.iconeVetor} />
               {aberto && <span className={styles.label}>{item.label}</span>}
@@ -103,7 +113,7 @@ export function Sidebar() {
 
       <div className={styles.rodape}>
         <Link href="/" className={styles.voltar}>
-          {aberto ? "Voltar para o site" : "←"}
+          {aberto? "Voltar para o site" : "←"}
         </Link>
       </div>
     </aside>
