@@ -39,20 +39,10 @@ export default function AgendaPage(){
     return estaNaSemana(t.data, prox);
   }).sort((a,b)=> (a.data+a.hora).localeCompare(b.data+b.hora));
 
+  // SETA IGUALZINHO O X - centralizada perfeita
   const Seta = ({dir, onClick}:{dir:"left"|"right", onClick:()=>void})=>(
     <div className="seta" onClick={onClick}>
-      <img
-        src="/seta.png"
-        alt={dir}
-        style={{
-          width:"10px",
-          height:"10px",
-          display:"block",
-          objectFit:"contain",
-          transform: dir==="left"? "rotate(90deg)" : "rotate(-90deg)",
-          transformOrigin:"center center"
-        }}
-      />
+      <span style={{fontSize:"12px", fontWeight:700, lineHeight:1, transform:"translateY(-1px)"}}>{dir==="left"?"‹":"›"}</span>
     </div>
   );
 
@@ -66,9 +56,8 @@ export default function AgendaPage(){
 .right{ flex:1; background:#fff; border-radius:18px; border:1px solid #ece8f0; padding:16px; min-height:600px; min-width:0; }
 .reag{ background:#e9e2ff; border-radius:18px; padding:14px; }
 .cal{ background:#ffd6e2; border-radius:18px; padding:14px; }
-.seta{ width:28px; height:28px; min-width:28px; min-height:28px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s; line-height:1; padding:0; }
-.seta:hover{ background:#d5c8ff; border-color:#1a125f; }
-.seta img{ display:block; margin:0; }
+.seta{ width:26px; height:26px; border-radius:50%; background:#fff; border:1px solid #f0e8ff; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s; }
+.seta:hover{ background:#d5c8ff; border-color:#1a125f; color:#1a125f; }
 .chip{ border:none; border-radius:999px; padding:7px 14px; font-size:9px; cursor:pointer; transition:.2s; }
 .taskInside{ background:#e9e2ff; border-radius:12px; border-left:5px solid #1a125f; min-height:48px; display:flex; alignItems:center; padding:8px 32px 8px 12px; position:relative; }
 .xbtn{ position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #e0d4ff; display:flex; alignItems:center; justifyContent:center; cursor:pointer; transition:.2s; }
