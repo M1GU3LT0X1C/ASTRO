@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-export default function MeusPetsPage(){
+function ConteudoPets(){
   const [animais, setAnimais] = useState<any[]>([]);
   const [filtro, setFiltro] = useState("");
   const searchParams = useSearchParams();
@@ -28,7 +28,7 @@ export default function MeusPetsPage(){
     load();
   },[]);
 
-  const filtrados = animais.filter(p => 
+  const filtrados = animais.filter(p =>
     p.nome.toLowerCase().includes(filtro.toLowerCase()) ||
     p.especie?.toLowerCase().includes(filtro.toLowerCase())
   );
@@ -40,7 +40,7 @@ export default function MeusPetsPage(){
         <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px,1fr))", gap:12}}>
           {filtrados.map(pet=>(
             <div key={pet.id} style={{background:"#fff", border:"1px solid #eee", borderRadius:18, padding:14, textAlign:"center"}}>
-              <img src={pet.foto_url || "/logo-gato.png"} style={{width:80, height:80, borderRadius:"50%", objectFit:"cover", margin:"0 auto"}}/>
+              <img src={pet.foto_url || "/logo-gato.png"} style={{width:80, height:80, borderRadius:"50%", objectFit:"cover", margin:"0 auto"}} alt={pet.nome}/>
               <h4>{pet.nome}</h4>
               <small>{pet.especie}</small>
             </div>
@@ -48,5 +48,13 @@ export default function MeusPetsPage(){
         </div>
       }
     </div>
+  );
+}
+
+export default function MeusPetsPage(){
+  return (
+    <Suspense fallback={<div style={{padding:24}}>Carregando pets...</div>}>
+      <ConteudoPets />
+    </Suspense>
   );
 }
