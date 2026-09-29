@@ -39,7 +39,7 @@ export function HomeContent() {
 
         <div className={styles.heroImage}>
           <img
-            src="/dog-astro.png"
+            src="/gatohome.png"
             alt="Pet em destaque no Astro"
           />
         </div>
@@ -55,7 +55,7 @@ export function HomeContent() {
         <div className={styles.comoFuncionaConteudo}>
 
           <h2 className={styles.sectionTitle}>
-            Como o Astro funciona?
+            Como a Astro funciona?
           </h2>
 
           <div className={styles.gridFunciona}>
