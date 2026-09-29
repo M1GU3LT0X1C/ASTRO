@@ -141,7 +141,7 @@
 ========================= */
 
 .heroImage {
-  width: 350px;
+  width: 480px;
 
   display: flex;
   align-items: center;
@@ -152,7 +152,7 @@
 
 .heroImage img {
   width: 100%;
-  max-width: 350px;
+  max-width: 480px;
   height: auto;
 
   display: block;
