@@ -6,7 +6,14 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?defina no arquivo .env}
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?defina no arquivo .env}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?defina no arquivo .env}
     container_name: astro-frontend
+    environment:
+      # o servidor do Next roda dentro do container, onde "localhost" nao e o back;
+      # host.docker.internal aponta para a maquina, onde o back expoe a porta 8080
+      API_URL_SERVIDOR: http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3000:3000"
     restart: unless-stopped

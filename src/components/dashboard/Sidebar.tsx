@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { obterParceiro } from "@/lib/animais";
+import { buscarMe } from "@/lib/perfil";
 import { sair } from "@/lib/sair";
 import styles from "./Sidebar.module.css";
 
@@ -58,16 +58,15 @@ export function Sidebar() {
         setFotoONG(fotoGoogle);
         localStorage.setItem("ong_foto", fotoGoogle);
       }
-      const { data: ong } = await supabase.from("ongs").select("nome_organizacao").eq("usuario_id", user.id).maybeSingle();
-      const parceiro = ong ? await obterParceiro(user, false) : null;
-      if (ong?.nome_organizacao) {
-        setNomeONG(ong.nome_organizacao);
-        localStorage.setItem("ong_nome", ong.nome_organizacao);
-        const pessoaNome = user.user_metadata?.full_name || user.email?.split('@')[0] || ong.nome_organizacao;
+      const { ong, parceiro } = await buscarMe();
+      if (ong?.nomeOrganizacao) {
+        setNomeONG(ong.nomeOrganizacao);
+        localStorage.setItem("ong_nome", ong.nomeOrganizacao);
+        const pessoaNome = user.user_metadata?.full_name || user.email?.split('@')[0] || ong.nomeOrganizacao;
         localStorage.setItem("pessoa_nome", pessoaNome);
-        if (parceiro?.logo_url) {
-          setFotoONG(parceiro.logo_url);
-          localStorage.setItem("ong_foto", parceiro.logo_url);
+        if (parceiro?.logoUrl) {
+          setFotoONG(parceiro.logoUrl);
+          localStorage.setItem("ong_foto", parceiro.logoUrl);
         }
       } else {
         const fallback = localStorage.getItem("ong_nome") || user.user_metadata?.full_name || user.email?.split('@')[0] || "astro";

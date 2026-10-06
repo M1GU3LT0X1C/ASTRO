@@ -2,7 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { listarAnimaisDoUsuario, type AnimalTela } from "@/lib/animais";
+import { listarMeusAnimais, type AnimalTela } from "@/lib/animais";
 import styles from "./MeusPets.module.css";
 
 type Pet = AnimalTela;
@@ -31,7 +31,7 @@ function ConteudoMeusPets() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
-      setPets(await listarAnimaisDoUsuario(user));
+      setPets(await listarMeusAnimais());
       setLoading(false);
     }
     load();

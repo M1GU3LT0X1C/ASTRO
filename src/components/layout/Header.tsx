@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import styles from "./Header.module.css";
 import { supabase } from "@/lib/supabase";
-import { ehTutor } from "@/lib/perfil";
+import { buscarMe } from "@/lib/perfil";
 import { sair } from "@/lib/sair";
 
 type Sessao = { logado: boolean; tutor: boolean };
@@ -17,7 +17,10 @@ export function Header() {
 
   useEffect(() => {
     async function atualizar(userId?: string) {
-      setSessao(userId ? { logado: true, tutor: await ehTutor(userId) } : { logado: false, tutor: false });
+      if (!userId) return setSessao({ logado: false, tutor: false });
+      // se o back estiver fora do ar, ainda mostra "Sair"
+      const tutor = await buscarMe().then((me) => me.tutor).catch(() => false);
+      setSessao({ logado: true, tutor });
     }
     supabase.auth.getUser().then(({ data }) => atualizar(data.user?.id));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_evento, s) => { atualizar(s?.user.id); });

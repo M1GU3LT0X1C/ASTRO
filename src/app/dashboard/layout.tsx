@@ -1,5 +1,7 @@
 // src/app/dashboard/layout.tsx - VERSÃO SEGURA
 import { createServerSupabase } from '@/lib/supabase-server'
+import { apiServidor } from '@/lib/api-servidor'
+import type { Me } from '@/lib/perfil'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
 
@@ -11,13 +13,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login')
   }
 
+  const me = await apiServidor<Me>('/api/me').catch(() => null)
+
   // o dashboard é só para ONGs; tutor volta para a home
-  const { data: perfil } = await supabase.from('usuarios').select('tipo').eq('id', user.id).maybeSingle()
-  if (perfil?.tipo === 'EXPLORADOR') {
+  if (me?.tutor) {
     redirect('/')
   }
 
-  const { data: ong } = await supabase.from('ongs').select('nome_organizacao').eq('usuario_id', user.id).maybeSingle()
-
-  return <DashboardClient nomeOng={ong?.nome_organizacao || 'Minha ONG'}>{children}</DashboardClient>
+  return <DashboardClient nomeOng={me?.ong?.nomeOrganizacao || 'Minha ONG'}>{children}</DashboardClient>
 }

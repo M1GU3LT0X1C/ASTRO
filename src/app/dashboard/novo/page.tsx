@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { obterParceiro, paraBanco } from "@/lib/animais";
+import { cadastrarAnimal } from "@/lib/animais";
 import { alerta } from "@/lib/alerta";
 
 function SelectBonito({ id, label, value, onChange, options, openId, setOpenId }: any){
@@ -66,10 +66,6 @@ export default function NovoPage(){
     if(!idade) return alerta.aviso("Idade obrigatória", "Informe a idade do pet.");
     setLoading(true);
     try{
-      const { data:{user} }=await supabase.auth.getUser();
-      if(!user) throw new Error("Não logado");
-      const parceiro=await obterParceiro(user);
-      if(!parceiro) throw new Error("ONG não encontrada");
       let foto_url="";
       if(file){
         const nomeArquivo = `${Date.now()}-${file.name.replace(/\s/g,"-")}`;
@@ -77,14 +73,13 @@ export default function NovoPage(){
         if(upErr) throw new Error("Erro upload: "+upErr.message);
         foto_url = supabase.storage.from("animais-fotos").getPublicUrl(nomeArquivo).data.publicUrl;
       }
-      const { error } = await supabase.from("animais").insert(paraBanco({
+      await cadastrarAnimal({
         nome: nome.trim(), idade: String(Number(idade)||0), raca: tipo.trim(),
         porte: porte||"medio", sexo: sexo||"macho", especie: especie||"cachorro",
         castrado: checks.castrado, vacinado: checks.vacinado,
         vermifugado: checks.vermifugado, cuidados: checks.cuidados,
         temperamentos: temps, fotoUrl: foto_url
-      }, parceiro.id));
-      if(error) throw error;
+      });
       await alerta.sucesso("Pet publicado!", "Ele já aparece em Meus Pets.");
       location.href="/dashboard/meus-pets";
     }catch(e:any){ alerta.erro("Não foi possível publicar", e.message); }

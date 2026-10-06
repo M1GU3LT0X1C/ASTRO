@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
-import { ehTutor, garantirOng } from "@/lib/perfil";
+import { buscarMe, garantirOng } from "@/lib/perfil";
 import styles from "./Login.module.css";
 
 export function Login() {
@@ -88,15 +88,15 @@ export function Login() {
       setLoading(false);
       return;
     }
-    if (await ehTutor(user.id)) {
-      localStorage.setItem("tipo_usuario", "explorador");
-      router.push("/");
-      return;
-    }
     try {
+      if ((await buscarMe()).tutor) {
+        localStorage.setItem("tipo_usuario", "explorador");
+        router.push("/");
+        return;
+      }
       const nome = user.user_metadata?.full_name || user.email.split("@")[0] || "Minha ONG";
-      const ong = await garantirOng(user, nome);
-      localStorage.setItem("ong_nome", ong.nome_organizacao);
+      const { ong } = await garantirOng(nome);
+      localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nome);
       router.push("/dashboard");
     } catch (err) {
       alerta.erro("Não foi possível carregar sua ONG", err instanceof Error ? err.message : undefined);

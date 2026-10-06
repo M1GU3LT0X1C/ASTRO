@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { ehTutor, garantirOng, garantirTutor } from "@/lib/perfil";
+import { buscarMe, garantirOng, garantirTutor } from "@/lib/perfil";
 import { alerta } from "@/lib/alerta";
 
 export default function CallbackPage() {
@@ -23,16 +23,17 @@ export default function CallbackPage() {
       localStorage.setItem("pessoa_nome", nomePessoa);
       if (user.user_metadata?.avatar_url) localStorage.setItem("ong_foto", user.user_metadata.avatar_url);
 
-      if (perfilPendente === "explorador") await garantirTutor(user, nomePessoa);
-      if (await ehTutor(user.id)) {
+      const me = perfilPendente === "explorador" ? await garantirTutor(nomePessoa || "Explorador") : await buscarMe();
+      if (me.tutor) {
         localStorage.setItem("tipo_usuario", "explorador");
         router.push("/");
         return;
       }
 
-      const ong = await garantirOng(user, nomeOngTemp || nomePessoa || "Minha ONG", perfilPendente || undefined);
+      const nomeOng = nomeOngTemp || nomePessoa || "Minha ONG";
+      const { ong } = await garantirOng(nomeOng, perfilPendente || undefined);
       localStorage.setItem("tipo_usuario", perfilPendente || "ong");
-      localStorage.setItem("ong_nome", ong.nome_organizacao);
+      localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nomeOng);
       router.push("/dashboard");
     };
     handleCallback().catch(async (err) => {
