@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { alerta } from "@/lib/alerta";
 
 export default function RecompensasPage(){
   const dias = ["Seg","Ter","Qua","Qui","Sex"];
@@ -10,10 +11,6 @@ export default function RecompensasPage(){
   const [mostra,setMostra]=useState(true);
   const [hojeIdx,setHojeIdx]=useState(-1);
   const [semanaId,setSemanaId]=useState("");
-  const [modal,setModal]=useState<any>({open:false});
-
-  const alertBonito = (d:any)=> setModal({open:true,...d});
-  const showAlert = (title:string, desc?:string)=> alertBonito({title, desc, type:"info", okText:"OK"});
 
   const getSemanaId = ()=>{
     const now=new Date(); const onejan=new Date(now.getFullYear(),0,1);
@@ -34,42 +31,38 @@ export default function RecompensasPage(){
   const savePontos = (n:number)=>{ setPontos(n); localStorage.setItem("astro_pontos",String(n)); };
 
   const fazerCheck = (idx:number)=>{
-    if(idx!==hojeIdx) return showAlert("Ops!", "Só pode fazer o check-in de hoje!");
+    if(idx!==hojeIdx) return alerta.aviso("Ops!", "Só pode fazer o check-in de hoje!");
     const dia=dias[idx]; if(checks[dia]) return;
     const novo={...checks,[dia]:true}; setChecks(novo);
     localStorage.setItem("astro_checks",JSON.stringify(novo)); savePontos(pontos+10);
-    showAlert("+10 pontos! 🎉", "Check-in de hoje feito!");
+    alerta.sucesso("+10 pontos! 🎉", "Check-in de hoje feito!");
   };
 
-  const fazerTarefa = (id:string,pts:number,nome:string)=>{
+  const fazerTarefa = async (id:string,pts:number,nome:string)=>{
     if(tarefas[id]) return;
-    alertBonito({
+    const confirmou = await alerta.confirmar({
       title:`Confirmar: ${nome}?`,
-      desc:`Você vai ganhar +${pts} pontos. Só confirme se realmente fez!`,
-      type:"confirm",
-      okText:`Ganhar +${pts}`,
+      text:`Você vai ganhar +${pts} pontos. Só confirme se realmente fez!`,
+      confirmText:`Ganhar +${pts}`,
       cancelText:"Ainda não",
-      onOk:()=>{
-        const novo={...tarefas,[id]:true}; setTarefas(novo);
-        localStorage.setItem("astro_tarefas",JSON.stringify(novo)); savePontos(pontos+pts);
-        alertBonito({title:`+${pts} pontos! 🎉`, desc:"Missão concluída!"});
-      }
-    })
+    });
+    if(!confirmou) return;
+    const novo={...tarefas,[id]:true}; setTarefas(novo);
+    localStorage.setItem("astro_tarefas",JSON.stringify(novo)); savePontos(pontos+pts);
+    alerta.sucesso(`+${pts} pontos! 🎉`, "Missão concluída!");
   };
 
-  const usarCupom = (custo:number)=>{
-    if(pontos < custo) return showAlert("Pontos insuficientes", `Você tem ${pontos} pts e precisa de ${custo} pts. Continue fazendo check-ins!`);
-    alertBonito({
+  const usarCupom = async (custo:number)=>{
+    if(pontos < custo) return alerta.aviso("Pontos insuficientes", `Você tem ${pontos} pts e precisa de ${custo} pts. Continue fazendo check-ins!`);
+    const confirmou = await alerta.confirmar({
       title:"Usar cupom?",
-      desc:`Usar 25% OFF em banho e tosa por ${custo} pontos?`,
-      type:"confirm",
-      okText:"Usar agora",
+      text:`Usar 25% OFF em banho e tosa por ${custo} pontos?`,
+      confirmText:"Usar agora",
       cancelText:"Cancelar",
-      onOk:()=>{
-        savePontos(pontos - custo);
-        alertBonito({title:"Cupom liberado! 🎉", desc:"Código: BANHO25 - copie e use no checkout!"});
-      }
-    })
+    });
+    if(!confirmou) return;
+    savePontos(pontos - custo);
+    alerta.sucesso("Cupom liberado! 🎉", "Código: BANHO25 - copie e use no checkout!");
   };
 
   const isPerdido = (idx:number)=> idx < hojeIdx &&!checks[dias[idx]];
@@ -143,20 +136,6 @@ export default function RecompensasPage(){
         </div>
       </div>
 
-      {/* MODAL BONITO LOCAL */}
-      {modal.open && (
-        <div style={{position:"fixed", inset:0, zIndex:9999, background:"rgba(20,10,40,.5)", display:"flex", alignItems:"center", justifyContent:"center", padding:"16px", backdropFilter:"blur(6px)"}}>
-          <div style={{background:"#fff", borderRadius:"20px", padding:"22px", width:"100%", maxWidth:"360px", textAlign:"center"}}>
-            <div style={{width:"52px", height:"52px", borderRadius:"999px", background:modal.type==="confirm"?"#ffe1ea":"#efe8ff", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 12px", fontSize:"24px"}}>{modal.type==="confirm"?"🎁":"✨"}</div>
-            <h3 style={{fontSize:"16px", fontWeight:900, color:"#201a4a", margin:"0 0 6px"}}>{modal.title}</h3>
-            {modal.desc && <p style={{fontSize:"13px", color:"#666", margin:"0 0 18px"}}>{modal.desc}</p>}
-            <div style={{display:"flex", gap:"10px"}}>
-              {modal.type==="confirm" && <button onClick={()=>setModal({open:false})} style={{flex:1, padding:"12px", borderRadius:"999px", border:"1.5px solid #e8e0ff", background:"#fff", fontWeight:700, cursor:"pointer"}}>{modal.cancelText||"Cancelar"}</button>}
-              <button onClick={()=>{ const ok=modal.onOk; setModal({open:false}); ok?.(); }} style={{flex:1, padding:"12px", borderRadius:"999px", border:"none", background:"#ff4b7a", color:"#fff", fontWeight:800, cursor:"pointer"}}>{modal.okText||"OK"}</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

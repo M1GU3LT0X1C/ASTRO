@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { obterParceiro, paraBanco } from "@/lib/animais";
+import { alerta } from "@/lib/alerta";
 
 function SelectBonito({ id, label, value, onChange, options, openId, setOpenId }: any){
   const open = openId===id;
@@ -58,16 +60,16 @@ export default function NovoPage(){
   const onIdade = (v:string)=> setIdade(v.replace(/[^0-9]/g,"")); // só número
 
   const publicar=async()=>{
-    if(!nome.trim()) return alert("Nome obrigatório (sem números)");
-    if(!/^[A-Za-zÀ-ÿ\s]+$/.test(nome)) return alert("Nome do pet não pode ter números");
-    if(!/^[A-Za-zÀ-ÿ\s]+$/.test(tipo) && tipo) return alert("Tipo de pet não pode ter números");
-    if(!idade) return alert("Idade obrigatória");
+    if(!nome.trim()) return alerta.aviso("Nome obrigatório", "Informe o nome do pet (sem números).");
+    if(!/^[A-Za-zÀ-ÿ\s]+$/.test(nome)) return alerta.aviso("Nome inválido", "O nome do pet não pode ter números.");
+    if(!/^[A-Za-zÀ-ÿ\s]+$/.test(tipo) && tipo) return alerta.aviso("Tipo inválido", "O tipo de pet não pode ter números.");
+    if(!idade) return alerta.aviso("Idade obrigatória", "Informe a idade do pet.");
     setLoading(true);
     try{
       const { data:{user} }=await supabase.auth.getUser();
       if(!user) throw new Error("Não logado");
-      const { data:ong }=await supabase.from("ongs").select("id").eq("usuario_id",user.id).maybeSingle();
-      if(!ong) throw new Error("ONG não encontrada");
+      const parceiro=await obterParceiro(user);
+      if(!parceiro) throw new Error("ONG não encontrada");
       let foto_url="";
       if(file){
         const nomeArquivo = `${Date.now()}-${file.name.replace(/\s/g,"-")}`;
@@ -75,17 +77,17 @@ export default function NovoPage(){
         if(upErr) throw new Error("Erro upload: "+upErr.message);
         foto_url = supabase.storage.from("animais-fotos").getPublicUrl(nomeArquivo).data.publicUrl;
       }
-      const { error } = await supabase.from("animais").insert({
-        ong_id: ong.id, nome: nome.trim(), idade: Number(idade)||0, tipo: tipo.trim(),
+      const { error } = await supabase.from("animais").insert(paraBanco({
+        nome: nome.trim(), idade: String(Number(idade)||0), raca: tipo.trim(),
         porte: porte||"medio", sexo: sexo||"macho", especie: especie||"cachorro",
         castrado: checks.castrado, vacinado: checks.vacinado,
-        vermifugado: checks.vermifugado, cuidados_especiais: checks.cuidados,
-        foto_url, temperamentos: temps
-      });
+        vermifugado: checks.vermifugado, cuidados: checks.cuidados,
+        temperamentos: temps, fotoUrl: foto_url
+      }, parceiro.id));
       if(error) throw error;
-      alert("Publicado!");
+      await alerta.sucesso("Pet publicado!", "Ele já aparece em Meus Pets.");
       location.href="/dashboard/meus-pets";
-    }catch(e:any){ alert("ERRO: "+e.message); }
+    }catch(e:any){ alerta.erro("Não foi possível publicar", e.message); }
     setLoading(false);
   };
 

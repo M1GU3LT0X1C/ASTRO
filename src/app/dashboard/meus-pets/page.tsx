@@ -2,14 +2,10 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { listarAnimaisDoUsuario, type AnimalTela } from "@/lib/animais";
 import styles from "./MeusPets.module.css";
 
-type Pet = {
-  id: string; nome: string; sexo: string; idade: number;
-  especie: string; porte: string; foto_url: string;
-  castrado: boolean; vacinado: boolean; vermifugado: boolean;
-  cuidados_especiais: boolean; created_at: string;
-};
+type Pet = AnimalTela;
 
 const FILTROS = [
   "Pequeno","Fêmea","Cachorro","Castrado(a)","Vacinado(a)","Vermifugado(a)",
@@ -35,10 +31,7 @@ function ConteudoMeusPets() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
-      const { data: ong } = await supabase.from("ongs").select("id").eq("usuario_id", user.id).maybeSingle();
-      if (!ong) { setLoading(false); return; }
-      const { data } = await supabase.from("animais").select("*").eq("ong_id", ong.id).order("created_at", { ascending: false });
-      setPets((data as Pet[]) || []);
+      setPets(await listarAnimaisDoUsuario(user));
       setLoading(false);
     }
     load();

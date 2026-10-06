@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // gera um servidor enxuto em .next/standalone, usado pela imagem Docker
+  output: "standalone",
   async headers() {
     return [
       {
