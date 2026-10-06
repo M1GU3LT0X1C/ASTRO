@@ -13,7 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   // o dashboard é só para ONGs; tutor volta para a home
   const { data: perfil } = await supabase.from('usuarios').select('tipo').eq('id', user.id).maybeSingle()
-  if (perfil?.tipo === 'TUTOR') {
+  if (perfil?.tipo === 'EXPLORADOR') {
     redirect('/')
   }
 
