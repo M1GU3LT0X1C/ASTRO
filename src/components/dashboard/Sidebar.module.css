@@ -142,6 +142,24 @@
   padding: 8px;
 }
 
+.sair {
+  width: 100%;
+  margin-top: 8px;
+  background: transparent;
+  color: #e63d68;
+  border: 1.5px solid #e63d68;
+  text-align: center;
+  padding: 9px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sair:hover { background: #fff0f4; }
+.fechado .sair {
+  padding: 7px;
+}
+
 .overlay{ display:none; }
 
 /* ===== FIX MOBILE QUE FALTAVA ===== */
@@ -164,7 +182,8 @@
   }
   .sidebar.fechado .nomeOng,
   .sidebar.fechado .label,
-  .sidebar.fechado .voltar{
+  .sidebar.fechado .voltar,
+  .sidebar.fechado .sair{
     display:none;
   }
   .overlay{

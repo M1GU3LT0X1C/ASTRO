@@ -2,6 +2,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { buscarMe, garantirOng, garantirTutor } from "@/lib/perfil";
+import { alerta } from "@/lib/alerta";
 
 export default function CallbackPage() {
   const router = useRouter();
@@ -11,29 +13,33 @@ export default function CallbackPage() {
       const user = data.session?.user;
       if (!user) { router.push("/login"); return; }
 
-      const tipo = localStorage.getItem("tipo_usuario") || "explorador";
+      // perfil escolhido no cadastro com Google (vazio quando a pessoa só clicou em "entrar com Google")
+      const perfilPendente = localStorage.getItem("astro_perfil_pendente");
+      const nomeOngTemp = localStorage.getItem("temp_ong_nome");
       localStorage.clear();
       localStorage.setItem("ultimo_user_id", user.id);
-      localStorage.setItem("tipo_usuario", tipo);
 
       const nomePessoa = user.user_metadata?.full_name || user.email?.split('@')[0] || "";
       localStorage.setItem("pessoa_nome", nomePessoa);
       if (user.user_metadata?.avatar_url) localStorage.setItem("ong_foto", user.user_metadata.avatar_url);
 
-      if (tipo === "ong") {
-        const nomeOng = localStorage.getItem("temp_ong_nome") || nomePessoa || "Minha ONG";
-        const { data: existe } = await supabase.from("ongs").select("id").eq("usuario_id", user.id).maybeSingle();
-        if (!existe) {
-          await supabase.from("ongs").insert({ usuario_id: user.id, nome_organizacao: nomeOng, email: user.email });
-        }
-        localStorage.setItem("ong_nome", nomeOng);
-        localStorage.removeItem("temp_ong_nome");
-      } else {
-        localStorage.setItem("ong_nome", nomePessoa);
+      const me = perfilPendente === "explorador" ? await garantirTutor(nomePessoa || "Explorador") : await buscarMe();
+      if (me.tutor) {
+        localStorage.setItem("tipo_usuario", "explorador");
+        router.push("/");
+        return;
       }
+
+      const nomeOng = nomeOngTemp || nomePessoa || "Minha ONG";
+      const { ong } = await garantirOng(nomeOng, perfilPendente || undefined);
+      localStorage.setItem("tipo_usuario", perfilPendente || "ong");
+      localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nomeOng);
       router.push("/dashboard");
     };
-    handleCallback();
+    handleCallback().catch(async (err) => {
+      await alerta.erro("Não foi possível concluir o login", err?.message);
+      router.push("/login");
+    });
   }, [router]);
   return <p>Entrando...</p>;
 }

@@ -51,3 +51,81 @@ html, body {
 input, button, textarea, select {
   max-width: 100%;
 }
+/* ===== SweetAlert2 com a paleta Astro (usado por src/lib/alerta.ts) ===== */
+.swal2-container.swal2-backdrop-show {
+  background: rgba(20, 10, 40, 0.5);
+  backdrop-filter: blur(6px);
+}
+
+.swal2-popup.astro-swal {
+  width: min(380px, calc(100vw - 32px));
+  padding: 26px 22px 22px;
+  border-radius: 22px;
+  border: 1px solid #ece8f8;
+  background: #fffdfd;
+  box-shadow: 0 20px 40px rgba(32, 26, 74, 0.25);
+  font-family: inherit;
+}
+
+.swal2-popup.astro-swal .swal2-icon {
+  margin: 4px auto 14px;
+  transform: scale(0.8);
+}
+
+.swal2-popup.astro-swal .astro-swal-titulo {
+  padding: 0 4px;
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 900;
+  color: #201a4a;
+}
+
+.swal2-popup.astro-swal .astro-swal-texto {
+  margin: 0 0 4px;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #5b5677;
+}
+
+.swal2-popup.astro-swal .astro-swal-acoes {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin: 18px 0 0;
+  padding: 0;
+}
+
+.swal2-popup.astro-swal .astro-swal-confirmar,
+.swal2-popup.astro-swal .astro-swal-cancelar {
+  flex: 1;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 0.15s, background 0.15s;
+}
+
+.swal2-popup.astro-swal .astro-swal-confirmar {
+  border: none;
+  background: #e63d68;
+  color: #fff;
+}
+
+.swal2-popup.astro-swal .astro-swal-confirmar:hover { filter: brightness(1.08); }
+
+.swal2-popup.astro-swal .astro-swal-cancelar {
+  border: 1.5px solid #e9e2ff;
+  background: #fff;
+  color: #201a4a;
+}
+
+.swal2-popup.astro-swal .astro-swal-cancelar:hover { background: #f6f4ff; }
+
+.swal2-popup.astro-swal .astro-swal-confirmar:focus-visible,
+.swal2-popup.astro-swal .astro-swal-cancelar:focus-visible {
+  outline: 3px solid #e9e2ff;
+  outline-offset: 2px;
+}

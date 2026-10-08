@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { buscarMe } from "@/lib/perfil";
+import { sair } from "@/lib/sair";
 import styles from "./Sidebar.module.css";
 
 const menu = [
@@ -56,15 +58,15 @@ export function Sidebar() {
         setFotoONG(fotoGoogle);
         localStorage.setItem("ong_foto", fotoGoogle);
       }
-      const { data: ong } = await supabase.from("ongs").select("nome_organizacao, logo_url").eq("usuario_id", user.id).maybeSingle();
-      if (ong?.nome_organizacao) {
-        setNomeONG(ong.nome_organizacao);
-        localStorage.setItem("ong_nome", ong.nome_organizacao);
-        const pessoaNome = user.user_metadata?.full_name || user.email?.split('@')[0] || ong.nome_organizacao;
+      const { ong, parceiro } = await buscarMe();
+      if (ong?.nomeOrganizacao) {
+        setNomeONG(ong.nomeOrganizacao);
+        localStorage.setItem("ong_nome", ong.nomeOrganizacao);
+        const pessoaNome = user.user_metadata?.full_name || user.email?.split('@')[0] || ong.nomeOrganizacao;
         localStorage.setItem("pessoa_nome", pessoaNome);
-        if (ong.logo_url) {
-          setFotoONG(ong.logo_url);
-          localStorage.setItem("ong_foto", ong.logo_url);
+        if (parceiro?.logoUrl) {
+          setFotoONG(parceiro.logoUrl);
+          localStorage.setItem("ong_foto", parceiro.logoUrl);
         }
       } else {
         const fallback = localStorage.getItem("ong_nome") || user.user_metadata?.full_name || user.email?.split('@')[0] || "astro";
@@ -108,6 +110,7 @@ export function Sidebar() {
         </nav>
         <div className={styles.rodape}>
           <Link href="/" className={styles.voltar}>{aberto? "Voltar para o site" : "←"}</Link>
+          <button type="button" onClick={sair} className={styles.sair} title="Sair da conta">{aberto? "Sair" : "⎋"}</button>
         </div>
       </aside>
     </>
