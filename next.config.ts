@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // gera um servidor enxuto em .next/standalone, usado pela imagem Docker
-  output: "standalone",
+  // gera um servidor enxuto em .next/standalone, usado pela imagem Docker.
+  // So no Docker (BUILD_STANDALONE=1 no Dockerfile): na Vercel o standalone quebra o deploy
+  // ("ENOENT .next/next-server.js.nft.json"), porque ela empacota o Next do jeito dela.
+  output: process.env.BUILD_STANDALONE === "1" ? "standalone" : undefined,
   async headers() {
     return [
       {
