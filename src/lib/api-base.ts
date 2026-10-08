@@ -10,7 +10,8 @@ export class ErroApi extends Error {
 export type OpcoesApi = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown };
 
 export async function chamarApi<T>(baseUrl: string, caminho: string, token: string | undefined, opcoes: OpcoesApi = {}): Promise<T> {
-  const resposta = await fetch(baseUrl + caminho, {
+  // tira a barra final da URL base: "https://x.com/" + "/api/me" viraria "//api/me", que o Spring recusa (400)
+  const resposta = await fetch(baseUrl.replace(/\/+$/, "") + caminho, {
     method: opcoes.method ?? "GET",
     headers: {
       ...(opcoes.body !== undefined && { "Content-Type": "application/json" }),
