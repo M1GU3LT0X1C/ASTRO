@@ -1,124 +1,334 @@
 .login {
   width: 100%;
   min-height: 100vh;
-
+  min-height: 100dvh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.15fr 0.85fr;
+  background: #160877;
+  overflow: hidden;
+  align-items: center;
 }
 
-
-/* LADO ESQUERDO */
+/* GATO PLANETA */
 
 .ladoEsquerdo {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background: white;
+  padding: 40px 20px 40px 60px;
+  background: transparent;
 }
 
-.logo {
-  width: 360px;
+.planetaLink {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  border-radius: 24px;
+  transition: transform 0.2s ease;
+}
+
+.planetaLink:hover {
+  transform: scale(1.025);
+}
+
+.planetaLink:focus-visible {
+  outline: 3px solid #e94e77;
+  outline-offset: 8px;
+}
+
+.planetaImg {
+  width: 100%;
   height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.35));
 }
-
-
-/* LADO DIREITO */
-
-.ladoDireito {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #160877;
-}
-
 
 /* FORMULÁRIO */
 
+.ladoDireito {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 60px 40px 20px;
+}
+
 .formulario {
   width: 100%;
-  max-width: 320px;
-
+  max-width: 360px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 
 .formulario h1 {
-  margin: 0 0 34px;
-
+  margin: 0 0 24px;
   color: white;
-
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.25;
-
-  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
 }
 
-
-/* INPUTS */
+/* CAMPOS */
 
 .input {
   width: 100%;
-  height: 34px;
-
-  margin-bottom: 14px;
-
+  height: 38px;
+  margin-bottom: 10px;
   padding: 0 14px;
-
-  border: 1.5px solid white;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
   border-radius: 999px;
-
   background: transparent;
-
   color: white;
-
-  font-size: 11px;
-
+  font-size: 12px;
   outline: none;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 .input::placeholder {
-  color: white;
-  opacity: 1;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .input:focus {
-  background: rgba(255, 255, 255, 0.08);
+  border-color: white;
+  background: rgba(255, 255, 255, 0.06);
 }
 
+.inputWrap {
+  width: 100%;
+  position: relative;
+  margin-bottom: 10px;
+}
 
-/* BOTÃO */
+.inputWrap .input {
+  margin-bottom: 0;
+  padding-right: 46px;
+}
 
-.botao {
-  margin-top: 16px;
+/* ÍCONE DE MOSTRAR E OCULTAR SENHA */
 
-  padding: 11px 22px;
+.olhinho {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  padding: 4px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+}
 
+.olhinho:hover {
+  opacity: 1;
+}
+
+.olhinho svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.olhinho:focus-visible {
+  outline: 2px solid #e94e77;
+  border-radius: 50%;
+}
+
+/* OPÇÕES */
+
+.opcoes {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0 18px;
+  padding: 0 2px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox input {
+  width: 14px;
+  height: 14px;
+  accent-color: #e94e77;
+  cursor: pointer;
+}
+
+.checkbox span {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.esqueci {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.esqueci:hover {
+  color: white;
+}
+
+/* BOTÕES DE ACESSO E CADASTRO */
+
+.botoesLinha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.botaoPrimario {
+  height: 40px;
+  min-width: 130px;
+  padding: 0 22px;
   border: none;
   border-radius: 999px;
-
   background: #e94e77;
   color: white;
-
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-
   cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    background-color 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
-.botao:hover {
+.botaoPrimario:hover {
   background: #d83d66;
-
-  transform: translateY(-1px);
 }
 
-.botao:active {
-  transform: scale(0.97);
+.botaoPrimario:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.botaoSecundario {
+  height: 40px;
+  min-width: 110px;
+  padding: 0 22px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  background: transparent;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.botaoSecundario:hover {
+  background: #e94e77;
+  border-color: #e94e77;
+  color: white;
+}
+
+.divisor {
+  width: 100%;
+  text-align: center;
+  margin: 18px 0 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  text-transform: lowercase;
+}
+
+/* BOTÃO GOOGLE */
+
+.botaoGoogle {
+  width: 100%;
+  max-width: 220px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid white;
+  background: white;
+  color: #111;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  align-self: center;
+}
+
+.botaoGoogle img {
+  width: 16px;
+  height: 16px;
+}
+
+.botaoGoogle:hover {
+  background: #f5f5f5;
+}
+
+.botaoGoogle:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* CELULAR */
+
+@media (max-width: 900px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+
+  .ladoEsquerdo {
+    padding: 30px 20px 10px;
+  }
+
+  .planetaLink {
+    max-width: 280px;
+  }
+
+  .ladoDireito {
+    justify-content: center;
+    padding: 10px 20px 40px;
+  }
+
+  .formulario {
+    max-width: 100%;
+  }
+
+  .formulario h1 {
+    text-align: center;
+  }
+
+  .input {
+    height: 44px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .planetaLink {
+    max-width: 240px;
+  }
 }

@@ -1,43 +1,310 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase";
 import styles from "./Login.module.css";
 
 export function Login() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [lembrar, setLembrar] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("astro_remember_email");
+
+    if (saved) {
+      setEmail(saved);
+      setLembrar(true);
+    }
+  }, []);
+
+  function checkRateLimit(e: string) {
+    const key = `rl_${e}`;
+    const raw = localStorage.getItem(key);
+
+    if (!raw) return true;
+
+    const data = JSON.parse(raw);
+
+    if (data.count >= 5 && Date.now() - data.time < 15 * 60 * 1000) {
+      alert("Muitas tentativas. Tente em alguns minutos.");
+      return false;
+    }
+
+    if (Date.now() - data.time > 15 * 60 * 1000) {
+      localStorage.removeItem(key);
+    }
+
+    return true;
+  }
+
+  function addTentativa(e: string, ok: boolean) {
+    const key = `rl_${e}`;
+
+    if (ok) {
+      localStorage.removeItem(key);
+      return;
+    }
+
+    const raw = localStorage.getItem(key);
+    const d = raw ? JSON.parse(raw) : { count: 0, time: Date.now() };
+
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        count: d.count + 1,
+        time: Date.now(),
+      })
+    );
+  }
+
+  async function handleLogin() {
+    if (!email || !senha) {
+      alert("Preencha e-mail e senha");
+      return;
+    }
+
+    if (!checkRateLimit(email)) return;
+
+    setLoading(true);
+
+    const supabase = await createClient();
+
+    if (lembrar) {
+      localStorage.setItem("astro_remember_email", email);
+    } else {
+      localStorage.removeItem("astro_remember_email");
+    }
+
+    const result = await supabase.auth.signInWithPassword({
+      email,
+      password: senha,
+    });
+
+    if (result.error) {
+      addTentativa(email, false);
+      alert("Erro: " + result.error.message);
+      setLoading(false);
+      return;
+    }
+
+    addTentativa(email, true);
+    await checkAndRedirect(result.data.user);
+  }
+
+  async function handleGoogleLogin() {
+    setLoading(true);
+
+    const supabase = await createClient();
+
+    const result = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/auth/callback",
+      },
+    });
+
+    if (result.error) {
+      alert("Erro: " + result.error.message);
+      setLoading(false);
+    }
+  }
+
+  async function checkAndRedirect(user: any) {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const supabase = await createClient();
+
+    const ongData = await supabase
+      .from("ongs")
+      .select("id,nome_organizacao")
+      .eq("usuario_id", user.id)
+      .single();
+
+    if (ongData.data) {
+      localStorage.setItem("ong_nome", ongData.data.nome_organizacao);
+      router.push("/dashboard");
+      return;
+    }
+
+    const nome =
+      user.user_metadata?.full_name ||
+      user.email.split("@")[0] ||
+      "Minha ONG";
+
+    const nova = await supabase
+      .from("ongs")
+      .insert({
+        usuario_id: user.id,
+        nome_organizacao: nome,
+        email: user.email,
+      })
+      .select("id,nome_organizacao")
+      .single();
+
+    if (nova.data) {
+      localStorage.setItem("ong_nome", nova.data.nome_organizacao);
+      router.push("/dashboard");
+    }
+  }
+
+  async function handleEsqueciSenha() {
+    if (!email) {
+      alert("Digite seu e-mail primeiro");
+      return;
+    }
+
+    const supabase = await createClient();
+
+    const result = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/login?reset=true",
+    });
+
+    if (result.error) {
+      alert("Erro: " + result.error.message);
+    } else {
+      alert("Enviamos link para " + email);
+    }
+  }
+
   return (
     <main className={styles.login}>
-      
       <section className={styles.ladoEsquerdo}>
-        <img
-          src="/logo-gato.png"
-          alt="Astro"
-          className={styles.logo}
-        />
+        <Link
+          href="/"
+          className={styles.planetaLink}
+          aria-label="Voltar para a página inicial da Astro"
+        >
+          <img
+            src="/gatoplaneta.png"
+            alt=""
+            className={styles.planetaImg}
+          />
+        </Link>
       </section>
 
       <section className={styles.ladoDireito}>
         <div className={styles.formulario}>
           <h1>
-            Bem-vindo(a) de volta! Sentimos sua
-            <br />
-            falta no nosso radar.
+            Bem-vindo(a) de volta! Sentimos sua falta no nosso radar.
           </h1>
 
           <input
             type="email"
             placeholder="E-mail"
             className={styles.input}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
-          <input
-            type="password"
-            placeholder="Senha"
-            className={styles.input}
-          />
+          <div className={styles.inputWrap}>
+            <input
+              type={mostrarSenha ? "text" : "password"}
+              placeholder="Senha"
+              className={styles.input}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleLogin();
+              }}
+            />
 
-          <button className={styles.botao}>
-            Entrar na Órbita
+            <button
+              type="button"
+              className={styles.olhinho}
+              onClick={() => setMostrarSenha(!mostrarSenha)}
+              aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+              aria-pressed={mostrarSenha}
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                {mostrarSenha ? (
+                  <>
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.53 9.53a3 3 0 1 0 4.24 4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </>
+                )}
+              </svg>
+            </button>
+          </div>
+
+          <div className={styles.opcoes}>
+            <label className={styles.checkbox}>
+              <input
+                type="checkbox"
+                checked={lembrar}
+                onChange={(e) => setLembrar(e.target.checked)}
+              />
+              <span>Lembrar meu login</span>
+            </label>
+
+            <button
+              type="button"
+              className={styles.esqueci}
+              onClick={handleEsqueciSenha}
+            >
+              Esqueci minha senha
+            </button>
+          </div>
+
+          <div className={styles.botoesLinha}>
+            <button
+              type="button"
+              className={styles.botaoPrimario}
+              onClick={handleLogin}
+              disabled={loading}
+            >
+              {loading ? "Entrando..." : "Acessar Base"}
+            </button>
+
+            <button
+              type="button"
+              className={styles.botaoSecundario}
+              onClick={() => router.push("/cadastro")}
+            >
+              Cadastre
+            </button>
+          </div>
+
+          <div className={styles.divisor}>ou</div>
+
+          <button
+            type="button"
+            className={styles.botaoGoogle}
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              width={20}
+              alt=""
+            />
+            Continuar com Google
           </button>
         </div>
       </section>
-
     </main>
   );
 }
