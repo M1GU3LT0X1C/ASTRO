@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import { alerta } from "@/lib/alerta";
+import { traduzirErroAuth } from "@/lib/errosAuth";
+import { buscarMe, garantirOng } from "@/lib/perfil";
 import styles from "./Login.module.css";
 
 export function Login() {
@@ -16,7 +19,6 @@ export function Login() {
 
   useEffect(() => {
     const saved = localStorage.getItem("astro_remember_email");
-
     if (saved) {
       setEmail(saved);
       setLembrar(true);
@@ -26,91 +28,59 @@ export function Login() {
   function checkRateLimit(e: string) {
     const key = `rl_${e}`;
     const raw = localStorage.getItem(key);
-
     if (!raw) return true;
-
     const data = JSON.parse(raw);
-
     if (data.count >= 5 && Date.now() - data.time < 15 * 60 * 1000) {
-      alert("Muitas tentativas. Tente em alguns minutos.");
+      alerta.aviso("Muitas tentativas", "Aguarde alguns minutos e tente novamente.");
       return false;
     }
-
     if (Date.now() - data.time > 15 * 60 * 1000) {
       localStorage.removeItem(key);
     }
-
     return true;
   }
 
   function addTentativa(e: string, ok: boolean) {
     const key = `rl_${e}`;
-
     if (ok) {
       localStorage.removeItem(key);
       return;
     }
-
     const raw = localStorage.getItem(key);
-    const d = raw ? JSON.parse(raw) : { count: 0, time: Date.now() };
-
-    localStorage.setItem(
-      key,
-      JSON.stringify({
-        count: d.count + 1,
-        time: Date.now(),
-      })
-    );
+    const d = raw? JSON.parse(raw) : { count: 0, time: Date.now() };
+    localStorage.setItem(key, JSON.stringify({ count: d.count + 1, time: Date.now() }));
   }
 
   async function handleLogin() {
-    if (!email || !senha) {
-      alert("Preencha e-mail e senha");
+    if (!email ||!senha) {
+      alerta.aviso("Preencha e-mail e senha");
       return;
     }
-
     if (!checkRateLimit(email)) return;
-
     setLoading(true);
-
     const supabase = await createClient();
-
-    if (lembrar) {
-      localStorage.setItem("astro_remember_email", email);
-    } else {
-      localStorage.removeItem("astro_remember_email");
-    }
-
-    const result = await supabase.auth.signInWithPassword({
-      email,
-      password: senha,
-    });
-
+    if (lembrar) localStorage.setItem("astro_remember_email", email);
+    else localStorage.removeItem("astro_remember_email");
+    const result = await supabase.auth.signInWithPassword({ email, password: senha });
     if (result.error) {
       addTentativa(email, false);
-      alert("Erro: " + result.error.message);
+      alerta.erro("Não foi possível entrar", traduzirErroAuth(result.error.message));
       setLoading(false);
       return;
     }
-
     addTentativa(email, true);
     await checkAndRedirect(result.data.user);
   }
 
   async function handleGoogleLogin() {
     setLoading(true);
-
     const supabase = await createClient();
-
     const result = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/auth/callback",
-      },
+      options: { redirectTo: window.location.origin + "/auth/callback" }
     });
-
     if (result.error) {
-      alert("Erro: " + result.error.message);
+      alerta.erro("Não foi possível entrar", traduzirErroAuth(result.error.message));
       setLoading(false);
     }
   }
@@ -120,59 +90,31 @@ export function Login() {
       setLoading(false);
       return;
     }
-
-    const supabase = await createClient();
-
-    const ongData = await supabase
-      .from("ongs")
-      .select("id,nome_organizacao")
-      .eq("usuario_id", user.id)
-      .single();
-
-    if (ongData.data) {
-      localStorage.setItem("ong_nome", ongData.data.nome_organizacao);
+    try {
+      if ((await buscarMe()).tutor) {
+        localStorage.setItem("tipo_usuario", "explorador");
+        router.push("/");
+        return;
+      }
+      const nome = user.user_metadata?.full_name || user.email.split("@")[0] || "Minha ONG";
+      const { ong } = await garantirOng(nome);
+      localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nome);
       router.push("/dashboard");
-      return;
-    }
-
-    const nome =
-      user.user_metadata?.full_name ||
-      user.email.split("@")[0] ||
-      "Minha ONG";
-
-    const nova = await supabase
-      .from("ongs")
-      .insert({
-        usuario_id: user.id,
-        nome_organizacao: nome,
-        email: user.email,
-      })
-      .select("id,nome_organizacao")
-      .single();
-
-    if (nova.data) {
-      localStorage.setItem("ong_nome", nova.data.nome_organizacao);
-      router.push("/dashboard");
+    } catch (err) {
+      alerta.erro("Não foi possível carregar sua ONG", err instanceof Error ? err.message : undefined);
+      setLoading(false);
     }
   }
 
   async function handleEsqueciSenha() {
     if (!email) {
-      alert("Digite seu e-mail primeiro");
+      alerta.aviso("Digite seu e-mail primeiro", "Usamos ele para enviar o link de recuperação.");
       return;
     }
-
     const supabase = await createClient();
-
-    const result = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + "/login?reset=true",
-    });
-
-    if (result.error) {
-      alert("Erro: " + result.error.message);
-    } else {
-      alert("Enviamos link para " + email);
-    }
+    const result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/login?reset=true" });
+    if (result.error) alerta.erro("Não foi possível enviar o link", traduzirErroAuth(result.error.message));
+    else alerta.sucesso("Link enviado!", "Enviamos um link de recuperação para " + email + ".");
   }
 
   return (
@@ -190,7 +132,6 @@ export function Login() {
           />
         </Link>
       </section>
-
       <section className={styles.ladoDireito}>
         <div className={styles.formulario}>
           <h1>

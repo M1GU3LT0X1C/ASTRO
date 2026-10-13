@@ -211,6 +211,9 @@
   border-radius: 999px;
 
   text-decoration: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
 
   transition:
     background-color 0.2s ease,

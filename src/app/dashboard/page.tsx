@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { listarMeusAnimais } from "@/lib/animais";
+import { buscarMe, garantirOng } from "@/lib/perfil";
 import styles from "./Painel.module.css";
 
 export default function DashboardPage() {
@@ -17,16 +19,10 @@ export default function DashboardPage() {
       localStorage.setItem("ultimo_user_id", user.id);
 
       const perfilPendente = localStorage.getItem("astro_perfil_pendente");
+      if (perfilPendente && perfilPendente !== "explorador") {
+        await garantirOng(localStorage.getItem("temp_ong_nome") || user.user_metadata.full_name || user.email?.split("@")[0] || "Minha ONG", perfilPendente);
+      }
       if (perfilPendente) {
-        const { data: existe } = await supabase.from("ongs").select("id").eq("usuario_id", user.id).maybeSingle();
-        if (!existe) {
-          await supabase.from("ongs").insert({
-            usuario_id: user.id,
-            nome_organizacao: localStorage.getItem("temp_ong_nome") || user.user_metadata.full_name || user.email?.split("@")[0] || "Minha ONG",
-            tipo_perfil: perfilPendente, documento: "", telefone: "", cep: "", regiao: "",
-            descricao: `Criado via Google - ${perfilPendente}`,
-          });
-        }
         localStorage.removeItem("astro_perfil_pendente");
         localStorage.removeItem("temp_ong_nome");
       }
@@ -36,11 +32,10 @@ export default function DashboardPage() {
       setNomePessoa(pessoaSalva);
       localStorage.setItem("pessoa_nome", pessoaSalva);
 
-      const { data: ong } = await supabase.from("ongs").select("id, nome_organizacao").eq("usuario_id", user.id).maybeSingle();
+      const { ong } = await buscarMe();
       if (ong) {
-        localStorage.setItem("ong_nome", ong.nome_organizacao);
-        const { data: pets } = await supabase.from("animais").select("*").eq("ong_id", ong.id).order("created_at", { ascending: false });
-        setAnimais(pets || []);
+        localStorage.setItem("ong_nome", ong.nomeOrganizacao);
+        setAnimais(await listarMeusAnimais());
       }
       setLoading(false);
     }

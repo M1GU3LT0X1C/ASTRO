@@ -3,11 +3,29 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import styles from "./Header.module.css";
+import { supabase } from "@/lib/supabase";
+import { buscarMe } from "@/lib/perfil";
+import { sair } from "@/lib/sair";
+
+type Sessao = { logado: boolean; tutor: boolean };
 
 export function Header() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const [sessao, setSessao] = useState<Sessao>({ logado: false, tutor: false });
+
+  useEffect(() => {
+    async function atualizar(userId?: string) {
+      if (!userId) return setSessao({ logado: false, tutor: false });
+      // se o back estiver fora do ar, ainda mostra "Sair"
+      const tutor = await buscarMe().then((me) => me.tutor).catch(() => false);
+      setSessao({ logado: true, tutor });
+    }
+    supabase.auth.getUser().then(({ data }) => atualizar(data.user?.id));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_evento, s) => { atualizar(s?.user.id); });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -53,8 +71,17 @@ export function Header() {
           <input type="text" className={styles.buscaInput} aria-label="Pesquisar" />
         </div>
         <div className={styles.botoes}>
-          <Link href="/login" className={styles.btnEntrar}>Entrar</Link>
-          <Link href="/cadastro" className={styles.btnCadastro}>Cadastro</Link>
+          {sessao.logado ? (
+            <>
+              {!sessao.tutor && <Link href="/dashboard" className={styles.btnEntrar}>Painel</Link>}
+              <button type="button" onClick={sair} className={styles.btnCadastro}>Sair</button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className={styles.btnEntrar}>Entrar</Link>
+              <Link href="/cadastro" className={styles.btnCadastro}>Cadastro</Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -76,8 +103,17 @@ export function Header() {
               <input type="text" className={styles.buscaInput} placeholder="Pesquisar" />
             </div>
             <div className={styles.botoes}>
-              <button onClick={() => goTo("/login")} className={styles.btnEntrar}>Entrar</button>
-              <button onClick={() => goTo("/cadastro")} className={styles.btnCadastro}>Cadastro</button>
+              {sessao.logado ? (
+                <>
+                  {!sessao.tutor && <button onClick={() => goTo("/dashboard")} className={styles.btnEntrar}>Painel</button>}
+                  <button onClick={() => { setOpen(false); sair(); }} className={styles.btnCadastro}>Sair</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => goTo("/login")} className={styles.btnEntrar}>Entrar</button>
+                  <button onClick={() => goTo("/cadastro")} className={styles.btnCadastro}>Cadastro</button>
+                </>
+              )}
             </div>
           </div>
         </div>

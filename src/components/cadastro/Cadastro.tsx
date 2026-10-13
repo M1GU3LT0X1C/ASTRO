@@ -1,11 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import styles from "./Cadastro.module.css";
+import { alerta } from "@/lib/alerta";
+import { traduzirErroAuth } from "@/lib/errosAuth";
 
 type Perfil = "explorador" | "guardiao" | "base-estelar" | "estacao";
+class EmailJaCadastradoError extends Error {}
+
 type DadosIniciais = { nome: string; email: string; senha: string };
 
 export function Cadastro() {
@@ -26,6 +30,8 @@ export function Cadastro() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   const [carregando, setCarregando] = useState(false);
+  // trava síncrona: o estado "carregando" só chega ao botão no próximo render, um clique duplo rápido passaria
+  const enviando = useRef(false);
 
   function maskCPF(v: string) {
     return v.replace(/\D/g, "").slice(0,11)
@@ -90,49 +96,72 @@ export function Cadastro() {
     if (!perfilSelecionado) return;
     if (!senhaOk) { setErroSenha("Sua senha precisa cumprir todos os requisitos"); return; }
     if (senha !== confirmarSenha) { setErroSenha("As senhas não coincidem!"); return; }
+    if (enviando.current) return;
+    enviando.current = true;
     setCarregando(true);
     try {
+      const ehOng = perfilSelecionado !== "explorador";
+      // os registros em "usuarios" e "ongs" são criados pelo trigger do banco a partir destes dados
+      // (Astro-Back-end/sql/002_trigger_perfil_no_cadastro.sql), junto com o usuário de login
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email, password: senha, options: { data: { nome, perfil: perfilSelecionado } }
+        email, password: senha, options: { data: {
+          nome, perfil: perfilSelecionado, telefone, cep,
+          ...(ehOng && {
+            documento,
+            descricao: `${perfilSelecionado} ${responsavel ? '| Resp:'+responsavel : ''} ${instagram ? '| IG:'+instagram : ''}`.trim(),
+          }),
+        } }
       });
-      if (authError) throw authError;
-      const userId = authData.user?.id;
-      if (!userId) throw new Error("Erro ao criar usuário");
-      if (perfilSelecionado !== "explorador") {
-        const { error } = await supabase.from("ongs").insert({
-          usuario_id: userId,
-          nome_organizacao: nome,
-          tipo_perfil: perfilSelecionado,
-          documento: documento,
-          telefone: telefone,
-          cep: cep,
-          regiao: cep,
-          descricao: `${perfilSelecionado} ${responsavel ? '| Resp:'+responsavel : ''} ${instagram ? '| IG:'+instagram : ''}`.trim()
-        });
-        if (error) throw error;
-        localStorage.setItem("ong_nome", nome);
-        localStorage.setItem("tipo_usuario", perfilSelecionado);
+      // com "Confirm email" desligado, o Supabase devolve erro para e-mail repetido
+      if (authError?.code === "user_already_exists") throw new EmailJaCadastradoError();
+      // a conta (e o perfil) já foram criados; só o e-mail de confirmação não saiu
+      if (authError?.code === "over_email_send_rate_limit") {
         sessionStorage.removeItem("astroCadastroInicial");
-        router.push("/dashboard");
+        await alerta.aviso("Conta criada, mas o e-mail não foi enviado", "Atingimos o limite de envio de e-mails. Aguarde alguns minutos e use \"Esqueci minha senha\" no login para receber um novo link.");
+        router.push("/login");
         return;
       }
-      const { error } = await supabase.from("usuarios").insert({ id: userId, nome, email, telefone, cidade: cep });
-      if (error) throw error;
-      localStorage.setItem("tipo_usuario", "explorador");
+      if (authError) throw authError;
+      // com "Confirm email" ligado, ele NÃO dá erro (para não revelar quais e-mails existem):
+      // devolve um usuário falso, sem identidades, e a senha não é criada
+      if (authData.user && authData.user.identities?.length === 0) throw new EmailJaCadastradoError();
+      if (!authData.user) throw new Error("Erro ao criar usuário");
+
+      localStorage.setItem("tipo_usuario", perfilSelecionado);
+      if (ehOng) localStorage.setItem("ong_nome", nome);
       sessionStorage.removeItem("astroCadastroInicial");
-      router.push("/");
-    } catch (err: any) { alert(err.message || "Erro ao cadastrar"); }
-    finally { setCarregando(false); }
+
+      // sem sessão = o projeto exige confirmar o e-mail antes do primeiro login
+      if (!authData.session) {
+        await alerta.sucesso("Conta criada!", `Enviamos um link de confirmação para ${email}. Confirme e depois faça login.`);
+        router.push("/login");
+        return;
+      }
+      router.push(ehOng ? "/dashboard" : "/");
+    } catch (err: any) {
+      // só libera o botão em caso de erro; no sucesso ele fica travado até a página trocar
+      enviando.current = false;
+      setCarregando(false);
+      if (err instanceof EmailJaCadastradoError) {
+        const irParaLogin = await alerta.confirmar({
+          icon: "info",
+          title: "Este e-mail já está cadastrado",
+          text: "Você pode entrar com ele na página de login ou usar \"Esqueci minha senha\".",
+          cancelText: "Continuar aqui", confirmText: "Ir para o login",
+        });
+        if (irParaLogin) router.push("/login");
+      } else alerta.erro("Não foi possível cadastrar", traduzirErroAuth(err.message || "Erro ao cadastrar"));
+    }
   }
 
   async function handleGoogleCadastro() {
-    if (!perfilSelecionado) { alert("Escolhe um perfil primeiro"); return; }
+    if (!perfilSelecionado) { alerta.aviso("Escolha um perfil primeiro", "Selecione como você vai orbitar com a gente."); return; }
     localStorage.setItem("astro_perfil_pendente", perfilSelecionado);
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: "google", 
       options: { redirectTo: `${window.location.origin}/auth/callback` } 
     });
-    if (error) alert(error.message);
+    if (error) alerta.erro("Não foi possível continuar com o Google", traduzirErroAuth(error.message));
   }
 
   const IconeOlhoAberto = () => (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a0b5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>);
@@ -210,7 +239,7 @@ export function Cadastro() {
               <input type="text" placeholder="CEP - 00000-000" className={styles.inputGrande} value={cep} onChange={(e) => setCep(maskCEP(e.target.value))} required />
 
               <button type="submit" className={styles.botaoContinuar} disabled={carregando || !senhaOk || !confirmOk}>
-                {carregando ? "Criando..." : `Criar conta de ${perfilSelecionado}`}
+                {carregando ? "Criando conta..." : `Criar conta de ${perfilSelecionado}`}
               </button>
 
               <div className={styles.divisor}>ou</div>
