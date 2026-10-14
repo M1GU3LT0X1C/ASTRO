@@ -16,7 +16,8 @@ export default function CallbackPage() {
       // perfil escolhido no cadastro com Google (vazio quando a pessoa só clicou em "entrar com Google")
       const perfilPendente = localStorage.getItem("astro_perfil_pendente");
       const nomeOngTemp = localStorage.getItem("temp_ong_nome");
-      localStorage.clear();
+      localStorage.removeItem("astro_perfil_pendente");
+      localStorage.removeItem("temp_ong_nome");
       localStorage.setItem("ultimo_user_id", user.id);
 
       const nomePessoa = user.user_metadata?.full_name || user.email?.split('@')[0] || "";

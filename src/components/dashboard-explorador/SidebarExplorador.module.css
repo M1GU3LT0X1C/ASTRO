@@ -1,0 +1,192 @@
+
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 16px 12px;
+  background: #f0eef6;
+  transition: width 0.25s ease, padding 0.25s ease;
+}
+
+.sidebar.fechado {
+  width: 72px;
+  padding: 16px 8px;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 0 4px 52px;
+}
+
+.avatarLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.avatar {
+  display: block;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e63d68;
+}
+
+.hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: #555;
+  cursor: pointer;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  flex: 1;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  color: #171717;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.item:hover {
+  background: #e9e0f4;
+}
+
+.item.ativo {
+  background: #f1cada;
+  color: #e63d68;
+}
+
+.icone {
+  flex-shrink: 0;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+.fechado .topo {
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+.fechado .item {
+  justify-content: center;
+  padding: 9px;
+}
+
+.rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.voltar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px;
+  border-radius: 999px;
+  background: #e63d68;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+
+.voltar:hover {
+  background: #d3325b;
+}
+
+.sair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px;
+  border: 1.5px solid #e63d68;
+  border-radius: 999px;
+  background: transparent;
+  color: #e63d68;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sair:hover {
+  background: #fff0f4;
+}
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    height: 100dvh;
+    min-height: 0;
+  }
+
+  .sidebar.fechado {
+    width: 70px;
+  }
+
+  .sidebar.aberto {
+    width: 280px;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.4);
+  }
+}
+
+@media (max-width: 380px) {
+  .sidebar.aberto {
+    width: min(280px, 85vw);
+  }
+}

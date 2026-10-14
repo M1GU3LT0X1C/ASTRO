@@ -1,0 +1,85 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.modal {
+  position: relative;
+  width: min(556px, 100%);
+  min-height: 242px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 46px;
+  padding: 45px 28px 38px;
+  border-radius: 16px;
+  background: #fff;
+  color: #111;
+  text-align: center;
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.18);
+}
+
+.fechar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #555;
+  cursor: pointer;
+}
+
+.fechar:hover { background: #f3f1f7; }
+
+.mensagem {
+  max-width: 490px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 400;
+}
+
+.acoes {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 26px;
+}
+
+.criarConta,
+.login {
+  min-width: 136px;
+  min-height: 47px;
+  padding: 11px 22px;
+  border: none;
+  border-radius: 999px;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.criarConta { background: #e63764; }
+.criarConta:hover { background: #ce2d56; }
+.login { background: #0d0062; }
+.login:hover { background: #24128c; }
+
+@media (max-width: 480px) {
+  .modal { gap: 28px; padding: 48px 18px 28px; min-height: 220px; }
+  .mensagem { font-size: 14px; }
+  .acoes { gap: 12px; }
+  .criarConta, .login { min-width: 120px; font-size: 14px; }
+}
