@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
 import { buscarMe, garantirOng } from "@/lib/perfil";
+import { acordarServidor } from "@/lib/api";
 import styles from "./Login.module.css";
 
 export function Login() {
@@ -16,6 +17,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    acordarServidor(); // o back no Render pode estar dormindo; vai subindo enquanto a pessoa digita
     const saved = localStorage.getItem("astro_remember_email");
     if (saved) {
       setEmail(saved);
@@ -99,7 +101,10 @@ export function Login() {
       localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nome);
       router.push("/dashboard");
     } catch (err) {
-      alerta.erro("Não foi possível carregar sua ONG", err instanceof Error ? err.message : undefined);
+      // a senha foi aceita pelo Supabase, mas o back falhou: encerra a sessão para não ficar
+      // "meio logado" (parecendo deslogado e depois entrando sozinho)
+      await (await createClient()).auth.signOut();
+      alerta.erro("Não foi possível concluir o login", err instanceof Error ? err.message : undefined);
       setLoading(false);
     }
   }
