@@ -15,9 +15,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const me = await apiServidor<Me>('/api/me').catch(() => null)
 
-  // o dashboard é só para ONGs; tutor volta para a home
+  // o dashboard é só para ONGs; explorador (tutor) vai para o painel dele
   if (me?.tutor) {
-    redirect('/')
+    redirect('/dashboard-explorador')
   }
 
   return <DashboardClient nomeOng={me?.ong?.nomeOrganizacao || 'Minha ONG'}>{children}</DashboardClient>

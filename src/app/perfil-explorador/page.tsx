@@ -15,6 +15,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import styles from "./PerfilExplorador.module.css";
+import { alerta } from "@/lib/alerta";
 
 type DadosPerfil = {
   nome: string;
@@ -130,12 +131,12 @@ export default function PerfilExplorador() {
     if (!arquivo) return;
 
     if (!arquivo.type.startsWith("image/")) {
-      alert("Selecione um arquivo de imagem válido.");
+      alerta.aviso("Arquivo inválido", "Selecione um arquivo de imagem.");
       return;
     }
 
     if (arquivo.size > 5 * 1024 * 1024) {
-      alert("Escolha uma imagem de até 5 MB.");
+      alerta.aviso("Imagem muito grande", "Escolha uma imagem de até 5 MB.");
       return;
     }
 

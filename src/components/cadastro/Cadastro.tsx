@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import styles from "./Cadastro.module.css";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
+import { acordarServidor } from "@/lib/api";
 
 type Perfil = "explorador" | "guardiao" | "base-estelar" | "estacao";
 class EmailJaCadastradoError extends Error {}
@@ -75,6 +76,7 @@ export function Cadastro() {
   const confirmOk = confirmarSenha !== "" && senha === confirmarSenha && senha.length <= 18;
 
   useEffect(() => {
+    acordarServidor(); // o back no Render pode estar dormindo; vai subindo enquanto a pessoa preenche
     const dadosSalvos = sessionStorage.getItem("astroCadastroInicial");
     if (!dadosSalvos) return;
     try {
@@ -137,7 +139,7 @@ export function Cadastro() {
         router.push("/login");
         return;
       }
-      router.push(ehOng ? "/dashboard" : "/");
+      router.push(ehOng ? "/dashboard" : "/dashboard-explorador");
     } catch (err: any) {
       // só libera o botão em caso de erro; no sucesso ele fica travado até a página trocar
       enviando.current = false;
