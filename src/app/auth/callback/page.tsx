@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { buscarMe, garantirOng, garantirTutor } from "@/lib/perfil";
@@ -10,14 +10,15 @@ import { alerta } from "@/lib/alerta";
 // encerrada: senão a pessoa voltaria ao login parecendo deslogada e depois "logaria sozinha".
 export default function CallbackPage() {
   const router = useRouter();
-  const [mensagem, setMensagem] = useState("Entrando...");
   const iniciou = useRef(false);
 
   useEffect(() => {
     if (iniciou.current) return;
     iniciou.current = true;
 
-    const aviso = setTimeout(() => setMensagem("O servidor está iniciando, isso pode levar até 2 minutos..."), 5000);
+    const MSG_ESPERA = "O servidor está iniciando, isso pode levar até 2 minutos.";
+    // só mostra o alerta de espera se demorar: quando o servidor já está acordado, entra direto
+    const aviso = setTimeout(() => alerta.carregando("Entrando na sua conta...", MSG_ESPERA), 3000);
 
     async function concluir() {
       const { data } = await supabase.auth.getSession();
@@ -35,6 +36,9 @@ export default function CallbackPage() {
           const me = perfilPendente === "explorador" ? await garantirTutor(nomePessoa || "Explorador") : await buscarMe();
           const ong = me.tutor ? null : (await garantirOng(nomeOngTemp || nomePessoa || "Minha ONG", perfilPendente || undefined)).ong;
 
+          clearTimeout(aviso);
+          alerta.fechar();
+
           // remove só os dados temporários do cadastro com Google (não apaga o resto do localStorage)
           localStorage.removeItem("astro_perfil_pendente");
           localStorage.removeItem("temp_ong_nome");
@@ -51,6 +55,7 @@ export default function CallbackPage() {
           }
           return;
         } catch (err) {
+          clearTimeout(aviso);
           const tentarDeNovo = await alerta.confirmar({
             icon: "error",
             title: "Não foi possível concluir o login",
@@ -63,7 +68,7 @@ export default function CallbackPage() {
             router.push("/login");
             return;
           }
-          setMensagem("Tentando de novo...");
+          alerta.carregando("Tentando de novo...", MSG_ESPERA);
         }
       }
     }
@@ -71,5 +76,5 @@ export default function CallbackPage() {
     concluir().finally(() => clearTimeout(aviso));
   }, [router]);
 
-  return <p style={{ padding: 24, textAlign: "center" }}>{mensagem}</p>;
+  return <p style={{ padding: 24, textAlign: "center" }}>Entrando...</p>;
 }

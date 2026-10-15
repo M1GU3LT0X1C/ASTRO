@@ -129,3 +129,8 @@ input, button, textarea, select {
   outline: 3px solid #e9e2ff;
   outline-offset: 2px;
 }
+
+/* animacao de "carregando" (alerta.carregando) na cor da paleta */
+.swal2-popup.astro-swal .swal2-loader {
+  border-color: #e63d68 transparent #e63d68 transparent;
+}

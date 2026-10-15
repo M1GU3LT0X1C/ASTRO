@@ -47,4 +47,18 @@ export const alerta = {
     });
     return isConfirmed;
   },
+
+  /** Alerta de espera, com animação e sem botões; some com alerta.fechar() ou ao abrir outro alerta. */
+  carregando(title: string, text?: string) {
+    AstroSwal.fire({
+      title,
+      text,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => Swal.showLoading(),
+    });
+  },
+
+  fechar: () => Swal.close(),
 };
