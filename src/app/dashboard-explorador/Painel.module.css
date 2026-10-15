@@ -1,0 +1,452 @@
+
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  color: #171717;
+}
+
+/* BOAS-VINDAS */
+
+.boasVindas {
+  padding: 15px 20px;
+  border: 1px solid #e8e4ef;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.boasVindas h1 {
+  margin: 0 0 7px;
+  font-size: clamp(18px, 2vw, 23px);
+  font-weight: 800;
+}
+
+.boasVindas p {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
+}
+
+/* AÇÕES RÁPIDAS */
+
+.acoesRapidas h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.acoesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.acao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 43px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.2s, filter 0.2s;
+}
+
+.acao:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.acaoAzul {
+  background: #100064;
+}
+
+.acaoRosa {
+  background: #e43d69;
+}
+
+/* GRID DOS CARDS */
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.cardSaude,
+.cardCompromisso {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 245px;
+  padding: 13px;
+  border: 1px solid;
+  border-radius: 14px;
+}
+
+.cardSaude {
+  background: #e7e6f0;
+  border-color: #4b42a1;
+}
+
+.cardCompromisso {
+  background: #f4c9d5;
+  border-color: #ed6688;
+}
+
+/* CARD ESQUERDO - CABEÇALHO */
+
+.cabecalhoSaude {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.seletorPet,
+.statusAtencao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.seletorPet {
+  min-width: 145px;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.bolinhaPet {
+  width: 21px;
+  height: 21px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e43d69;
+}
+
+.statusAtencao {
+  min-width: 135px;
+  color: #e0ae00;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.bolinhaAmarela {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f2d323;
+}
+
+/* CARD ESQUERDO - CONTEÚDO */
+
+.conteudoSaude {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.barraProtecao {
+  width: 100%;
+  height: 28px;
+  overflow: hidden;
+  border: 1px solid #2aaf4e;
+  border-radius: 999px;
+  background: #d5f1db;
+}
+
+.progressoProtecao {
+  display: flex;
+  align-items: center;
+  width: 80%;
+  height: 100%;
+  padding: 0 15px;
+  border-radius: 999px;
+  background: #16a53d;
+  color: #fff;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.listaAlertas {
+  margin-top: 6px;
+}
+
+.alerta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 39px;
+  padding: 8px 0;
+  color: #171717;
+}
+
+.alerta + .alerta {
+  border-top: 1px solid #d5d5d5;
+}
+
+.alerta svg {
+  flex-shrink: 0;
+}
+
+.alerta p {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.alerta strong {
+  font-weight: 800;
+}
+
+/* CARD DIREITO - CABEÇALHO */
+
+.cabecalhoCompromisso {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 31px;
+  margin-bottom: 17px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.tituloCompromisso {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  padding: 5px 10px;
+}
+
+.tituloCompromisso svg {
+  flex-shrink: 0;
+  color: #e43d69;
+}
+
+.tituloCompromisso strong {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.prazoCompromisso {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  background: #e43d69;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* CARD DIREITO - CONTEÚDO */
+
+.conteudoCompromisso {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 124px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.dadosPet {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nomePetCompromisso,
+.dataCompromisso {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 4px 9px;
+  border: 1px solid #ed6688;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.bolinhaAzul {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #100064;
+}
+
+.dataCompromisso {
+  padding: 5px 13px;
+  color: #e43d69;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.detalhesCompromisso {
+  margin-top: 12px;
+}
+
+.detalhesCompromisso > p {
+  margin: 0 0 7px;
+  font-size: 10px;
+}
+
+.localCompromisso {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px solid #d5d5d5;
+  font-size: 10px;
+}
+
+.localCompromisso svg {
+  flex-shrink: 0;
+  color: #888;
+  fill: #888;
+  stroke: #fff;
+}
+
+/* BOTÕES INFERIORES */
+
+.botoesCard {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.botaoRosa,
+.botaoAzul {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: filter 0.2s;
+}
+
+.botaoRosa {
+  background: #e43d69;
+}
+
+.botaoAzul {
+  background: #100064;
+}
+
+.botaoRosa:hover,
+.botaoAzul:hover {
+  filter: brightness(1.12);
+}
+
+.avisoDemonstracao {
+  margin: 0;
+  color: #888;
+  font-size: 11px;
+  text-align: right;
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 1150px) {
+  .acoesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagina {
+    gap: 20px;
+  }
+
+  .boasVindas {
+    padding: 14px;
+  }
+
+  .boasVindas h1 {
+    font-size: 18px;
+  }
+
+  .acoesGrid {
+    gap: 9px;
+  }
+
+  .acao {
+    gap: 6px;
+    padding: 10px 7px;
+    font-size: 11px;
+  }
+
+  .acao svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .cardSaude,
+  .cardCompromisso {
+    padding: 11px;
+  }
+
+  .cabecalhoSaude {
+    gap: 8px;
+  }
+
+  .seletorPet {
+    min-width: 130px;
+  }
+
+  .statusAtencao {
+    min-width: 125px;
+  }
+
+  .tituloCompromisso strong {
+    font-size: 10px;
+  }
+
+  .prazoCompromisso {
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .botoesCard {
+    gap: 8px;
+  }
+}

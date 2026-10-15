@@ -139,7 +139,7 @@ export function Cadastro() {
         router.push("/login");
         return;
       }
-      router.push(ehOng ? "/dashboard" : "/");
+      router.push(ehOng ? "/dashboard" : "/dashboard-explorador");
     } catch (err: any) {
       // só libera o botão em caso de erro; no sucesso ele fica travado até a página trocar
       enviando.current = false;

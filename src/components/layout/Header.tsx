@@ -73,7 +73,7 @@ export function Header() {
         <div className={styles.botoes}>
           {sessao.logado ? (
             <>
-              {!sessao.tutor && <Link href="/dashboard" className={styles.btnEntrar}>Painel</Link>}
+              <Link href={sessao.tutor ? "/dashboard-explorador" : "/dashboard"} className={styles.btnEntrar}>Painel</Link>
               <button type="button" onClick={sair} className={styles.btnCadastro}>Sair</button>
             </>
           ) : (
@@ -105,7 +105,7 @@ export function Header() {
             <div className={styles.botoes}>
               {sessao.logado ? (
                 <>
-                  {!sessao.tutor && <button onClick={() => goTo("/dashboard")} className={styles.btnEntrar}>Painel</button>}
+                  <button onClick={() => goTo(sessao.tutor ? "/dashboard-explorador" : "/dashboard")} className={styles.btnEntrar}>Painel</button>
                   <button onClick={() => { setOpen(false); sair(); }} className={styles.btnCadastro}>Sair</button>
                 </>
               ) : (

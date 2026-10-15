@@ -1,6 +1,8 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
@@ -93,7 +95,7 @@ export function Login() {
     try {
       if ((await buscarMe()).tutor) {
         localStorage.setItem("tipo_usuario", "explorador");
-        router.push("/");
+        router.push("/dashboard-explorador");
         return;
       }
       const nome = user.user_metadata?.full_name || user.email.split("@")[0] || "Minha ONG";
@@ -123,32 +125,128 @@ export function Login() {
   return (
     <main className={styles.login}>
       <section className={styles.ladoEsquerdo}>
-        <img src="/gatoplaneta.png" alt="Gato planeta" className={styles.planetaImg} />
+        <Link
+          href="/"
+          className={styles.planetaLink}
+          aria-label="Voltar para a página inicial da Astro"
+        >
+          <img
+            src="/gatoplaneta.png"
+            alt=""
+            className={styles.planetaImg}
+          />
+        </Link>
       </section>
       <section className={styles.ladoDireito}>
         <div className={styles.formulario}>
-          <h1>Bem-vindo(a) de volta! Sentimos sua falta no nosso radar.</h1>
-          <input type="email" placeholder="E-mail" className={styles.input} value={email} onChange={function(e){setEmail(e.target.value)}} />
+          <h1>
+            Bem-vindo(a) de volta! Sentimos sua falta no nosso radar.
+          </h1>
+
+          <input
+            type="email"
+            placeholder="E-mail"
+            className={styles.input}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
           <div className={styles.inputWrap}>
-            <input type={mostrarSenha? "text" : "password"} placeholder="Senha" className={styles.input} value={senha} onChange={function(e){setSenha(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter") handleLogin()}} />
-            <button type="button" className={styles.olhinho} onClick={function(){setMostrarSenha(!mostrarSenha)}}>
-              {mostrarSenha? "🙈" : "👁️"}
+            <input
+              type={mostrarSenha ? "text" : "password"}
+              placeholder="Senha"
+              className={styles.input}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleLogin();
+              }}
+            />
+
+            <button
+              type="button"
+              className={styles.olhinho}
+              onClick={() => setMostrarSenha(!mostrarSenha)}
+              aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+              aria-pressed={mostrarSenha}
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                {mostrarSenha ? (
+                  <>
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.53 9.53a3 3 0 1 0 4.24 4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </>
+                )}
+              </svg>
             </button>
           </div>
+
           <div className={styles.opcoes}>
             <label className={styles.checkbox}>
-              <input type="checkbox" checked={lembrar} onChange={function(e){setLembrar(e.target.checked)}} />
+              <input
+                type="checkbox"
+                checked={lembrar}
+                onChange={(e) => setLembrar(e.target.checked)}
+              />
               <span>Lembrar meu login</span>
             </label>
-            <button type="button" className={styles.esqueci} onClick={handleEsqueciSenha}>Esqueci minha senha</button>
+
+            <button
+              type="button"
+              className={styles.esqueci}
+              onClick={handleEsqueciSenha}
+            >
+              Esqueci minha senha
+            </button>
           </div>
+
           <div className={styles.botoesLinha}>
-            <button className={styles.botaoPrimario} onClick={handleLogin} disabled={loading}>{loading? "Entrando..." : "Acessar Base"}</button>
-            <button className={styles.botaoSecundario} onClick={function(){router.push("/cadastro")}}>Cadastre</button>
+            <button
+              type="button"
+              className={styles.botaoPrimario}
+              onClick={handleLogin}
+              disabled={loading}
+            >
+              {loading ? "Entrando..." : "Acessar Base"}
+            </button>
+
+            <button
+              type="button"
+              className={styles.botaoSecundario}
+              onClick={() => router.push("/cadastro")}
+            >
+              Cadastre
+            </button>
           </div>
+
           <div className={styles.divisor}>ou</div>
-          <button className={styles.botaoGoogle} onClick={handleGoogleLogin} disabled={loading}>
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" width={20} alt="" />
+
+          <button
+            type="button"
+            className={styles.botaoGoogle}
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              width={20}
+              alt=""
+            />
             Continuar com Google
           </button>
         </div>

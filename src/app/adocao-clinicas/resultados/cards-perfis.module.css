@@ -1,0 +1,67 @@
+/* Complemento visual para os três tipos de card; não altera filtros ou modal. */
+.cardPerfil {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 385px;
+  padding: 62px 20px 18px;
+  text-align: center;
+  border: 1.5px solid #ef3869;
+  border-radius: 22px;
+  background: #fff;
+}
+.fotoArea { position: relative; width: 124px; height: 124px; flex: 0 0 auto; margin-bottom: 16px; }
+.fotoCircular {
+  width: 124px !important;
+  height: 124px !important;
+  border-radius: 50% !important;
+  overflow: hidden;
+  background: #d9d9d9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.fotoCircular img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.fotoPlaceholder { display: block; width: 100%; height: 100%; background: #d9d9d9; }
+.statusOng {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: white;
+  font-weight: 800;
+  font-size: 23px;
+  box-shadow: 0 0 0 3px #fff;
+}
+.superlotada { background: #cc0c13; }
+.lotada { background: #f3b51d; }
+.disponivel { background: #20a65a; }
+.informacoes { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; }
+.nome { display: block; font-size: 17px; font-weight: 500; line-height: 1.25; color: #171717; }
+.idade { color: #171717; font-size: 16px; line-height: 1.2; }
+.local { display: block !important; font-size: 13px; line-height: 1.4; color: #777; }
+.estrelas { display: flex; justify-content: center; gap: 2px; font-size: 24px; line-height: 1.1; }
+.estrelaAtiva { color: #e53868; }
+.estrelaInativa { color: #d5d5d5; }
+.botaoPerfil {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto !important;
+  width: 100%;
+  max-width: 212px;
+  min-height: 47px;
+  border-radius: 999px !important;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+.botaoSemLink { background: #e43968 !important; color: #fff !important; opacity: 0.7; cursor: not-allowed; }
+@media (max-width: 600px) { .cardPerfil { min-height: 370px; } }

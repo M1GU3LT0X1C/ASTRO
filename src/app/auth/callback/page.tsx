@@ -35,13 +35,15 @@ export default function CallbackPage() {
           const me = perfilPendente === "explorador" ? await garantirTutor(nomePessoa || "Explorador") : await buscarMe();
           const ong = me.tutor ? null : (await garantirOng(nomeOngTemp || nomePessoa || "Minha ONG", perfilPendente || undefined)).ong;
 
-          localStorage.clear();
+          // remove só os dados temporários do cadastro com Google (não apaga o resto do localStorage)
+          localStorage.removeItem("astro_perfil_pendente");
+          localStorage.removeItem("temp_ong_nome");
           localStorage.setItem("ultimo_user_id", user.id);
           localStorage.setItem("pessoa_nome", nomePessoa);
           if (user.user_metadata?.avatar_url) localStorage.setItem("ong_foto", user.user_metadata.avatar_url);
           if (me.tutor) {
             localStorage.setItem("tipo_usuario", "explorador");
-            router.push("/");
+            router.push("/dashboard-explorador");
           } else {
             localStorage.setItem("tipo_usuario", perfilPendente || "ong");
             localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nomeOngTemp || nomePessoa || "Minha ONG");

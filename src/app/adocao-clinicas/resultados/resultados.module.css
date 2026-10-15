@@ -1,0 +1,705 @@
+
+.main {
+  width: 100%;
+  min-height: calc(100vh - 74px);
+  padding: 30px 0 85px;
+  background: #fffdfd;
+  color: #111;
+}
+
+.container {
+  width: 100%;
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* ===== LOCALIZAÇÃO ===== */
+
+.barraSuperior {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 22px;
+}
+
+.localizacao {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  border: 1.5px solid #160877;
+  border-radius: 999px;
+  background: #e9e6f2;
+  overflow: hidden;
+}
+
+.localizacao svg {
+  margin-left: 14px;
+  flex-shrink: 0;
+  color: #160877;
+}
+
+.localizacao span {
+  padding: 0 15px 0 9px;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.localizacao button {
+  align-self: stretch;
+  flex-shrink: 0;
+  padding: 0 22px;
+  border: none;
+  background: #0d0062;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.localizacao button:hover {
+  background: #24128c;
+}
+
+/* ===== BARRA DE FILTROS ===== */
+
+.areaFiltros {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.barraFiltros {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.acoesFiltros {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.botaoFiltro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 43px;
+  padding: 0 17px;
+  border: 1px solid #c8c8c8;
+  border-radius: 10px;
+  background: white;
+  color: #333;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.botaoFiltro:hover,
+.botaoFiltro[aria-expanded="true"] {
+  border-color: #0d0062;
+  color: #0d0062;
+}
+
+.limparFiltros {
+  border: none;
+  background: transparent;
+  color: #0d0062;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.limparFiltros:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.limparFiltros:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ===== ORDENAÇÃO ===== */
+
+.ordenacao {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 43px;
+  border: 1px solid #c8c8c8;
+  border-radius: 10px;
+  background: white;
+}
+
+.ordenacao select {
+  width: 100%;
+  min-width: 115px;
+  height: 43px;
+  padding: 0 39px 0 16px;
+  border: none;
+  border-radius: 10px;
+  outline-offset: 3px;
+  background: transparent;
+  color: #333;
+  font-size: 13px;
+  cursor: pointer;
+  appearance: none;
+}
+
+.ordenacao svg {
+  position: absolute;
+  right: 12px;
+  color: #111;
+  pointer-events: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===== TAGS SELECIONADAS ===== */
+
+.tagsSelecionadas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  width: 100%;
+  min-height: 65px;
+  padding: 12px;
+  border: 1px solid #c8c8c8;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.tagSelecionada {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 29px;
+  padding: 5px 7px 5px 12px;
+  border: 1px solid #0d0062;
+  border-radius: 999px;
+  background: #0d0062;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.tagSelecionada:hover {
+  background: #2b1a91;
+}
+
+.removerTag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  color: #0d0062;
+}
+
+.semFiltros {
+  color: #888;
+  font-size: 12px;
+}
+
+/* ===== PAINEL DE FILTROS HORIZONTAL ===== */
+
+.painelFiltros {
+  position: absolute;
+  top: 53px;
+  left: 0;
+  z-index: 20;
+  width: min(1100px, 100%);
+  max-height: min(75vh, 700px);
+  overflow-y: auto;
+  padding: 24px 28px;
+  border: 1px solid #dcd8e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 35px rgba(13, 0, 98, 0.13);
+}
+
+/* CABEÇALHO */
+
+.cabecalhoPainel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.cabecalhoPainel strong {
+  color: #0d0062;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.cabecalhoPainel button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: #f4f1fa;
+  color: #0d0062;
+  cursor: pointer;
+}
+
+.ajudaFiltro {
+  margin: 6px 0 22px;
+  color: #777;
+  font-size: 12px;
+}
+
+/* ORGANIZAÇÃO GERAL */
+
+.gruposFiltros {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* PORTE, SEXO E ESPÉCIE */
+
+.linhaCaracteristicas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eeeaf5;
+}
+
+/* SAÚDE, PERSONALIDADE E CONVIVÊNCIA */
+
+.gruposFiltros > .grupoFiltro {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eeeaf5;
+}
+
+.gruposFiltros > .grupoFiltro:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.grupoFiltro {
+  min-width: 0;
+}
+
+.grupoFiltro h3 {
+  margin: 0 0 12px;
+  color: #0d0062;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.opcoesFiltro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+/* BOTÕES DE TAGS */
+
+.tagOpcao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 7px 13px;
+  border: 1.5px solid #0d0062;
+  border-radius: 999px;
+  background: #f7f5fc;
+  color: #0d0062;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.tagOpcao:hover {
+  background: #e9e5fa;
+}
+
+.tagAtiva,
+.tagAtiva:hover {
+  background: #0d0062;
+  color: white;
+}
+
+/* RODAPÉ DO PAINEL */
+
+.rodapePainel {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eeeaf5;
+}
+
+.botaoConcluir {
+  min-height: 38px;
+  padding: 0 25px;
+  border: none;
+  border-radius: 999px;
+  background: #0d0062;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.botaoConcluir:hover {
+  background: #24128c;
+}
+
+/* ===== SEÇÕES ===== */
+
+.secao {
+  margin-top: 80px;
+}
+
+.secao h2 {
+  margin: 0 0 24px;
+  color: #15056f;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+/* ===== MENSAGENS SEM CADASTROS ===== */
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 185px;
+  padding: 30px 20px;
+  border: 1.8px dashed #f5bdcc;
+  border-radius: 18px;
+  background: #fff8f9;
+  text-align: center;
+}
+
+.iconeVazio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #ffe6ed;
+  color: #df3b67;
+}
+
+.vazio strong {
+  color: #221672;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.vazio span {
+  color: #888;
+  font-size: 12px;
+}
+
+/* ===== CARDS ===== */
+
+.cardsGrid {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 5px 2px 20px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.cardsGrid::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 220px;
+  min-height: 295px;
+  padding: 35px 15px 18px;
+  border: 1.5px solid #f16b8e;
+  border-radius: 16px;
+  background: white;
+  text-align: center;
+  scroll-snap-align: start;
+}
+
+.favorito {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #df3b67;
+  cursor: pointer;
+}
+
+.imagemCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  margin: 8px 0 15px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #ececec;
+}
+
+.imagemCard img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.semImagem {
+  color: #999;
+  font-size: 11px;
+}
+
+.nomeCard {
+  color: #222;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.descricaoCard {
+  margin-top: 5px;
+  color: #555;
+  font-size: 12px;
+}
+
+.localCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 7px;
+  color: #777;
+  font-size: 11px;
+}
+
+.botaoCard,
+.botaoIndisponivel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 35px;
+  margin-top: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.botaoCard {
+  background: #df3b67;
+}
+
+.botaoCard:hover {
+  background: #c92b55;
+}
+
+.botaoIndisponivel {
+  background: #aaa;
+}
+
+/* ===== TABLET ===== */
+
+@media (max-width: 850px) {
+  .container {
+    padding: 0 22px;
+  }
+
+  .secao {
+    margin-top: 65px;
+  }
+
+  .secao h2 {
+    font-size: 19px;
+  }
+
+  .card {
+    flex-basis: 195px;
+  }
+}
+
+@media (max-width: 768px) {
+  .painelFiltros {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .linhaCaracteristicas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+/* ===== CELULAR ===== */
+
+@media (max-width: 600px) {
+  .main {
+    padding-top: 20px;
+    padding-bottom: 60px;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .barraFiltros {
+    gap: 10px;
+  }
+
+  .acoesFiltros {
+    gap: 10px;
+  }
+
+  .botaoFiltro {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .limparFiltros {
+    font-size: 11px;
+  }
+
+  .ordenacao select {
+    min-width: 95px;
+    padding-left: 10px;
+    padding-right: 30px;
+    font-size: 11px;
+  }
+
+  .ordenacao svg {
+    right: 7px;
+    width: 15px;
+  }
+
+  .painelFiltros {
+    top: 53px;
+    padding: 17px;
+    max-height: 75vh;
+  }
+
+  .linhaCaracteristicas {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .gruposFiltros {
+    gap: 18px;
+  }
+
+  .tagOpcao {
+    padding: 6px 11px;
+    font-size: 10px;
+  }
+
+  .tagsSelecionadas {
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .tagSelecionada {
+    font-size: 10px;
+  }
+
+  .localizacao span {
+    font-size: 11px;
+  }
+
+  .localizacao button {
+    padding: 0 13px;
+    font-size: 11px;
+  }
+
+  .secao {
+    margin-top: 55px;
+  }
+
+  .secao h2 {
+    margin-bottom: 18px;
+    font-size: 17px;
+  }
+
+  .vazio {
+    min-height: 170px;
+    padding: 22px 14px;
+  }
+
+  .vazio strong {
+    font-size: 13px;
+  }
+
+  .vazio span {
+    font-size: 11px;
+  }
+
+  .cardsGrid {
+    gap: 14px;
+  }
+
+  .card {
+    flex-basis: 170px;
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 360px) {
+  .barraFiltros {
+    flex-wrap: wrap;
+  }
+
+  .ordenacao {
+    margin-left: auto;
+  }
+}
