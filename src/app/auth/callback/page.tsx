@@ -17,13 +17,14 @@ export default function CallbackPage() {
     iniciou.current = true;
 
     const MSG_ESPERA = "O servidor está iniciando, isso pode levar até 2 minutos.";
-    // só mostra o alerta de espera se demorar: quando o servidor já está acordado, entra direto
-    const aviso = setTimeout(() => alerta.carregando("Entrando na sua conta...", MSG_ESPERA), 3000);
+    alerta.carregando("Entrando...");
+    // se demorar, explica o motivo (o back no Render pode estar "dormindo")
+    const aviso = setTimeout(() => alerta.carregando("Entrando...", MSG_ESPERA), 3000);
 
     async function concluir() {
       const { data } = await supabase.auth.getSession();
       const user = data.session?.user;
-      if (!user) { router.push("/login"); return; }
+      if (!user) { clearTimeout(aviso); alerta.fechar(); router.push("/login"); return; }
 
       // perfil escolhido no cadastro com Google (vazio quando a pessoa só clicou em "entrar com Google")
       const perfilPendente = localStorage.getItem("astro_perfil_pendente");
@@ -76,5 +77,6 @@ export default function CallbackPage() {
     concluir().finally(() => clearTimeout(aviso));
   }, [router]);
 
-  return <p style={{ padding: 24, textAlign: "center" }}>Entrando...</p>;
+  // o conteúdo da espera fica no alerta de carregamento
+  return null;
 }
