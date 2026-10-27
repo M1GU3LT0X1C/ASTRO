@@ -4,56 +4,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Menu,
-  LayoutDashboard,
-  Cat,
-  Gift,
-  ChartNoAxesColumn,
-  CalendarDays,
-  MessageCircle,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { sair } from "@/lib/sair";
 import styles from "./SidebarExplorador.module.css";
 
 const menu = [
-  {
-    label: "Painel",
-    href: "/dashboard-explorador",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Meus Pets",
-    href: "/dashboard-explorador/meus-pets",
-    icon: Cat,
-  },
-  {
-    label: "Recompensas & Pontos",
-    href: "/dashboard-explorador/recompensas",
-    icon: Gift,
-  },
-  {
-    label: "Métricas",
-    href: "/dashboard-explorador/metricas",
-    icon: ChartNoAxesColumn,
-  },
-  {
-    label: "Agenda",
-    href: "/dashboard-explorador/agenda",
-    icon: CalendarDays,
-  },
-  {
-    label: "Mensagens",
-    href: "/dashboard-explorador/mensagens",
-    icon: MessageCircle,
-  },
-  {
-    label: "Configurações",
-    href: "/dashboard-explorador/config",
-    icon: Settings,
-  },
+  { label: "Painel", href: "/dashboard-explorador", icon: "/painel-vetor.png" },
+  { label: "Meus Pets & Saúde", href: "/dashboard-explorador/meus-pets", icon: "/gato-meuspets.png" },
+  { label: "Meus Favoritos", href: "/dashboard-explorador/favoritos", icon: "/mais-novo-pet.png" },
+  { label: "Minhas adoções", href: "/dashboard-explorador/adocoes", icon: "/metricas.png" },
+  { label: "Recompensas & Pontos", href: "/dashboard-explorador/recompensas", icon: "/recompensa.png" },
+  { label: "Agenda", href: "/dashboard-explorador/agenda", icon: "/agenda.png" },
+  { label: "Mensagens", href: "/dashboard-explorador/mensagens", icon: "/balao-dashboard.png" },
+  { label: "Configurações", href: "/dashboard-explorador/config", icon: "/configuracao.png" },
 ];
 
 export function SidebarExplorador() {
@@ -132,7 +95,6 @@ export function SidebarExplorador() {
 
         <nav className={styles.nav}>
           {menu.map((item) => {
-            const Icone = item.icon;
 
             const ativo =
               pathname === item.href ||
@@ -149,9 +111,9 @@ export function SidebarExplorador() {
                   ativo ? styles.ativo : ""
                 }`}
               >
-                <Icone
-                  size={20}
-                  className={styles.icone}
+                <span
+                  className={styles.iconeVetor}
+                  style={{ maskImage: `url("${item.icon}")`, WebkitMaskImage: `url("${item.icon}")` }}
                   aria-hidden="true"
                 />
 
