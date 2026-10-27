@@ -14,7 +14,12 @@ export type OpcoesApi = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; 
 const TEMPO_LIMITE_MS = 150_000;
 
 // tira a barra final da URL base: "https://x.com/" + "/api/me" viraria "//api/me", que o Spring recusa (400)
-export const montarUrl = (baseUrl: string, caminho: string) => baseUrl.replace(/\/+$/, "") + caminho;
+export const montarUrl = (baseUrl: string, caminho: string) => {
+  if (!baseUrl?.trim()) {
+    throw new ErroApi(0, "A URL da API não está configurada. Defina NEXT_PUBLIC_API_URL no .env.local.");
+  }
+  return baseUrl.replace(/\/+$/, "") + caminho;
+};
 
 export async function chamarApi<T>(baseUrl: string, caminho: string, token: string | undefined, opcoes: OpcoesApi = {}): Promise<T> {
   let resposta: Response;
