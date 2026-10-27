@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import styles from "./dashboard.module.css";
 
@@ -24,7 +25,7 @@ export default function DashboardClient({ children, nomeOng }: { children: React
               <input placeholder="Procure pets..." value={busca} onChange={(e)=>setBusca(e.target.value)} onKeyDown={(e)=> e.key === "Enter" && fazerBusca()} />
             </div>
             <div className={styles.direita}>
-              <div className={styles.bolinha}></div>
+              <Link href="/perfil-ong" aria-label="Abrir perfil da ONG" title="Perfil da ONG" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",textDecoration:"none",cursor:"pointer"}}><div className={styles.bolinha}></div></Link>
               <strong className={styles.nomeTopo}>{nomeOng}</strong>
             </div>
           </header>
