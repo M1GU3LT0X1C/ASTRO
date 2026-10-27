@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -37,7 +36,9 @@ type Perguntas = {
   modeloTrabalho: string;
   tempoSozinho: string;
   pessoasCasa: string;
+  moradoresConcordam: string;
   petsResidencia: string;
+  tiposPets: string[];
 };
 
 const dadosIniciais: DadosPerfil = {
@@ -58,7 +59,9 @@ const perguntasIniciais: Perguntas = {
   modeloTrabalho: "",
   tempoSozinho: "",
   pessoasCasa: "",
+  moradoresConcordam: "",
   petsResidencia: "",
+  tiposPets: [],
 };
 
 export default function PerfilExplorador() {
@@ -120,6 +123,19 @@ export default function PerfilExplorador() {
     setPerguntas((anterior) => ({
       ...anterior,
       [campo]: valor,
+      ...(campo === "petsResidencia" && valor === "Não" ? { tiposPets: [] } : {}),
+    }));
+  }
+
+  // SELEÇÃO MÚLTIPLA DE PETS
+
+  function alternarTipoPet(tipo: string) {
+    setAvisoSalvo(false);
+    setPerguntas((anterior) => ({
+      ...anterior,
+      tiposPets: anterior.tiposPets.includes(tipo)
+        ? anterior.tiposPets.filter((item) => item !== tipo)
+        : [...anterior.tiposPets, tipo],
     }));
   }
 
@@ -480,7 +496,7 @@ export default function PerfilExplorador() {
                 <div id="opcoes-tempo" className={styles.conteudoPergunta}>
                   <div className={styles.grupoPergunta}>
                     <p>Selecione o seu modelo de Trabalho:</p>
-                    {renderizarOpcoes("modeloTrabalho", ["Presencial", "Híbrido", "Home-office", "Desempregado(a)"])}
+                    {renderizarOpcoes("modeloTrabalho", ["Presencial", "Híbrido", "Home-Office", "Desempregado(a)"])}
                   </div>
                   <div className={styles.grupoPergunta}>
                     <p>Quantas horas ele ficará sozinho?</p>
@@ -499,7 +515,14 @@ export default function PerfilExplorador() {
               </button>
               {perguntaAberta === "pessoas" && (
                 <div id="opcoes-pessoas" className={styles.conteudoPergunta}>
-                  {renderizarOpcoes("pessoasCasa", ["1 pessoa", "2 pessoas", "3 pessoas", "4 pessoas", "5 ou mais pessoas"])}
+                  <div className={styles.grupoPergunta}>
+                    <p>Quantas pessoas moram na sua casa:</p>
+                    {renderizarOpcoes("pessoasCasa", ["Moro sozinho(a)", "2 pessoas", "3 pessoas", "4 pessoas (ou mais)"])}
+                  </div>
+                  <div className={styles.grupoPergunta}>
+                    <p>Todos os moradores estão de acordo com a adoção?</p>
+                    {renderizarOpcoes("moradoresConcordam", ["Sim", "Não"])}
+                  </div>
                 </div>
               )}
             </div>
@@ -513,7 +536,30 @@ export default function PerfilExplorador() {
               </button>
               {perguntaAberta === "pets" && (
                 <div id="opcoes-pets" className={styles.conteudoPergunta}>
-                  {renderizarOpcoes("petsResidencia", ["Nenhum", "1 pet", "2 pets", "3 pets", "4 ou mais pets"])}
+                  <div className={styles.grupoPergunta}>
+                    <p>Existem outros Pets na residência?</p>
+                    {renderizarOpcoes("petsResidencia", ["Sim", "Não"])}
+                  </div>
+                  {perguntas.petsResidencia === "Sim" && (
+                    <div className={styles.grupoPergunta}>
+                      <p>Selecione o(s) outro(s) Pets na residência:</p>
+                      <div className={styles.opcoes}>
+                        {["Cachorro", "Gato", "Pássaro", "Outro"].map((tipo) => (
+                          <label key={tipo} className={styles.opcao}>
+                            <input
+                              type="checkbox"
+                              name="tiposPets"
+                              value={tipo}
+                              checked={perguntas.tiposPets.includes(tipo)}
+                              onChange={() => alternarTipoPet(tipo)}
+                            />
+                            <span className={styles.radioVisual} />
+                            <span>{tipo}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -528,12 +574,6 @@ export default function PerfilExplorador() {
           </section>
         </div>
 
-        {/* AVISO DE PRÉ-VISUALIZAÇÃO */}
-
-        <p className={styles.aviso}>
-          Pré-visualização: alterações mantidas apenas
-          nesta página, sem salvamento no banco de dados.
-        </p>
       </main>
     </>
   );
