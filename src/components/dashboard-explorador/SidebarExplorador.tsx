@@ -11,8 +11,8 @@ import styles from "./SidebarExplorador.module.css";
 const menu = [
   { label: "Painel", href: "/dashboard-explorador", icon: "/painel-vetor.png" },
   { label: "Meus Pets & Saúde", href: "/dashboard-explorador/meus-pets", icon: "/gato-meuspets.png" },
-  { label: "Meus Favoritos", href: "/dashboard-explorador/favoritos", icon: "/mais-novo-pet.png" },
-  { label: "Minhas adoções", href: "/dashboard-explorador/adocoes", icon: "/metricas.png" },
+  { label: "Meus Favoritos", href: "/dashboard-explorador/favoritos", icon: "/meus-favs.svg" },
+  { label: "Minhas adoções", href: "/dashboard-explorador/adocoes", icon: "/adocaos.svg" },
   { label: "Recompensas & Pontos", href: "/dashboard-explorador/recompensas", icon: "/recompensa.png" },
   { label: "Agenda", href: "/dashboard-explorador/agenda", icon: "/agenda.png" },
   { label: "Mensagens", href: "/dashboard-explorador/mensagens", icon: "/balao-dashboard.png" },
