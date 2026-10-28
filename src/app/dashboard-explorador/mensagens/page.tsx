@@ -1,1 +1,5 @@
-import {MessageCircle} from "lucide-react";import styles from "../painel-interno.module.css";export default function Mensagens(){return <div className={styles.pagina}><div><h1 className={styles.titulo}>Mensagens</h1><p className={styles.subtitulo}>Suas conversas com ONGs e parceiros.</p></div><div className={styles.vazio}><MessageCircle size={36}/><strong>Nenhuma conversa disponível</strong><p>Você ainda não possui conversas.</p></div></div>}
+import Mensagens from "@/components/mensagens/Mensagens";
+
+export default function PaginaMensagens() {
+  return <Mensagens tipo="explorador" />;
+}
