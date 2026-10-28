@@ -452,3 +452,7 @@
 }
 
 .cardSaude h2,.cardCompromisso h2{font-size:15px;margin:0 0 14px}.estadoVazio{display:flex;min-height:150px;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;color:#736e80}.estadoVazio strong{color:#171324;font-size:13px}.estadoVazio p{margin:0;max-width:290px;font-size:12px;line-height:1.5}.listaDinamica{display:flex;flex-direction:column;gap:12px}.petResumo{display:flex;flex-direction:column;gap:5px;padding:10px;border:1px solid #e9e5ee;border-radius:9px;font-size:12px}.petResumo span{color:#666}.notaDados{display:flex;align-items:center;gap:7px;color:#817c8c;font-size:11px;margin:0}.conteudoCompromisso p{font-size:12px}
+
+/* Ícones personalizados dos quatro botões de acesso rápido */
+.iconeAcao { display: block; width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
+@media (max-width: 480px) { .iconeAcao { width: 18px; height: 18px; } }
