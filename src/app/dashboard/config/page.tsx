@@ -143,7 +143,7 @@ export default function Page() {
     <main className={styles.page}>
       <h1>Configurações Gerais</h1>
       <div className={styles.accordion}>
-        <Link href="/perfil-ong" className={styles.profileLink}><span>Perfil</span><span aria-hidden="true">›</span></Link>
+        <Link href="/dashboard/perfil" className={styles.profileLink}><span>Perfil</span><span aria-hidden="true">›</span></Link>
         {sections.map(({ id, title }) => (
           <section className={`${styles.section} ${open === id ? styles.expanded : ""}`} key={id}>
             <button type="button" className={styles.heading} aria-expanded={open === id} onClick={() => toggle(id)}>
