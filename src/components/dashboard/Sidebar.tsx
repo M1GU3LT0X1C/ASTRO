@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { buscarMe } from "@/lib/perfil";
 import { sair } from "@/lib/sair";
@@ -27,8 +28,8 @@ export function Sidebar() {
     return "astro";
   });
   const [fotoONG, setFotoONG] = useState(() => {
-    if (typeof window!== "undefined") return localStorage.getItem("ong_foto") || "/logo-gato.png";
-    return "/logo-gato.png";
+    if (typeof window!== "undefined") return localStorage.getItem("ong_foto") || "";
+    return "";
   });
 
   useEffect(() => {
@@ -82,38 +83,70 @@ export function Sidebar() {
 
   return (
     <>
-      {isMobile && aberto && <div className={styles.overlay} onClick={() => setAberto(false)} />}
-      <aside className={`${styles.sidebar} ${aberto? styles.aberto : styles.fechado} ${isMobile? styles.mobile : ""}`}>
+      {isMobile && aberto && (
+        <div className={styles.overlay} onClick={() => setAberto(false)} />
+      )}
+
+      <aside className={`${styles.sidebar} ${aberto ? styles.aberto : styles.fechado}`}>
         <div className={styles.topo}>
-          {aberto? (
-            <>
+          <Link
+            href="/perfil-ong"
+            className={styles.avatarLink}
+            onClick={fecharMobile}
+            aria-label="Acessar perfil da ONG"
+          >
+            {fotoONG ? (
               <img src={fotoONG} alt={nomeONG} className={styles.avatarTopo} />
-              <span className={styles.nomeOng}>{nomeONG}</span>
-            </>
-          ) : (
-            <img src={fotoONG} alt={nomeONG} className={styles.avatarTopoFechado} />
-          )}
-          <button className={styles.hamburger} onClick={() => setAberto(!aberto)}>
-            <img src="/3tracinhos.png" alt="menu" className={styles.tracinhos} />
+            ) : (
+              <span className={styles.avatarPadrao} aria-hidden="true" />
+            )}
+          </Link>
+          <button
+            type="button"
+            className={styles.hamburger}
+            onClick={() => setAberto((valor) => !valor)}
+            aria-label={aberto ? "Recolher menu" : "Expandir menu"}
+            aria-expanded={aberto}
+          >
+            <Menu size={22} />
           </button>
         </div>
+
         <nav className={styles.nav}>
           {menu.map((item) => {
-            const ativo = pathname === item.href || (item.href!== "/dashboard" && pathname.startsWith(item.href));
+            const ativo = pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
             return (
-              <Link key={item.href} href={item.href} onClick={fecharMobile} className={`${styles.item} ${ativo? styles.ativo : ""}`}>
-                <img src={item.icon} alt={item.label} className={styles.iconeVetor} />
+              <Link
+                key={item.href}
+                href={item.href}
+                title={!aberto ? item.label : undefined}
+                onClick={fecharMobile}
+                className={`${styles.item} ${ativo ? styles.ativo : ""}`}
+              >
+                <span
+                  className={styles.iconeVetor}
+                  style={{ maskImage: `url("${item.icon}")`, WebkitMaskImage: `url("${item.icon}")` }}
+                  aria-hidden="true"
+                />
                 {aberto && <span className={styles.label}>{item.label}</span>}
               </Link>
             );
           })}
         </nav>
+
         <div className={styles.rodape}>
-          <Link href="/" className={styles.voltar}>{aberto? "Voltar para o site" : "←"}</Link>
-          <button type="button" onClick={sair} className={styles.sair} title="Sair da conta">{aberto? "Sair" : "⎋"}</button>
+          <Link href="/" className={styles.voltar} onClick={fecharMobile}>
+            {aberto ? "Voltar para o site" : "←"}
+          </Link>
+          <button type="button" onClick={sair} className={styles.sair} title="Sair da conta">
+            <LogOut size={aberto ? 16 : 18} />
+            {aberto && "Sair"}
+          </button>
         </div>
       </aside>
     </>
   );
 }
+
 export default Sidebar;

@@ -1,0 +1,37 @@
+.pagina{display:flex;flex-direction:column;gap:28px;color:#171324;width:100%}
+.cabecalho{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.cabecalho h1{font-size:23px;font-weight:800;margin:0 0 6px}
+.cabecalho p{font-size:13px;color:#777181;margin:0}
+.encontrar,.acompanhar{display:inline-flex;justify-content:center;align-items:center;border:0;border-radius:999px;padding:11px 17px;background:#e43d69;color:#fff;text-decoration:none;font-weight:700;font-size:12px;cursor:pointer;text-align:center}
+.encontrar:hover,.acompanhar:hover{filter:brightness(1.07)}
+.lista{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.cartao{border:1px solid #ed6688;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:15px;min-width:0;background:#fff;transition:background .2s,color .2s}
+.cartaoAtivo{background:#e43d69;color:#fff}
+.cartaoTopo{display:flex;align-items:center;gap:12px;min-width:0}
+.petIcone{width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#f4c9d5;color:#e43d69}
+.cartaoAtivo .petIcone{background:#fff}
+.cartaoIdentidade{min-width:0}
+.cartaoIdentidade h2{font-size:14px;font-weight:800;margin:0 0 5px;overflow-wrap:anywhere}
+.cartaoIdentidade span{font-size:11px}
+.cartaoDetalhes{display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:#fff;border-radius:11px;padding:12px;color:#171324;flex:1}
+.etiqueta{font-size:12px;font-weight:800;color:#100064}
+.data{display:inline-flex;align-items:center;gap:6px;color:#777181;font-size:11px}
+.acompanhar{align-self:center;min-width:75%;margin-top:auto}
+.cartaoAtivo .acompanhar{background:#100064}
+.acompanhamento{margin-top:4px}
+.acompanhamentoTopo h2{font-size:17px;margin:0 0 6px}
+.acompanhamentoTopo p{font-size:13px;color:#777181;margin:0 0 24px}
+.etapas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px;list-style:none;padding:0;margin:0;position:relative}
+.etapas::before{content:"";position:absolute;height:2px;background:#171324;top:50%;left:8%;right:8%;z-index:0}
+.etapa{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;min-height:170px;border:1px solid #554ca3;border-radius:14px;background:#fff;color:#858585;text-align:center;padding:18px 12px}
+.etapa strong{font-size:14px;max-width:120px}
+.etapa.ativa{background:#f1d321;border-color:#f1d321;color:#fff}
+.etapa.concluida{background:#100064;border-color:#100064;color:#fff}
+.etapa.concluida:last-child{background:#18a43b;border-color:#18a43b}
+.confirmacao{position:absolute;top:9px;right:9px}
+.nota{font-size:12px;color:#777181;margin:18px 0 0;line-height:1.5}
+.vazio{min-height:320px;border:1px dashed #d9cddd;border-radius:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:13px;padding:30px;text-align:center;color:#100064}
+.vazio h2{margin:0;font-size:18px}
+.vazio p{margin:0 0 6px;max-width:420px;font-size:13px;color:#777181;line-height:1.6}
+@media(max-width:1050px){.lista{grid-template-columns:repeat(2,minmax(0,1fr))}.etapas{gap:12px}.etapa{min-height:145px}.etapa strong{font-size:12px}}
+@media(max-width:650px){.lista{grid-template-columns:1fr}.etapas{grid-template-columns:repeat(2,minmax(0,1fr))}.etapas::before{display:none}.etapa{min-height:125px}.cabecalho h1{font-size:20px}}

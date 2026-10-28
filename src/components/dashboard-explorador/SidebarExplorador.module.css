@@ -190,3 +190,59 @@
     width: min(280px, 85vw);
   }
 }
+
+/* Ícones vetoriais usados nos dois painéis */
+.iconeVetor {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
+  filter: brightness(0);
+}
+.item.ativo .iconeVetor { filter: brightness(0); }
+.fechado .iconeVetor { width: 22px; height: 22px; }
+
+/* Identificação da ONG */
+.avatarTopo, .avatarTopoFechado {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+}
+.nomeOng {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+.fechado .nomeOng { display: none; }
+.fechado .hamburger { margin: 0; }
+/* Mantém a rolagem acessível em telas baixas */
+.sidebar { max-height: 100dvh; overflow-y: auto; }
+@media (max-width: 768px) {
+  .sidebar { overflow-y: auto; }
+}
+
+/* Ícones PNG como máscara: acompanham a cor do item ativo. */
+.iconeVetor {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  filter: none;
+}
+.item.ativo .iconeVetor { filter: none; }
+.fechado .iconeVetor { width: 22px; height: 22px; }
