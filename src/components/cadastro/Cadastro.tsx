@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import styles from "./Cadastro.module.css";
@@ -30,6 +31,7 @@ export function Cadastro() {
   const [erroSenha, setErroSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   const [carregando, setCarregando] = useState(false);
   // trava síncrona: o estado "carregando" só chega ao botão no próximo render, um clique duplo rápido passaria
   const enviando = useRef(false);
@@ -98,6 +100,10 @@ export function Cadastro() {
     if (!perfilSelecionado) return;
     if (!senhaOk) { setErroSenha("Sua senha precisa cumprir todos os requisitos"); return; }
     if (senha !== confirmarSenha) { setErroSenha("As senhas não coincidem!"); return; }
+    if (!aceitouTermos) {
+      alerta.aviso("Aceite os termos para continuar", "Confirme que você tem 18 anos ou mais e que aceita os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
     if (enviando.current) return;
     enviando.current = true;
     setCarregando(true);
@@ -158,6 +164,10 @@ export function Cadastro() {
 
   async function handleGoogleCadastro() {
     if (!perfilSelecionado) { alerta.aviso("Escolha um perfil primeiro", "Selecione como você vai orbitar com a gente."); return; }
+    if (!aceitouTermos) {
+      alerta.aviso("Aceite os termos para continuar", "Confirme que você tem 18 anos ou mais e que aceita os Termos de Uso e a Política de Privacidade antes de continuar com o Google.");
+      return;
+    }
     localStorage.setItem("astro_perfil_pendente", perfilSelecionado);
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: "google", 
@@ -240,7 +250,40 @@ export function Cadastro() {
               {erroSenha && <span className={styles.erroSenha}>{erroSenha}</span>}
               <input type="text" placeholder="CEP - 00000-000" className={styles.inputGrande} value={cep} onChange={(e) => setCep(maskCEP(e.target.value))} required />
 
-              <button type="submit" className={styles.botaoContinuar} disabled={carregando || !senhaOk || !confirmOk}>
+              <label className={styles.termoLabel}>
+                <input
+                  type="checkbox"
+                  checked={aceitouTermos}
+                  onChange={(e) => setAceitouTermos(e.target.checked)}
+                  className={styles.termoCheckbox}
+                  required
+                />
+                <span className={styles.termoTexto}>
+                  Declaro ter <strong>18 anos ou mais</strong> e que li e aceito os{" "}
+                  <Link
+                    href="/termos-de-uso"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.termoLink}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Termos de Uso
+                  </Link>{" "}
+                  e a{" "}
+                  <Link
+                    href="/politica-de-privacidade"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.termoLink}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Política de Privacidade
+                  </Link>{" "}
+                  do Astro.
+                </span>
+              </label>
+
+              <button type="submit" className={styles.botaoContinuar} disabled={carregando || !senhaOk || !confirmOk || !aceitouTermos}>
                 {carregando ? "Criando conta..." : `Criar conta de ${perfilSelecionado}`}
               </button>
 
