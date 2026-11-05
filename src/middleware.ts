@@ -5,6 +5,32 @@ import type { NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  const modoTesteExplorador =
+  process.env.NODE_ENV === "development" &&
+  process.env.MODO_TESTE_EXPLORADOR === "true";
+
+  const rotaExplorador =
+    pathname === "/dashboard-explorador" ||
+    pathname.startsWith("/dashboard-explorador/") ||
+    pathname === "/perfil-explorador" ||
+    pathname.startsWith("/perfil-explorador/");
+
+  const modoTesteONG =
+    process.env.NODE_ENV === "development" &&
+    process.env.MODO_TESTE_ONG === "true";
+
+  const rotaONG =
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/");
+
+  if (modoTesteONG && rotaONG) {
+    return NextResponse.next({ request });
+  }
+
+  if (modoTesteExplorador && rotaExplorador) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

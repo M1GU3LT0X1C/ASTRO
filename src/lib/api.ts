@@ -12,7 +12,10 @@ export async function api<T>(caminho: string, opcoes?: OpcoesApi): Promise<T> {
 // Dispara uma chamada leve so para o back comecar a acordar (Render gratuito dorme sem uso).
 // Usado no login/cadastro: enquanto a pessoa preenche ou escolhe a conta Google, o back ja vai subindo.
 export function acordarServidor() {
-  fetch(montarUrl(process.env.NEXT_PUBLIC_API_URL!, "/api/pets"), { method: "HEAD", mode: "no-cors" }).catch(() => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!baseUrl?.trim()) return;
+
+  fetch(montarUrl(baseUrl, "/api/pets"), { method: "HEAD", mode: "no-cors" }).catch(() => {
     // so um aquecimento; erro aqui nao importa
   });
 }

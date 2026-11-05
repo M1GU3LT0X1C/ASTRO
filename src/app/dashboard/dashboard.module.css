@@ -83,3 +83,15 @@
   .direita{ gap:8px; }
   .nomeTopo{ font-size:12px; max-width:90px; overflow:hidden; text-overflow:ellipsis; }
 }
+/* Nas páginas sem barra superior, arredonda também o topo do conteúdo. */
+.painelSemCabecalho {
+  overflow: hidden;
+}
+.painelSemCabecalho .conteudo {
+  border-radius: 24px;
+}
+@media (max-width: 768px) {
+  .painelSemCabecalho .conteudo {
+    border-radius: 0;
+  }
+}

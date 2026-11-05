@@ -9,22 +9,44 @@ export default async function DashboardExploradorLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const modoTesteExplorador =
+    process.env.NODE_ENV === "development" &&
+    process.env.MODO_TESTE_EXPLORADOR === "true";
+
+  // Acesso temporário para desenvolvimento
+  if (modoTesteExplorador) {
+    return (
+      <DashboardExploradorClient nomeExplorador="Explorador Teste">
+        {children}
+      </DashboardExploradorClient>
+    );
+  }
+
+  // Autenticação normal
   const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  // painel só para exploradores (tutores); ONGs vão para o painel delas.
-  // Se o back não responder (me = null), deixa entrar em vez de mandar para o lugar errado.
-  const me = await apiServidor<Me>("/api/me").catch(() => null);
+  // Verificar se o usuário é explorador
+  const me = await apiServidor<Me>("/api/me").catch(
+    () => null
+  );
+
   if (me && !me.tutor) {
     redirect("/dashboard");
   }
 
-  // "nome" vem do cadastro por e-mail; "full_name", do login com Google
-  const nome = user.user_metadata?.nome || user.user_metadata?.full_name || user.email?.split("@")[0] || "Explorador";
+  const nome =
+    user.user_metadata?.nome ||
+    user.user_metadata?.full_name ||
+    user.email?.split("@")[0] ||
+    "Explorador";
 
   return (
     <DashboardExploradorClient nomeExplorador={nome}>
