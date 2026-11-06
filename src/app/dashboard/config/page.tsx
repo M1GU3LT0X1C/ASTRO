@@ -45,11 +45,18 @@ export default function Page() {
   const [saved, setSaved] = useState(false);
   const [colaborador, setColaborador] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [nivelAcesso, setNivelAcesso] = useState<"administrador" | "voluntario" | "clinica">("voluntario");
+  const [convites, setConvites] = useState<{ email: string; nivel: string; status: "rascunho" | "email" }[]>([]);
+  const [integracaoEditando, setIntegracaoEditando] = useState<string | null>(null);
+  const [integracaoValor, setIntegracaoValor] = useState("");
+  const [integracaoAviso, setIntegracaoAviso] = useState("");
 
   useEffect(() => {
     try {
       const savedSettings = localStorage.getItem(storageKey);
       if (savedSettings) setSettings({ ...initial, ...JSON.parse(savedSettings) });
+      const draftInvites = localStorage.getItem("astro_ong_convites_rascunho_v1");
+      if (draftInvites) setConvites(JSON.parse(draftInvites));
       setFoto(localStorage.getItem("ong_foto") || "");
       const perfil = JSON.parse(localStorage.getItem("astro_ong_perfil_visual_v1") || "{}");
       setNome(perfil.nome || ""); setBio(perfil.bio || ""); setEndereco(perfil.endereco || "");
@@ -123,6 +130,51 @@ export default function Page() {
       if (fileRef.current) fileRef.current.value = "";
     }
   };
+  const niveis = [
+    { id: "administrador", titulo: "Administrador", descricao: "Gerenciamento administrativo da ONG", icon: "administrador.svg" },
+    { id: "voluntario", titulo: "Voluntário/Atendente", descricao: "Atendimento e apoio às ONGs", icon: "maocoracoa.svg" },
+    { id: "clinica", titulo: "Clínica Veterinária", descricao: "Integração de exames e informações vet", icon: "estetoscopio.svg" },
+  ] as const;
+  const canais = [
+    { id: "whatsapp", nome: "WhatsApp", icon: "whatsapp.svg", campo: "whatsappContato" as const },
+    { id: "instagram", nome: "Instagram", icon: "instagram.svg", campo: "instagram" as const },
+    { id: "facebook", nome: "Facebook", icon: "facebook.svg" },
+    { id: "email", nome: "E-mail", icon: "email.svg" },
+  ];
+  const servicos = [
+    { id: "agenda", nome: "Agendamento", icon: "agenda-icon.svg" },
+    { id: "local", nome: "Localização", icon: "local-icon.svg" },
+    { id: "armazenamento", nome: "Armazenamento", icon: "armazenamento-nuvem.svg" },
+    { id: "api", nome: "API e serviços", icon: "integracao-api.svg" },
+  ];
+  const iconeConfig = (nome: string) => `/icons-config/${nome}`;
+  const guardarConvites = (novos: typeof convites) => {
+    setConvites(novos);
+    try { localStorage.setItem("astro_ong_convites_rascunho_v1", JSON.stringify(novos)); }
+    catch { alerta.erro("Não foi possível guardar os convites neste navegador."); }
+  };
+  const prepararConvite = () => {
+    const email = colaborador.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    const nivel = niveis.find(n => n.id === nivelAcesso)?.titulo || "Voluntário/Atendente";
+    guardarConvites([{ email, nivel, status: "email" }, ...convites.filter(c => c.email.toLowerCase() !== email.toLowerCase())]);
+    setColaborador("");
+    const subject = "Convite para colaborar com nossa ONG no ASTRO";
+    const body = `Olá! Gostaríamos de convidar você para colaborar com nossa ONG no ASTRO.\nNível de acesso proposto: ${nivel}.\n\nEste é um convite por e-mail; o acesso à plataforma ainda precisa ser cadastrado por um administrador.`;
+    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+  const salvarIntegracaoLocal = () => {
+    if (!integracaoEditando) return;
+    const id = integracaoEditando;
+    if (id === "whatsapp" || id === "instagram") update(id === "whatsapp" ? "whatsappContato" : "instagram", integracaoValor);
+    try {
+      if (id === "whatsapp" || id === "instagram") {
+        localStorage.setItem(storageKey, JSON.stringify({ ...settings, [id === "whatsapp" ? "whatsappContato" : "instagram"]: integracaoValor }));
+      }
+      setIntegracaoAviso("Dados salvos neste navegador. A conexão com o serviço ainda não foi verificada.");
+    } catch { alerta.erro("Não foi possível salvar neste navegador."); }
+    setIntegracaoEditando(null);
+  };
   const sections: { id: Section; title: string }[] = [
     { id: "seguranca", title: "Conta & Segurança" },
     { id: "preferencias", title: "Preferências" },
@@ -170,16 +222,65 @@ export default function Page() {
                 <h2>Tipos de Alerta</h2>
                 {switchRow("Novas mensagens de exploradores", "mensagens")}{switchRow("Lembretes de compromissos da agenda", "agenda")}{switchRow("Alerta de novos cupons", "cupons")}{switchRow("Lembrete de check-in diário", "checkin")}
               </div>}
-              {id === "colaboradores" && <div className={styles.formArea}><h2>Convidar colaboradores</h2>
-                <p>Prepare um convite para um colaborador da ONG.</p>
-                <label className={styles.fieldLabel} htmlFor="colaborador">E-mail do colaborador</label>
-                <div className={styles.inlineField}><input id="colaborador" type="email" value={colaborador} onChange={(e) => setColaborador(e.target.value)} placeholder="colaborador@exemplo.com" />
-                  <button type="button" className={styles.primary} disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(colaborador)} onClick={() => { window.location.href = `mailto:${encodeURIComponent(colaborador)}?subject=${encodeURIComponent("Convite para colaborar com nossa ONG no ASTRO")}`; }}>Preparar e-mail</button></div>
+              {id === "colaboradores" && <div className={styles.colaboradoresGrid}>
+                <div className={styles.conviteColuna}>
+                  <h2>Convidar colaboradores</h2>
+                  <label className={styles.configLabel} htmlFor="colaborador">E-mail:</label>
+                  <input className={styles.conviteEmail} id="colaborador" type="email" value={colaborador} onChange={e => setColaborador(e.target.value)} placeholder="endereço de e-mail" />
+                  <label className={styles.configLabel} htmlFor="nivel-colaborador">Nível de Acesso:</label>
+                  <div className={styles.niveisLista} id="nivel-colaborador" role="radiogroup" aria-label="Nível de acesso">
+                    {niveis.map(n => <label key={n.id} className={`${styles.nivelOpcao} ${nivelAcesso === n.id ? styles.nivelSelecionado : ""}`}>
+                      <input type="radio" name="nivel-acesso" value={n.id} checked={nivelAcesso === n.id} onChange={() => setNivelAcesso(n.id)} />
+                      <img src={iconeConfig(n.icon)} alt="" /><span><strong>{n.titulo}</strong><small>{n.descricao}</small></span>
+                    </label>)}
+                  </div>
+                  <button type="button" className={styles.conviteBotao} disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(colaborador.trim())} onClick={prepararConvite}>Preparar convite por e-mail</button>
+                </div>
+                <div className={styles.colaboradoresColuna}>
+                  <h2>Colaboradores:</h2>
+                  {convites.length === 0 ? <p className={styles.vazioColaboradores}>Nenhum colaborador cadastrado ou convite preparado neste navegador.</p> :
+                    <div className={styles.colaboradoresLista}>{convites.map(c => <div className={styles.colaboradorCard} key={c.email}>
+                      <div>
+                         <strong>{c.email}</strong>
+                         <span className={styles.colaboradorTipo}>
+                           {niveis.find(n => n.titulo === c.nivel) && (
+                             <img
+                               src={iconeConfig(niveis.find(n => n.titulo === c.nivel)!.icon)}
+                               alt=""
+                               aria-hidden="true"
+                               className={styles.colaboradorTipoIcone}
+                             />
+                           )}
+                           <small>{c.nivel}</small>
+                         </span>
+                       </div><span className={styles.statusPendente}>E-mail preparado</span>
+                      <button type="button" className={styles.removerConvite} onClick={() => guardarConvites(convites.filter(v => v.email !== c.email))} aria-label={`Remover rascunho de ${c.email}`}>×</button>
+                    </div>)}</div>}
+                </div>
               </div>}
-              {id === "integracoes" && <div className={styles.formArea}><h2>Canais externos</h2>
-                <label className={styles.fieldLabel} htmlFor="site">Site da ONG</label><input id="site" value={settings.site} onChange={(e) => update("site", e.target.value)} placeholder="https://..." />
-                <label className={styles.fieldLabel} htmlFor="instagram">Instagram</label><input id="instagram" value={settings.instagram} onChange={(e) => update("instagram", e.target.value)} placeholder="@suaong" />
-                <label className={styles.fieldLabel} htmlFor="whatsapp">WhatsApp de contato</label><input id="whatsapp" value={settings.whatsappContato} onChange={(e) => update("whatsappContato", e.target.value)} placeholder="(00) 00000-0000" />
+              {id === "integracoes" && <div className={styles.integracoesGrid}>
+                <div className={styles.integracoesColuna}>
+                  <h3>Gerencie os canais externos:</h3>
+                  <div className={styles.integracoesLista}>{canais.map(c => <div className={styles.integracaoCard} key={c.id}>
+                    <img src={iconeConfig(c.icon)} alt="" className={styles.integracaoIcone}/><strong>{c.nome}</strong>
+                    <span className={styles.statusDesconectado}><i />Não conectado</span>
+                    <button type="button" className={styles.gerenciar} onClick={() => {setIntegracaoEditando(c.id);setIntegracaoValor(c.campo ? settings[c.campo] : "");setIntegracaoAviso("");}}>Gerenciar</button>
+                  </div>)}</div>
+                </div>
+                <div className={styles.integracoesColuna}>
+                  <h3 className={styles.servicosTitulo}>Gerencie os serviços vinculados:</h3>
+                  <div className={styles.integracoesLista}>{servicos.map(c => <div className={styles.integracaoCard} key={c.id}>
+                    <img src={iconeConfig(c.icon)} alt="" className={styles.integracaoIcone}/><strong>{c.nome}</strong>
+                    <span className={styles.statusDesconectado}><i />Não conectado</span>
+                    <button type="button" className={styles.gerenciar} onClick={() => {setIntegracaoEditando(c.id);setIntegracaoValor("");setIntegracaoAviso("");}}>Gerenciar</button>
+                  </div>)}</div>
+                </div>
+                {integracaoEditando && <div className={styles.editarIntegracao}>
+                  <label htmlFor="config-integracao">Configurar {([...canais, ...servicos].find(c => c.id === integracaoEditando)?.nome || "serviço")}</label>
+                  <input id="config-integracao" value={integracaoValor} onChange={e => setIntegracaoValor(e.target.value)} placeholder="Informe o endereço ou identificador do serviço" />
+                  <div className={styles.editarAcoes}><button type="button" className={styles.primary} onClick={salvarIntegracaoLocal}>Salvar dados locais</button><button type="button" onClick={() => setIntegracaoEditando(null)}>Cancelar</button></div>
+                </div>}
+                {integracaoAviso && <p className={styles.notaIntegracao} role="status">{integracaoAviso}</p>}
               </div>}
               {id === "adocao" && <div className={styles.formArea}><h2>Critérios para adoção</h2>
                 <label className={styles.fieldLabel} htmlFor="idade">Idade mínima do adotante</label><input id="idade" type="number" min="18" max="100" value={settings.idadeMinima} onChange={(e) => update("idadeMinima", e.target.value)} />
