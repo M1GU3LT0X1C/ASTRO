@@ -192,7 +192,7 @@ export default function ConfiguracoesExplorador() {
   const switchRow = (label: string, key: keyof Settings) => (
     <label className={styles.switchRow} key={key}>
       <span>{label}</span>
-      <input type="checkbox" role="switch" checked={settings[key]} onChange={e => update(key, e.target.checked)} />
+      <input type="checkbox" role="switch" checked={Boolean(settings[key])} onChange={e => update(key, e.target.checked)} />
       <span className={styles.switch} aria-hidden="true" />
     </label>
   );
