@@ -1,5 +1,5 @@
 // Armazenamento provisório no navegador, até integrar os endpoints do Explorador.
-export type PetExplorador = { id:string; nome:string; microchip:string; peso:string; castrado:string; alergias:string; condicao:string; foto:string; vacinas:string[]; exames:string[] };
+export type PetExplorador = { id:string; nome:string; microchip:string; peso:string; castrado:string; alergias:string; condicao:string; foto:string; vacinas:string[]; exames:string[]; idade?:string; tempoAbrigo?:string; raca?:string; porte?:string; sexo?:string; especie?:string; vacinado?:boolean; vermifugado?:boolean; cuidadosEspeciais?:boolean; detalhesCuidados?:string; personalidade?:string[]; reatividade?:string[]; sobre?:string };
 export type Compromisso = { id:string; pet:string; descricao:string; local:string; data:string; hora:string };
 export type Favorito = { id:string; tipo:"pet"|"clinica"; nome:string; descricao:string; foto?:string };
 export type Adocao = { id:string; nomePet:string; status:string; data:string };
