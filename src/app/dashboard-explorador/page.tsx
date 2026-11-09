@@ -5,7 +5,7 @@ import {PawPrint,CalendarDays} from "lucide-react";
 import {CHAVES,lerLocal,type PetExplorador,type Compromisso} from "./dados-locais";
 import styles from "./Painel.module.css";
 const acoes=[
- {titulo:"Adicionar Pet",href:"/dashboard-explorador/meus-pets",icone:"/add-pet.svg",cor:"azul"},
+ {titulo:"Adicionar Pet",href:"/dashboard-explorador/novo",icone:"/add-pet.svg",cor:"azul"},
  {titulo:"Agendar Consulta",href:"/dashboard-explorador/agenda",icone:"/agendar.svg",cor:"rosa"},
  {titulo:"Cupons Ativos",href:"/dashboard-explorador/recompensas",icone:"/cupom-ativo.svg",cor:"azul"},
  {titulo:"Ver Estações",href:"/adocao-clinicas",icone:"/ver-estacao.svg",cor:"rosa"}
