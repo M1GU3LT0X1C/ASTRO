@@ -24,11 +24,21 @@ export type PetExplorador = {
   id: string; nome: string; microchip: string | null; peso: string | null; castrado: string;
   alergias: string | null; condicao: string | null; foto: string | null;
   vacinas: RegistroSaude[]; exames: RegistroSaude[];
+  idade: string | null; raca: string | null; porte: string | null; sexo: string | null; especie: string | null;
+  vacinado: boolean; vermifugado: boolean; cuidadosEspeciais: boolean; sobre: string | null;
+  personalidade: string[]; reatividade: string[];
 };
 
+/** Os campos opcionais vem do formulario completo (Novo Pet); ausentes = o back mantem o valor atual. */
 export type PetExploradorForm = {
   nome: string; microchip: string; peso: string; castrado: string; alergias: string; condicao: string; fotoUrl: string;
+  idade?: string; raca?: string; porte?: string; sexo?: string; especie?: string;
+  vacinado?: boolean; vermifugado?: boolean; cuidadosEspeciais?: boolean; sobre?: string;
+  personalidade?: string[]; reatividade?: string[];
 };
+
+export const buscarPetTutor = async (id: string) =>
+  (await listarPetsTutor()).find((p) => p.id === id) ?? null;
 
 export const buscarPerfil = () => api<PerfilExplorador>("/api/me/perfil");
 export const salvarPerfil = (perfil: Omit<PerfilExplorador, "email">) =>

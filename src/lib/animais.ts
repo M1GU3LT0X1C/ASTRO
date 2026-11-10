@@ -39,6 +39,13 @@ export type AnimalForm = {
   castrado: boolean; vacinado: boolean; vermifugado: boolean; cuidados: boolean;
   temperamentos: string[]; fotoUrl: string;
   convivencia?: string[]; historia?: string;
+  microchip?: string; tempoAbrigo?: string; detalhesCuidados?: string; recomendacoes?: string;
+  urgencia?: Urgencia;
+};
+
+export type Urgencia = "normal" | "prioritaria" | "critica";
+export const URGENCIAS: Record<Urgencia, string> = {
+  normal: "Normal", prioritaria: "Adoção prioritária", critica: "Caso crítico",
 };
 
 export type AnimalTela = {
@@ -49,6 +56,7 @@ export type AnimalTela = {
   historia: string; created_at: string;
   ong_id: string | null; ong_usuario_id: string | null; nome_ong: string; logo_ong: string;
   cidade: string; estado: string;
+  microchip: string; tempo_abrigo: string; detalhes_cuidados: string; recomendacoes: string; urgencia: Urgencia;
 };
 
 // PetResponse do back-end
@@ -58,6 +66,8 @@ type PetApi = {
   nome: string; especie: string; idade: string | null; porte: string | null; sexo: string | null; historia: string | null;
   caracteristicas: string[] | null; vacinado: boolean | null; castrado: boolean | null;
   fotos: string[] | null; status: string; criadoEm: string;
+  microchip: string | null; tempoAbrigo: string | null; detalhesCuidados: string | null;
+  recomendacoes: string | null; urgencia: string | null;
 };
 
 function paraApi(form: AnimalForm) {
@@ -71,6 +81,11 @@ function paraApi(form: AnimalForm) {
     castrado: form.castrado,
     vacinado: form.vacinado,
     fotos: form.fotoUrl ? [form.fotoUrl] : [],
+    microchip: form.microchip?.trim() || null,
+    tempoAbrigo: form.tempoAbrigo?.trim() || null,
+    detalhesCuidados: form.detalhesCuidados?.trim() || null,
+    recomendacoes: form.recomendacoes?.trim() || null,
+    urgencia: form.urgencia || "normal",
     caracteristicas: [
       ...form.temperamentos,
       ...(form.convivencia || []).map((c) => PREFIXO_CONVIVENCIA + c),
@@ -109,6 +124,11 @@ function daApi(pet: PetApi): AnimalTela {
     logo_ong: pet.logoParceiro || "",
     cidade: pet.cidade && !/^[\d-]+$/.test(pet.cidade) ? pet.cidade : "",
     estado: pet.estado || "",
+    microchip: pet.microchip || "",
+    tempo_abrigo: pet.tempoAbrigo || "",
+    detalhes_cuidados: pet.detalhesCuidados || "",
+    recomendacoes: pet.recomendacoes || "",
+    urgencia: (pet.urgencia as Urgencia) || "normal",
   };
 }
 
@@ -119,6 +139,8 @@ export function paraFormulario(pet: AnimalTela): AnimalForm {
     porte: pet.porte, sexo: pet.sexo, especie: pet.especie,
     castrado: pet.castrado, vacinado: pet.vacinado, vermifugado: pet.vermifugado, cuidados: pet.cuidados_especiais,
     temperamentos: pet.temperamentos, fotoUrl: pet.foto_url, convivencia: pet.convivencia, historia: pet.historia,
+    microchip: pet.microchip, tempoAbrigo: pet.tempo_abrigo, detalhesCuidados: pet.detalhes_cuidados,
+    recomendacoes: pet.recomendacoes, urgencia: pet.urgencia,
   };
 }
 

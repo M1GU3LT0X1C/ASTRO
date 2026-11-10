@@ -12,6 +12,8 @@ export const horaCurta = (hora: string | null) => (hora || "").slice(0, 5);
 
 export const listarAgenda = () => api<Compromisso[]>("/api/agenda");
 export const criarCompromisso = (c: NovoCompromisso) => api<Compromisso>("/api/agenda", { method: "POST", body: c });
+export const atualizarCompromisso = (id: string, c: NovoCompromisso) =>
+  api<Compromisso>(`/api/agenda/${encodeURIComponent(id)}`, { method: "PUT", body: c });
 export const excluirCompromisso = (id: string) => api<void>(`/api/agenda/${encodeURIComponent(id)}`, { method: "DELETE" });
 
 /** Compromissos de hoje em diante, do mais proximo ao mais distante. */
@@ -49,19 +51,30 @@ export const concluirTarefa = (codigo: string) =>
 export const resgatarCupom = (id: string) =>
   api<Resgate>(`/api/recompensas/cupons/${encodeURIComponent(id)}/resgatar`, { method: "POST" });
 
-// ===== Preferencias (pares chave/valor; booleanos viram "true"/"false") =====
-export async function buscarPreferencias<T extends Record<string, boolean | string>>(padrao: T): Promise<T> {
+// ===== Preferencias (pares chave/valor no back) =====
+// booleanos viram "true"/"false" e listas viram JSON
+type ValorPreferencia = boolean | string | string[];
+
+export async function buscarPreferencias<T extends Record<string, ValorPreferencia>>(padrao: T): Promise<T> {
   const salvas = await api<Record<string, string>>("/api/me/preferencias");
   const resultado = { ...padrao };
   (Object.keys(padrao) as (keyof T)[]).forEach((chave) => {
     const valor = salvas[chave as string];
     if (valor === undefined || valor === null) return;
-    resultado[chave] = (typeof padrao[chave] === "boolean" ? valor === "true" : valor) as T[keyof T];
+    const atual = padrao[chave];
+    if (typeof atual === "boolean") resultado[chave] = (valor === "true") as T[keyof T];
+    else if (Array.isArray(atual)) {
+      try {
+        const lista = JSON.parse(valor);
+        if (Array.isArray(lista)) resultado[chave] = lista.map(String) as T[keyof T];
+      } catch { /* valor invalido: fica o padrao */ }
+    } else resultado[chave] = valor as T[keyof T];
   });
   return resultado;
 }
 
-export function salvarPreferencias(valores: Record<string, boolean | string>) {
-  const corpo = Object.fromEntries(Object.entries(valores).map(([chave, valor]) => [chave, String(valor)]));
+export function salvarPreferencias(valores: Record<string, ValorPreferencia>) {
+  const corpo = Object.fromEntries(Object.entries(valores).map(([chave, valor]) =>
+    [chave, Array.isArray(valor) ? JSON.stringify(valor) : String(valor)]));
   return api<Record<string, string>>("/api/me/preferencias", { method: "PUT", body: corpo });
 }

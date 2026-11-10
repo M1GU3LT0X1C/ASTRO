@@ -7,7 +7,7 @@ import { Heart, House, MessageCircle, PawPrint } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { alerta } from "@/lib/alerta";
-import { CONVIVENCIAS, STATUS_PET, TEMPERAMENTOS, buscarAnimal, type AnimalTela } from "@/lib/animais";
+import { CONVIVENCIAS, STATUS_PET, TEMPERAMENTOS, URGENCIAS, buscarAnimal, type AnimalTela } from "@/lib/animais";
 import { minhasSolicitacoes, solicitarAdocao, EM_ANDAMENTO } from "@/lib/adocoes";
 import { useConta } from "@/lib/conta";
 import { buscarQuestionario, questionarioCompleto } from "@/lib/explorador";
@@ -126,7 +126,13 @@ export default function PetPublico() {
                       {pet.vacinado && <span className={`${styles.chip} ${styles.chipVerde}`}>Vacinado(a)</span>}
                       {pet.vermifugado && <span className={`${styles.chip} ${styles.chipVerde}`}>Vermifugado(a)</span>}
                       {pet.cuidados_especiais && <span className={`${styles.chip} ${styles.chipRosa}`}>Precisa de cuidados especiais</span>}
+                      {pet.urgencia !== "normal" && <span className={`${styles.chip} ${pet.urgencia === "critica" ? styles.chipRosa : styles.chipAmarelo}`}>{URGENCIAS[pet.urgencia]}</span>}
+                      {pet.tempo_abrigo && <span className={styles.chip}>No abrigo há {pet.tempo_abrigo}</span>}
                     </div>
+                    {pet.detalhes_cuidados && <>
+                      <h2 className={styles.secaoTitulo}>Cuidados especiais</h2>
+                      <p className={styles.texto}>{pet.detalhes_cuidados}</p>
+                    </>}
 
                     {pet.temperamentos.length > 0 && <>
                       <h2 className={styles.secaoTitulo}>Personalidade</h2>
@@ -139,6 +145,10 @@ export default function PetPublico() {
                     {pet.historia && <>
                       <h2 className={styles.secaoTitulo}>História</h2>
                       <p className={styles.texto}>{pet.historia}</p>
+                    </>}
+                    {pet.recomendacoes && <>
+                      <h2 className={styles.secaoTitulo}>Recomendações da ONG</h2>
+                      <p className={styles.texto}>{pet.recomendacoes}</p>
                     </>}
 
                     <div className={styles.acoes}>

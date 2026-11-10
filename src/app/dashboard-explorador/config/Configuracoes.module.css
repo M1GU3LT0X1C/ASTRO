@@ -6,3 +6,230 @@
 
 .securityIcon{display:inline-block;width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:5px}.buttonIcon{display:inline-block;width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:5px}
 .primaryLink{display:inline-flex;align-items:center;justify-content:center;background:#13065f;color:#fff;border-radius:18px;text-decoration:none;font-size:13px;font-weight:700;padding:10px 20px}.helperText{font-size:13px;color:#666;max-width:600px;margin-top:20px}.photoRow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.avatar{width:90px;height:90px;border-radius:50%;background:#f5d4de;display:grid;place-items:center;overflow:hidden;font-size:35px}.avatar img{width:100%;height:100%;object-fit:cover}.primaryFile{display:inline-flex;background:#13065f;color:white;border-radius:18px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer}.primaryFile:has(input:disabled){opacity:.6;cursor:wait}.primaryFile input{display:none}
+
+
+/* =========================================================
+   EXPLORADOR — PRIVACIDADE E PREFERÊNCIAS DE ADOÇÃO
+   ========================================================= */
+
+.settingsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 6px;
+}
+
+.settingsIntro h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #13065f;
+}
+
+.settingsIntro p,
+.settingsHint {
+  margin: 0;
+  color: #777;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.settingsGroup {
+  padding: 18px 20px;
+  border: 1px solid #e5e1f0;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.settingsGroup h3,
+.questionnaireCard h3 {
+  margin: 0 0 5px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #13065f;
+}
+
+.settingItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0edf5;
+}
+
+.settingItem:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.settingDescription {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settingDescription strong {
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.settingDescription span {
+  color: #777;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.compactSwitch {
+  display: inline-flex;
+  position: relative;
+  flex-shrink: 0;
+  align-items: center;
+  cursor: pointer;
+}
+
+.compactSwitch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.compactSwitch input:checked + .switch {
+  background: #13065f;
+}
+
+.compactSwitch input:checked + .switch::after {
+  transform: translateX(14px);
+}
+
+.compactSwitch input:focus-visible + .switch {
+  outline: 2px solid #e94077;
+  outline-offset: 3px;
+}
+
+.settingsFieldset {
+  min-width: 0;
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+}
+
+.settingsFieldset:last-of-type {
+  margin-bottom: 0;
+}
+
+.settingsFieldset legend,
+.distanceField label {
+  display: block;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #242424;
+}
+
+.settingsFieldset .settingsHint {
+  margin: 4px 0 11px;
+}
+
+.choiceGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  position: relative;
+  padding: 9px 13px;
+  border: 1px solid #cfc9e4;
+  border-radius: 999px;
+  background: #fff;
+  color: #13065f;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+
+.choice input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.choice:has(input:focus-visible) {
+  outline: 2px solid #e94077;
+  outline-offset: 3px;
+}
+
+.choiceSelected {
+  background: #13065f;
+  border-color: #13065f;
+  color: #fff;
+}
+
+.choiceIndicator {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.distanceField {
+  margin-top: 22px;
+}
+
+.distanceField .settingsHint {
+  margin: 4px 0 10px;
+}
+
+.distanceField select {
+  width: min(100%, 310px);
+}
+
+.questionnaireCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #d9d1ed;
+  border-radius: 18px;
+  background: #faf8ff;
+}
+
+.questionnaireCard p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.settingsFootnote {
+  margin: 0;
+  color: #858585;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 580px) {
+  .settingsGroup {
+    padding: 15px 13px;
+  }
+
+  .settingItem {
+    gap: 12px;
+  }
+
+  .questionnaireCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
