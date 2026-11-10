@@ -16,6 +16,51 @@
 }
 
 /* =========================
+   ANIMAÇÕES GERAIS DA HOME
+========================= */
+
+@keyframes surgirBloco {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flutuarGatoHero {
+  0%,
+  100% {
+    translate: 0px 0px;
+    rotate: 0deg;
+  }
+  25% {
+    translate: 3px -6px;
+    rotate: 0.6deg;
+  }
+  50% {
+    translate: 0px -11px;
+    rotate: 0deg;
+  }
+  75% {
+    translate: -3px -5px;
+    rotate: -0.6deg;
+  }
+}
+
+@keyframes flutuarIconeSuave {
+  0%,
+  100% {
+    translate: 0px 0px;
+  }
+  50% {
+    translate: 0px -5px;
+  }
+}
+
+/* =========================
    BLOCO 1 - HERO
 ========================= */
 
@@ -36,6 +81,7 @@
 .heroText {
   width: 520px;
   max-width: 100%;
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .heroText h1 {
@@ -107,9 +153,10 @@
   font-weight: 500;
 
   transition:
-    transform 0.2s ease,
-    background-color 0.2s ease,
-    color 0.2s ease;
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btnPrimary {
@@ -119,7 +166,8 @@
 
 .btnPrimary:hover {
   background: #251296;
-  transform: translateY(-1px);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(21, 5, 111, 0.24);
 }
 
 .btnSecondary {
@@ -133,7 +181,8 @@
   background: #15056f;
   color: white;
 
-  transform: translateY(-1px);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(21, 5, 111, 0.2);
 }
 
 /* =========================
@@ -148,6 +197,7 @@
   justify-content: center;
 
   flex-shrink: 0;
+  animation: surgirBloco 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
 }
 
 .heroImage img {
@@ -158,6 +208,18 @@
   display: block;
 
   object-fit: contain;
+  will-change: translate, rotate, scale, filter;
+  animation: flutuarGatoHero 6.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transition:
+    scale 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+    rotate 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.55s ease;
+}
+
+.heroImage:hover img {
+  scale: 1.035;
+  rotate: -1.5deg;
+  filter: drop-shadow(0 18px 32px rgba(21, 5, 111, 0.16));
 }
 
 /* ==========================================
@@ -219,8 +281,33 @@
   padding: 22px 22px;
 
   border-radius: 24px;
+  border: 2px solid transparent;
 
   overflow: hidden;
+
+  box-shadow: 0 8px 20px rgba(21, 5, 111, 0.1);
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.card:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.card:nth-child(3) {
+  animation-delay: 0.22s;
+}
+
+.card:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 18px 34px rgba(21, 5, 111, 0.2);
 }
 
 /* =========================
@@ -262,9 +349,15 @@
 
 .estrela {
   flex-shrink: 0;
+  display: inline-block;
 
   font-size: 36px;
   line-height: 1;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .estrela {
+  transform: rotate(45deg) scale(1.16);
 }
 
 .estrelaRosa {
@@ -287,6 +380,10 @@
   color: #111111;
 }
 
+.cardLight:hover {
+  border-color: #15056f;
+}
+
 .cardLight p {
   max-width: 500px;
 }
@@ -301,6 +398,10 @@
 
   background: #df3b67;
   color: #ffffff;
+}
+
+.cardPink:hover {
+  border-color: #ffffff;
 }
 
 .cardPink p {
@@ -322,6 +423,10 @@
 
   background: #15056f;
   color: #ffffff;
+}
+
+.cardDark:hover {
+  border-color: #e63d68;
 }
 
 /* TÍTULO DO CARD AZUL */
@@ -390,6 +495,16 @@
   display: block;
 
   object-fit: contain;
+  will-change: translate, scale, rotate;
+  animation: flutuarIconeSuave 5.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transition:
+    scale 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    rotate 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cardDark:hover .cupom {
+  scale: 1.07;
+  rotate: -4deg;
 }
 
 /* =========================
@@ -424,8 +539,20 @@
   color: white;
 
   border-radius: 48px;
+  border: 2px solid transparent;
 
   box-sizing: border-box;
+  box-shadow: 0 12px 28px rgba(21, 5, 111, 0.14);
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.universo:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(21, 5, 111, 0.24);
+  border-color: #e63d68;
 }
 
 .universoTexto {
@@ -478,14 +605,16 @@
   white-space: nowrap;
 
   transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
+    background-color 0.25s ease,
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btnUniverso:hover {
   background: #c9345c;
 
-  transform: translateY(-1px);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(223, 59, 103, 0.35);
 }
 
 /* =========================
@@ -544,6 +673,33 @@
   border-radius: 24px;
 
   text-align: center;
+
+  box-shadow: 0 6px 18px rgba(21, 5, 111, 0.06);
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.impactoCard:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.impactoCard:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.impactoCard:nth-child(3) {
+  animation-delay: 0.19s;
+}
+
+.impactoCard:nth-child(4) {
+  animation-delay: 0.26s;
+}
+
+.impactoCard:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 18px 34px rgba(21, 5, 111, 0.16);
 }
 
 .bordaRoxa {
@@ -567,6 +723,30 @@
   margin-bottom: 18px;
 
   object-fit: contain;
+  will-change: translate, scale, rotate, filter;
+  animation: flutuarIconeSuave 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transition:
+    scale 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    rotate 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.5s ease;
+}
+
+.impactoCard:nth-child(2) .impactoIcon {
+  animation-delay: 0.6s;
+}
+
+.impactoCard:nth-child(3) .impactoIcon {
+  animation-delay: 1.2s;
+}
+
+.impactoCard:nth-child(4) .impactoIcon {
+  animation-delay: 1.8s;
+}
+
+.impactoCard:hover .impactoIcon {
+  scale: 1.09;
+  rotate: -4deg;
+  filter: drop-shadow(0 10px 18px rgba(21, 5, 111, 0.16));
 }
 
 /* =========================

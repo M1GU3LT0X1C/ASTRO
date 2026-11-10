@@ -1,10 +1,20 @@
-
 .main {
   width: 100%;
   min-height: calc(100vh - 74px);
   padding: 30px 0 85px;
   background: #fffdfd;
   color: #111;
+}
+
+@keyframes surgirBloco {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .container {
@@ -21,6 +31,7 @@
   align-items: center;
   justify-content: flex-start;
   margin-bottom: 22px;
+  animation: surgirBloco 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .localizacao {
@@ -32,6 +43,12 @@
   border-radius: 999px;
   background: #e9e6f2;
   overflow: hidden;
+  transition: box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.localizacao:hover {
+  border-color: #df3b67;
+  box-shadow: 0 6px 16px rgba(22, 8, 119, 0.12);
 }
 
 .localizacao svg {
@@ -69,6 +86,7 @@
 .areaFiltros {
   position: relative;
   margin-bottom: 18px;
+  animation: surgirBloco 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
 }
 
 .barraFiltros {
@@ -101,13 +119,17 @@
   cursor: pointer;
   transition:
     border-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .botaoFiltro:hover,
 .botaoFiltro[aria-expanded="true"] {
   border-color: #0d0062;
   color: #0d0062;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 0, 98, 0.08);
 }
 
 .limparFiltros {
@@ -138,6 +160,12 @@
   border: 1px solid #c8c8c8;
   border-radius: 10px;
   background: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ordenacao:hover {
+  border-color: #0d0062;
+  box-shadow: 0 4px 12px rgba(13, 0, 98, 0.08);
 }
 
 .ordenacao select {
@@ -203,11 +231,12 @@
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .tagSelecionada:hover {
   background: #2b1a91;
+  transform: translateY(-1px);
 }
 
 .removerTag {
@@ -241,6 +270,7 @@
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 12px 35px rgba(13, 0, 98, 0.13);
+  animation: surgirBloco 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* CABEÇALHO */
@@ -269,6 +299,12 @@
   background: #f4f1fa;
   color: #0d0062;
   cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.cabecalhoPainel button:hover {
+  background: #e6dff5;
+  transform: rotate(90deg);
 }
 
 .ajudaFiltro {
@@ -343,11 +379,13 @@
   cursor: pointer;
   transition:
     background 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .tagOpcao:hover {
   background: #e9e5fa;
+  transform: translateY(-1px);
 }
 
 .tagAtiva,
@@ -376,16 +414,19 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .botaoConcluir:hover {
   background: #24128c;
+  transform: translateY(-1px);
 }
 
 /* ===== SEÇÕES ===== */
 
 .secao {
   margin-top: 80px;
+  animation: surgirBloco 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
 }
 
 .secao h2 {
@@ -410,6 +451,16 @@
   border-radius: 18px;
   background: #fff8f9;
   text-align: center;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.vazio:hover {
+  transform: translateY(-4px);
+  border-color: #df3b67;
+  box-shadow: 0 14px 28px rgba(223, 59, 103, 0.12);
 }
 
 .iconeVazio {
@@ -421,6 +472,11 @@
   border-radius: 50%;
   background: #ffe6ed;
   color: #df3b67;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.vazio:hover .iconeVazio {
+  transform: scale(1.1) rotate(-6deg);
 }
 
 .vazio strong {
@@ -440,8 +496,8 @@
   display: flex;
   gap: 20px;
   overflow-x: auto;
-  overflow-y: hidden;
-  padding: 5px 2px 20px;
+  overflow-y: visible;
+  padding: 10px 4px 24px;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
 }
@@ -463,6 +519,16 @@
   background: white;
   text-align: center;
   scroll-snap-align: start;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.28s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 16px 32px rgba(223, 59, 103, 0.18);
+  border-color: #df3b67;
 }
 
 .favorito {
@@ -476,6 +542,11 @@
   background: transparent;
   color: #df3b67;
   cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.favorito:hover {
+  transform: scale(1.2);
 }
 
 .imagemCard {
@@ -488,6 +559,11 @@
   overflow: hidden;
   border-radius: 50%;
   background: #ececec;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card:hover .imagemCard {
+  transform: scale(1.06);
 }
 
 .imagemCard img {
@@ -541,10 +617,16 @@
 
 .botaoCard {
   background: #df3b67;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .botaoCard:hover {
   background: #c92b55;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(223, 59, 103, 0.3);
 }
 
 .botaoIndisponivel {

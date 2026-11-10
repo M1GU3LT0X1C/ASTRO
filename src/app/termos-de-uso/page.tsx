@@ -213,8 +213,11 @@ export default function TermosDeUsoPage() {
 
             <nav
               className={styles.switchLegal}
-              aria-label="Alternar entre documentos legais"
+              aria-label="Alternar entre Central de Ajuda e documentos legais"
             >
+              <Link href="/ajuda" className={styles.switchItem}>
+                Central de Ajuda
+              </Link>
               <Link
                 href="/termos-de-uso"
                 className={`${styles.switchItem} ${styles.switchAtivo}`}

@@ -26,15 +26,15 @@ export function HomeContent() {
             para o seu pet gravitar sempre com saúde e carinho.
           </p>
 
-          <div className={styles.heroActions}>
-            <Link href="/animais" className={styles.btnPrimary}>
+          {/* <div className={styles.heroActions}>
+            <Link href="/adocao-clinicas" className={styles.btnPrimary}>
               Encontrar meu pet
             </Link>
 
-            <Link href="/animais" className={styles.btnSecondary}>
+            <Link href="/adocao-clinicas" className={styles.btnSecondary}>
               Buscar clínicas próximas
             </Link>
-          </div>
+          </div> */}
         </div>
 
         <div className={styles.heroImage}>

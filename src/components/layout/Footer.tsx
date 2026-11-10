@@ -15,7 +15,7 @@ export function Footer() {
           <div className={styles.column}>
             <h2>Suporte</h2>
             <Link href="/ajuda">Central de Ajuda</Link>
-            <Link href="/ajuda">Perguntas Frequentes</Link>
+            <Link href="/perguntas-frequentes">Perguntas Frequentes</Link>
           </div>
 
           <div className={styles.column}>

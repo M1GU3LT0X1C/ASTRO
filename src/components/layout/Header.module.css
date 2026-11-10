@@ -30,16 +30,16 @@
 
   object-fit: contain;
 
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: center bottom;
 }
 
 .logoLink:hover .logo {
-  transform: scale(1.35) rotate(-3deg);
+  transform: scale(1.18) rotate(-3deg);
 }
 
 .logoLink:active .logo {
-  transform: scale(1.5) rotate(-5deg);
+  transform: scale(1.24) rotate(-5deg);
 }
 
 /* MENU */

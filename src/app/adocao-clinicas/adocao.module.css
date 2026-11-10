@@ -1,9 +1,29 @@
-
 .main {
   width: 100%;
   background: #fffdfd;
   color: #111;
   padding-bottom: 0;
+}
+
+@keyframes surgirBloco {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flutuarIconeSuave {
+  0%,
+  100% {
+    translate: 0px 0px;
+  }
+  50% {
+    translate: 0px -4px;
+  }
 }
 
 /* ===== BLOCO 1 - BUSCA ===== */
@@ -12,6 +32,7 @@
   background: #fffdfd;
   text-align: center;
   padding: 70px 20px 60px;
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .searchSection h1 {
@@ -55,11 +76,16 @@
   outline: none;
   color: #111111;
   font-size: 14px;
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background-color 0.25s ease;
 }
 
 .searchBox input:focus {
-  border-color: #0d0062;
+  border-color: #df3b67;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(223, 59, 103, 0.15);
 }
 
 /* BOTÃO MAPEAR REGIÃO */
@@ -88,15 +114,15 @@
   cursor: pointer;
 
   transition:
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    background-color 0.25s ease,
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .searchBox button:hover {
   background: #24128c;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(13, 0, 98, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(13, 0, 98, 0.24);
 }
 
 .searchBox button:active {
@@ -136,12 +162,12 @@
   justify-content: flex-start;
 
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
 
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 
-  padding: 0 28px 10px 28px;
+  padding: 8px 28px 18px 28px;
   scrollbar-width: none;
 }
 
@@ -155,6 +181,7 @@
 
   padding: 18px 20px;
   border-radius: 20px;
+  border: 2px solid transparent;
 
   display: flex;
   align-items: flex-start;
@@ -167,6 +194,30 @@
   text-align: left;
   flex-shrink: 0;
   scroll-snap-align: start;
+
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.ecoCard:nth-child(1) {
+  animation-delay: 0.06s;
+}
+
+.ecoCard:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.ecoCard:nth-child(3) {
+  animation-delay: 0.22s;
+}
+
+.ecoCard:hover {
+  transform: translateY(-5px) scale(1.012);
+  box-shadow: 0 18px 34px rgba(21, 5, 111, 0.28);
+  border-color: rgba(255, 255, 255, 0.7);
 }
 
 .ecoIcon {
@@ -181,6 +232,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
+
+  will-change: translate, scale, rotate;
+  animation: flutuarIconeSuave 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transition:
+    scale 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    rotate 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s ease;
+}
+
+.ecoCard:nth-child(2) .ecoIcon {
+  animation-delay: 0.7s;
+}
+
+.ecoCard:nth-child(3) .ecoIcon {
+  animation-delay: 1.4s;
+}
+
+.ecoCard:hover .ecoIcon {
+  scale: 1.08;
+  rotate: -4deg;
+  box-shadow: 0 8px 18px rgba(223, 59, 103, 0.35);
 }
 
 .ecoIcon img {
@@ -213,6 +285,7 @@
   padding: 45px 0 45px 32px;
   position: relative;
   overflow: hidden;
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
 }
 
 .listSection h2 {
@@ -228,10 +301,10 @@
   gap: 18px;
 
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
 
-  padding-bottom: 18px;
-  padding-top: 4px;
+  padding-bottom: 22px;
+  padding-top: 8px;
   padding-right: 32px;
 
   scrollbar-width: none;
@@ -259,6 +332,18 @@
   cursor: pointer;
   flex-shrink: 0;
   scroll-snap-align: start;
+
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.cardBase:hover,
+.cardEstacao:hover {
+  transform: translateY(-5px) scale(1.015);
+  box-shadow: 0 14px 28px rgba(223, 59, 103, 0.18);
+  border-color: #df3b67;
 }
 
 /* MENSAGENS SEM CADASTROS */
@@ -281,6 +366,17 @@
   min-height: 120px;
   gap: 6px;
   margin-right: 32px;
+
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease,
+    border-color 0.35s ease;
+}
+
+.vazio:hover {
+  transform: translateY(-3px);
+  border-color: #df3b67;
+  box-shadow: 0 12px 24px rgba(223, 59, 103, 0.1);
 }
 
 .vazio p {
@@ -329,7 +425,7 @@
   }
 
   .ecoGrid {
-    padding: 0 16px 10px 16px;
+    padding: 8px 16px 16px 16px;
     gap: 14px;
   }
 
