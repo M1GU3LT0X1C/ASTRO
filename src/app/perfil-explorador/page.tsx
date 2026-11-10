@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import styles from "./PerfilExplorador.module.css";
 import { alerta } from "@/lib/alerta";
+import { buscarPerfil, buscarQuestionario, salvarPerfil, salvarQuestionario } from "@/lib/explorador";
+import { enviarImagemPublica, validarImagem } from "@/lib/upload";
 
 type DadosPerfil = {
   nome: string;
@@ -42,12 +44,20 @@ type Perguntas = {
 };
 
 const dadosIniciais: DadosPerfil = {
-  nome: "Nome do Explorador",
-  email: "emaildoexplorador@astro.com",
-  telefone: "(81) 12345-6789",
-  nascimento: "00 / 00 / 0000",
-  endereco: "Rua, Cidade, Bairro, Estado",
+  nome: "",
+  email: "",
+  telefone: "",
+  nascimento: "", // yyyy-mm-dd
+  endereco: "",
   biografia: "",
+};
+
+// o e-mail de login so muda pelas Configuracoes (Supabase Auth)
+const SOMENTE_LEITURA: CampoEditavel[] = ["email"];
+
+const formatarNascimento = (iso: string) => {
+  const [ano, mes, dia] = iso.split("-");
+  return ano && mes && dia ? `${dia}/${mes}/${ano}` : iso;
 };
 
 const perguntasIniciais: Perguntas = {
@@ -80,6 +90,55 @@ export default function PerfilExplorador() {
   type Secao = "moradia" | "condicao" | "protecao" | "tempo" | "pessoas" | "pets";
   const [perguntaAberta, setPerguntaAberta] = useState<Secao | null>(null);
   const [avisoSalvo, setAvisoSalvo] = useState(false);
+  const [salvandoQuestionario, setSalvandoQuestionario] = useState(false);
+  const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const [perfilCarregado, setPerfilCarregado] = useState(false);
+
+  useEffect(() => {
+    buscarPerfil()
+      .then((perfil) => {
+        setDados({
+          nome: perfil.nome || "",
+          email: perfil.email || "",
+          telefone: perfil.telefone || "",
+          nascimento: perfil.nascimento || "",
+          endereco: perfil.endereco || "",
+          biografia: perfil.biografia || "",
+        });
+        setFoto(perfil.fotoUrl);
+        setPerfilCarregado(true);
+      })
+      .catch(() => alerta.erro("Não foi possível carregar seu perfil", "Tente novamente em instantes."));
+    buscarQuestionario()
+      .then((q) => setPerguntas({ ...perguntasIniciais, ...Object.fromEntries(Object.entries(q).filter(([, v]) => v !== null)) } as Perguntas))
+      .catch(() => { /* questionario fica em branco */ });
+  }, []);
+
+  async function persistirPerfil(novos: DadosPerfil, novaFoto: string | null) {
+    // sem o perfil atual, salvar apagaria os outros campos
+    if (!perfilCarregado) throw new Error("Seu perfil ainda não foi carregado. Recarregue a página.");
+    await salvarPerfil({
+      nome: novos.nome.trim(),
+      telefone: novos.telefone || null,
+      nascimento: novos.nascimento || null,
+      endereco: novos.endereco || null,
+      biografia: novos.biografia || null,
+      fotoUrl: novaFoto,
+    });
+  }
+
+  async function salvarRespostas() {
+    setSalvandoQuestionario(true);
+    try {
+      await salvarQuestionario(perguntas);
+      setPerguntaAberta(null);
+      setAvisoSalvo(true);
+    } catch (erro) {
+      alerta.erro("Não foi possível salvar o questionário", erro instanceof Error ? erro.message : undefined);
+    } finally {
+      setSalvandoQuestionario(false);
+    }
+  }
 
   function alternarPergunta(campo: Secao) {
     setPerguntaAberta((atual) => (atual === campo ? null : campo));
@@ -94,16 +153,24 @@ export default function PerfilExplorador() {
 
   // SALVAR EDIÇÃO LOCALMENTE
 
-  function salvarEdicao() {
+  async function salvarEdicao() {
     if (!editando) return;
+    if (editando === "nome" && !rascunho.trim()) {
+      alerta.aviso("Nome obrigatório", "Informe seu nome.");
+      return;
+    }
 
-    setDados((anterior) => ({
-      ...anterior,
-      [editando]: rascunho,
-    }));
-
+    const anteriores = dados;
+    const novos = { ...dados, [editando]: rascunho };
+    setDados(novos);
     setEditando(null);
     setRascunho("");
+    try {
+      await persistirPerfil(novos, foto);
+    } catch (erro) {
+      setDados(anteriores);
+      alerta.erro("Não foi possível salvar", erro instanceof Error ? erro.message : undefined);
+    }
   }
 
   // CANCELAR EDIÇÃO
@@ -141,30 +208,28 @@ export default function PerfilExplorador() {
 
   // ALTERAR FOTO DE PERFIL
 
-  function alterarFoto(event: ChangeEvent<HTMLInputElement>) {
+  async function alterarFoto(event: ChangeEvent<HTMLInputElement>) {
     const arquivo = event.target.files?.[0];
+    event.target.value = "";
 
     if (!arquivo) return;
 
-    if (!arquivo.type.startsWith("image/")) {
-      alerta.aviso("Arquivo inválido", "Selecione um arquivo de imagem.");
+    const problema = validarImagem(arquivo, 5);
+    if (problema) {
+      alerta.aviso("Imagem inválida", problema);
       return;
     }
 
-    if (arquivo.size > 5 * 1024 * 1024) {
-      alerta.aviso("Imagem muito grande", "Escolha uma imagem de até 5 MB.");
-      return;
+    setEnviandoFoto(true);
+    try {
+      const url = await enviarImagemPublica(arquivo, "explorador");
+      await persistirPerfil(dados, url);
+      setFoto(url);
+    } catch (erro) {
+      alerta.erro("Não foi possível alterar a foto", erro instanceof Error ? erro.message : undefined);
+    } finally {
+      setEnviandoFoto(false);
     }
-
-    const leitor = new FileReader();
-
-    leitor.onload = () => {
-      if (typeof leitor.result === "string") {
-        setFoto(leitor.result);
-      }
-    };
-
-    leitor.readAsDataURL(arquivo);
   }
 
   // RENDERIZAR CAMPOS EDITÁVEIS
@@ -181,6 +246,8 @@ export default function PerfilExplorador() {
           <>
             <input
               className={styles.inputEdicao}
+              type={campo === "nascimento" ? "date" : campo === "telefone" ? "tel" : "text"}
+              maxLength={campo === "endereco" ? 300 : 120}
               value={rascunho}
               placeholder={placeholder}
               onChange={(e) => setRascunho(e.target.value)}
@@ -218,17 +285,19 @@ export default function PerfilExplorador() {
           </>
         ) : (
           <>
-            <span>{dados[campo] || placeholder}</span>
+            <span>{(campo === "nascimento" ? formatarNascimento(dados[campo]) : dados[campo]) || placeholder}</span>
 
-            <button
-              type="button"
-              className={styles.botaoIcone}
-              onClick={() => iniciarEdicao(campo)}
-              aria-label={`Editar ${placeholder}`}
-              title={`Editar ${placeholder}`}
-            >
-              <Pencil size={14} />
-            </button>
+            {!SOMENTE_LEITURA.includes(campo) && (
+              <button
+                type="button"
+                className={styles.botaoIcone}
+                onClick={() => iniciarEdicao(campo)}
+                aria-label={`Editar ${placeholder}`}
+                title={`Editar ${placeholder}`}
+              >
+                <Pencil size={14} />
+              </button>
+            )}
           </>
         )}
       </div>
@@ -307,20 +376,21 @@ export default function PerfilExplorador() {
                     type="file"
                     accept="image/*"
                     onChange={alterarFoto}
+                    disabled={enviandoFoto}
                     className={styles.inputFoto}
                     aria-label="Alterar foto de perfil"
                   />
                 </label>
               </div>
 
-              <h1>{dados.nome}</h1>
+              <h1>{dados.nome || "Explorador"}</h1>
 
               <p className={styles.localizacao}>
                 <MapPin
                   size={14}
                   aria-hidden="true"
                 />
-                {dados.endereco}
+                {dados.endereco || "Endereço não informado"}
               </p>
 
               <p className={styles.membroDesde}>
@@ -346,6 +416,7 @@ export default function PerfilExplorador() {
                       setRascunho(e.target.value)
                     }
                     placeholder="Sobre mim e minha motivação..."
+                    maxLength={1000}
                     rows={4}
                     autoFocus
                   />
@@ -566,10 +637,10 @@ export default function PerfilExplorador() {
 
             <div className={styles.rodapeQuestionario}>
               <button type="button" className={styles.botaoSalvarQuestionario}
-                onClick={() => { setPerguntaAberta(null); setAvisoSalvo(true); }}>
-                Salvar
+                onClick={salvarRespostas} disabled={salvandoQuestionario}>
+                {salvandoQuestionario ? "Salvando..." : "Salvar"}
               </button>
-              {avisoSalvo && <p className={styles.feedbackQuestionario} role="status">Respostas mantidas nesta pré-visualização.</p>}
+              {avisoSalvo && <p className={styles.feedbackQuestionario} role="status">Respostas salvas! As ONGs verão este questionário nas suas solicitações de adoção.</p>}
             </div>
           </section>
         </div>

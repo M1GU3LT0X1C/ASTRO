@@ -1,0 +1,52 @@
+.pagina { padding: 20px; display: flex; flex-direction: column; gap: 18px; color: #201a4a; }
+.cabecalho { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.cabecalho h1 { margin: 0; font-size: 24px; font-weight: 900; }
+.cabecalho p { margin: 4px 0 0; font-size: 13px; color: #6b6787; }
+
+.abas { display: flex; gap: 6px; background: #fff; border: 1px solid #ece8f0; border-radius: 999px; padding: 4px; }
+.abas button { border: none; background: transparent; border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: 700; color: #201a4a; cursor: pointer; }
+.abas .abaAtiva { background: #201a4a; color: #fff; }
+
+.vazio { background: #fff; border: 1px dashed #d8d0ff; border-radius: 18px; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: #6b6787; }
+.vazio strong { color: #201a4a; }
+.vazio p { margin: 0; font-size: 13px; }
+
+.lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.cartao { background: #fff; border: 1px solid #ece8f0; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.topo { display: flex; align-items: center; gap: 12px; }
+.foto { width: 52px; height: 52px; border-radius: 50%; background: #e9e2ff; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.foto img { width: 100%; height: 100%; object-fit: cover; }
+.identidade { flex: 1; min-width: 0; }
+.identidade h2 { margin: 0; font-size: 16px; font-weight: 900; }
+.identidade span { font-size: 12px; color: #6b6787; }
+
+.status { font-size: 10px; font-weight: 800; padding: 5px 10px; border-radius: 999px; white-space: nowrap; background: #f1edff; color: #201a4a; }
+.status_PENDENTE { background: #fff3d6; color: #8a5a00; }
+.status_EM_ANALISE, .status_ENTREVISTA { background: #e9e2ff; color: #201a4a; }
+.status_APROVADA { background: #d8f5e8; color: #106b48; }
+.status_ADOCAO_CONCLUIDA { background: #1ba97c; color: #fff; }
+.status_REPROVADA, .status_CANCELADA { background: #fde3ea; color: #b4204a; }
+
+.mensagem { margin: 0; font-size: 13px; font-style: italic; background: #f6f4ff; border-radius: 12px; padding: 10px 12px; }
+
+.detalhes { align-self: flex-start; border: none; background: transparent; color: #201a4a; font-weight: 800; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 0; }
+.girado { transform: rotate(180deg); }
+.questionario { font-size: 12px; background: #f6f4ff; border-radius: 12px; padding: 12px; }
+.questionario p { margin: 0 0 6px; }
+.questionario dl { margin: 8px 0 0; display: grid; gap: 6px; }
+.questionario dl div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #ece8f0; padding-bottom: 4px; }
+.questionario dt { color: #6b6787; }
+.questionario dd { margin: 0; font-weight: 700; text-align: right; }
+.semQuestionario { color: #6b6787; font-style: italic; }
+
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.botao, .botaoSecundario, .botaoPerigo { border-radius: 999px; padding: 8px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.botao { background: #201a4a; color: #fff; border: none; }
+.botaoSecundario { background: #fff; color: #201a4a; border: 1.4px solid #201a4a; }
+.botaoPerigo { background: #fff; color: #e63d68; border: 1.4px solid #e63d68; }
+.botao:disabled, .botaoPerigo:disabled { opacity: .5; cursor: wait; }
+
+@media (max-width: 600px) {
+  .pagina { padding: 12px; }
+  .lista { grid-template-columns: 1fr; }
+}

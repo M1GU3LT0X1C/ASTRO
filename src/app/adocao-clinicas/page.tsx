@@ -2,12 +2,9 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import styles from "./adocao.module.css";
+import ListaDestaques from "./ListaDestaques";
 
 export default function AdocaoEClinicasPage() {
-  // Dados vazios enquanto não há integração com o banco
-  const basesMaisVisitadas: { id: string; nome: string }[] = [];
-  const estacoesBemAvaliadas: { id: string; nome: string }[] = [];
-
   return (
     <>
       <Header />
@@ -114,55 +111,24 @@ export default function AdocaoEClinicasPage() {
         <section className={styles.listSection}>
           <h2>Bases Estelares e Guardiões mais visitados</h2>
 
-          {basesMaisVisitadas.length === 0 ? (
-            <div className={styles.vazio}>
-              <p>
-                Nenhuma base cadastrada ainda. Seja a
-                primeira ONG a aparecer aqui!
-              </p>
-
-              <span>
-                Os perfis mais visitados aparecerão aqui
-              </span>
-            </div>
-          ) : (
-            <div className={styles.cardsGrid}>
-              {basesMaisVisitadas.map((base) => (
-                <div
-                  key={base.id}
-                  className={styles.cardBase}
-                >
-                  {base.nome}
-                </div>
-              ))}
-            </div>
-          )}
+          <ListaDestaques
+            tipo="bases"
+            ordem="visitas"
+            textoVazio="Nenhuma base visitada ainda. Seja a primeira ONG a aparecer aqui!"
+            dicaVazio="Os perfis mais visitados aparecerão aqui"
+          />
         </section>
 
         {/* ===== BLOCO 4 - ESTAÇÕES DE CUIDADO ===== */}
         <section className={styles.listSection}>
           <h2>Estações de Cuidado bem avaliadas</h2>
 
-          {estacoesBemAvaliadas.length === 0 ? (
-            <div className={styles.vazio}>
-              <p>Nenhuma clínica avaliada ainda.</p>
-
-              <span>
-                As clínicas bem avaliadas aparecerão aqui
-              </span>
-            </div>
-          ) : (
-            <div className={styles.cardsGrid}>
-              {estacoesBemAvaliadas.map((estacao) => (
-                <div
-                  key={estacao.id}
-                  className={styles.cardEstacao}
-                >
-                  {estacao.nome}
-                </div>
-              ))}
-            </div>
-          )}
+          <ListaDestaques
+            tipo="clinicas"
+            ordem="avaliacao"
+            textoVazio="Nenhuma clínica avaliada ainda."
+            dicaVazio="As clínicas bem avaliadas aparecerão aqui"
+          />
         </section>
       </main>
 

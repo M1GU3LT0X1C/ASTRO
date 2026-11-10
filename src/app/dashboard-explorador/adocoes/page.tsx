@@ -2,35 +2,47 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ClipboardCheck, Heart, MessageCircle, Search, PawPrint, CalendarDays } from "lucide-react";
-import { CHAVES, lerLocal, type Adocao } from "../dados-locais";
+import { BadgeCheck, ClipboardCheck, Heart, MessageCircle, Search, PawPrint, CalendarDays, XCircle } from "lucide-react";
+import { alerta } from "@/lib/alerta";
+import { EM_ANDAMENTO, ROTULO_STATUS, cancelarSolicitacao, minhasSolicitacoes, type Solicitacao, type StatusAdocao } from "@/lib/adocoes";
 import styles from "./Adocoes.module.css";
 
 type Etapa = 0 | 1 | 2 | 3;
 const etapas = ["Solicitação enviada", "Em análise", "Entrevista", "Adoção concluída"] as const;
 
-function etapaAtual(status: string): Etapa {
-  const valor = status.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (valor.includes("conclu") || valor.includes("aprovad") || valor.includes("adotad")) return 3;
-  if (valor.includes("entrevista")) return 2;
-  if (valor.includes("analise") || valor.includes("avaliacao")) return 1;
-  return 0;
-}
+// status do back -> etapa da linha do tempo
+const ETAPA_DO_STATUS: Record<StatusAdocao, Etapa> = {
+  PENDENTE: 0, EM_ANALISE: 1, ENTREVISTA: 2, APROVADA: 2, ADOCAO_CONCLUIDA: 3, REPROVADA: 0, CANCELADA: 0,
+};
 
 const icones = [ClipboardCheck, Search, MessageCircle, Heart];
 
 export default function MinhasAdocoes() {
-  const [solicitacoes, setSolicitacoes] = useState<Adocao[]>([]);
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [carregado, setCarregado] = useState(false);
   const [selecionada, setSelecionada] = useState<string | null>(null);
 
   useEffect(() => {
-    setSolicitacoes(lerLocal<Adocao[]>(CHAVES.adocoes, []));
-    setCarregado(true);
+    minhasSolicitacoes()
+      .then(setSolicitacoes)
+      .catch(() => alerta.erro("Não foi possível carregar suas solicitações"))
+      .finally(() => setCarregado(true));
   }, []);
 
   const atual = solicitacoes.find((item) => item.id === selecionada) ?? solicitacoes[0];
-  const progresso = atual ? etapaAtual(atual.status) : 0;
+  const progresso = atual ? ETAPA_DO_STATUS[atual.status] : 0;
+  const encerrada = atual && (atual.status === "REPROVADA" || atual.status === "CANCELADA");
+
+  async function cancelar(s: Solicitacao) {
+    const confirmou = await alerta.confirmar({ title: `Cancelar a solicitação de ${s.nomePet}?`, confirmText: "Cancelar solicitação", cancelText: "Voltar", icon: "warning" });
+    if (!confirmou) return;
+    try {
+      const atualizada = await cancelarSolicitacao(s.id);
+      setSolicitacoes((lista) => lista.map((item) => (item.id === s.id ? atualizada : item)));
+    } catch (erro) {
+      alerta.erro("Não foi possível cancelar", erro instanceof Error ? erro.message : undefined);
+    }
+  }
 
   return (
     <div className={styles.pagina}>
@@ -56,19 +68,20 @@ export default function MinhasAdocoes() {
           <section aria-label="Solicitações de adoção" className={styles.lista}>
             {solicitacoes.map((solicitacao) => {
               const ativo = atual?.id === solicitacao.id;
-              const etapa = etapaAtual(solicitacao.status);
               return (
                 <article key={solicitacao.id} className={`${styles.cartao} ${ativo ? styles.cartaoAtivo : ""}`}>
                   <div className={styles.cartaoTopo}>
-                    <div className={styles.petIcone}><PawPrint size={22} aria-hidden="true" /></div>
+                    <div className={styles.petIcone}>
+                      {solicitacao.fotoPet ? <img src={solicitacao.fotoPet} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} /> : <PawPrint size={22} aria-hidden="true" />}
+                    </div>
                     <div className={styles.cartaoIdentidade}>
                       <h2>{solicitacao.nomePet || "Pet sem nome informado"}</h2>
-                      <span>Solicitação de adoção</span>
+                      <span>{solicitacao.nomeOng}</span>
                     </div>
                   </div>
                   <div className={styles.cartaoDetalhes}>
-                    <span className={styles.etiqueta}>{etapas[etapa]}</span>
-                    {solicitacao.data && <span className={styles.data}><CalendarDays size={14} aria-hidden="true" />{solicitacao.data}</span>}
+                    <span className={styles.etiqueta}>{ROTULO_STATUS[solicitacao.status]}</span>
+                    <span className={styles.data}><CalendarDays size={14} aria-hidden="true" />{new Date(solicitacao.criadoEm).toLocaleDateString("pt-BR")}</span>
                   </div>
                   <button type="button" className={styles.acompanhar} aria-pressed={ativo} onClick={() => setSelecionada(solicitacao.id)}>
                     {ativo ? "Solicitação selecionada" : "Acompanhar solicitação"}
@@ -77,26 +90,42 @@ export default function MinhasAdocoes() {
               );
             })}
           </section>
-          <section className={styles.acompanhamento} aria-label={`Andamento da adoção de ${atual.nomePet}`}>
-            <div className={styles.acompanhamentoTopo}>
-              <h2>Andamento da adoção</h2>
-              <p>{atual.nomePet} · {atual.status}</p>
-            </div>
-            <ol className={styles.etapas}>
-              {etapas.map((titulo, indice) => {
-                const Icone = icones[indice];
-                const concluida = indice < progresso || (progresso === 3 && indice === 3);
-                const ativa = indice === progresso && progresso !== 3;
-                return (
-                  <li key={titulo} className={`${styles.etapa} ${concluida ? styles.concluida : ""} ${ativa ? styles.ativa : ""}`} aria-current={ativa ? "step" : undefined}>
-                    <Icone size={34} strokeWidth={2.6} aria-hidden="true" />
-                    <strong>{titulo}</strong>
-                    {concluida && <BadgeCheck size={16} className={styles.confirmacao} aria-label="Concluída" />}
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
+          {atual && (
+            <section className={styles.acompanhamento} aria-label={`Andamento da adoção de ${atual.nomePet}`}>
+              <div className={styles.acompanhamentoTopo}>
+                <h2>Andamento da adoção</h2>
+                <p>{atual.nomePet} · {ROTULO_STATUS[atual.status]}</p>
+              </div>
+              {encerrada ? (
+                <p style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                  <XCircle size={20} aria-hidden="true" />
+                  {atual.status === "CANCELADA" ? "Você cancelou esta solicitação." : "A ONG não aprovou esta solicitação. Que tal conhecer outros pets?"}
+                </p>
+              ) : (
+                <ol className={styles.etapas}>
+                  {etapas.map((titulo, indice) => {
+                    const Icone = icones[indice];
+                    const concluida = indice < progresso || (progresso === 3 && indice === 3);
+                    const ativa = indice === progresso && progresso !== 3;
+                    return (
+                      <li key={titulo} className={`${styles.etapa} ${concluida ? styles.concluida : ""} ${ativa ? styles.ativa : ""}`} aria-current={ativa ? "step" : undefined}>
+                        <Icone size={34} strokeWidth={2.6} aria-hidden="true" />
+                        <strong>{titulo}</strong>
+                        {concluida && <BadgeCheck size={16} className={styles.confirmacao} aria-label="Concluída" />}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+                {atual.ongUsuarioId && <Link href={`/dashboard-explorador/mensagens?destinatario=${atual.ongUsuarioId}`} className={styles.encontrar}>Falar com a ONG</Link>}
+                <Link href={`/adocao-clinicas/pet/${atual.petId}`} className={styles.encontrar}>Ver pet</Link>
+                {EM_ANDAMENTO.includes(atual.status) && (
+                  <button type="button" className={styles.acompanhar} onClick={() => cancelar(atual)}>Cancelar solicitação</button>
+                )}
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>

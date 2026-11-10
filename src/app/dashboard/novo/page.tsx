@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { cadastrarAnimal } from "@/lib/animais";
+import { CONVIVENCIAS, atualizarAnimal, buscarAnimal, cadastrarAnimal } from "@/lib/animais";
 import { alerta } from "@/lib/alerta";
 
 function SelectBonito({ id, label, value, onChange, options, openId, setOpenId }: any){
@@ -46,13 +47,35 @@ function SelectBonito({ id, label, value, onChange, options, openId, setOpenId }
   )
 }
 
-export default function NovoPage(){
+function FormularioPet({ id }: { id: string | null }){
   const [preview,setPreview]=useState(""); const [file,setFile]=useState<File|null>(null);
   const [nome,setNome]=useState(""); const [idade,setIdade]=useState(""); const [tipo,setTipo]=useState("");
   const [porte,setPorte]=useState(""); const [sexo,setSexo]=useState(""); const [especie,setEspecie]=useState("");
   const [openSelect,setOpenSelect]=useState<string|null>(null);
   const [checks,setChecks]=useState({castrado:false,vacinado:false,vermifugado:false,cuidados:false});
   const [temps,setTemps]=useState<string[]>([]); const [loading,setLoading]=useState(false);
+  const [convivencia,setConvivencia]=useState<string[]>([]); const [historia,setHistoria]=useState("");
+  // edicao: /dashboard/novo?id=<pet>
+  const [editId,setEditId]=useState<string|null>(null); const [fotoAtual,setFotoAtual]=useState("");
+
+  useEffect(()=>{
+    if(!id) return;
+    buscarAnimal(id).then(pet=>{
+      setEditId(id);
+      setNome(pet.nome); setIdade(pet.idade?String(pet.idade):""); setTipo(pet.raca);
+      setPorte(pet.porte); setSexo(pet.sexo); setEspecie(pet.especie);
+      setChecks({castrado:pet.castrado,vacinado:pet.vacinado,vermifugado:pet.vermifugado,cuidados:pet.cuidados_especiais});
+      setTemps(pet.temperamentos); setConvivencia(pet.convivencia); setHistoria(pet.historia);
+      setFotoAtual(pet.foto_url); setPreview(pet.foto_url);
+    }).catch(()=>alerta.erro("Não foi possível carregar o pet para edição"));
+  },[id]);
+
+  const alternarConvivencia=(id:string)=>setConvivencia(atual=>{
+    if(atual.includes(id)) return atual.filter(x=>x!==id);
+    // "unico pet da casa" nao combina com "se da bem com outros"
+    if(id==="unico") return ["unico"];
+    return [...atual.filter(x=>x!=="unico"), id];
+  });
 
   // VALIDAÇÕES
   const onNome = (v:string)=> setNome(v.replace(/[0-9]/g,"")); // não deixa número
@@ -66,21 +89,27 @@ export default function NovoPage(){
     if(!idade) return alerta.aviso("Idade obrigatória", "Informe a idade do pet.");
     setLoading(true);
     try{
-      let foto_url="";
+      let foto_url=fotoAtual;
       if(file){
         const nomeArquivo = `${Date.now()}-${file.name.replace(/\s/g,"-")}`;
         const { error:upErr } = await supabase.storage.from("animais-fotos").upload(nomeArquivo, file);
         if(upErr) throw new Error("Erro upload: "+upErr.message);
         foto_url = supabase.storage.from("animais-fotos").getPublicUrl(nomeArquivo).data.publicUrl;
       }
-      await cadastrarAnimal({
+      const dados = {
         nome: nome.trim(), idade: String(Number(idade)||0), raca: tipo.trim(),
         porte: porte||"medio", sexo: sexo||"macho", especie: especie||"cachorro",
         castrado: checks.castrado, vacinado: checks.vacinado,
         vermifugado: checks.vermifugado, cuidados: checks.cuidados,
-        temperamentos: temps, fotoUrl: foto_url
-      });
-      await alerta.sucesso("Pet publicado!", "Ele já aparece em Meus Pets.");
+        temperamentos: temps, fotoUrl: foto_url, convivencia, historia
+      };
+      if(editId){
+        await atualizarAnimal(editId, dados);
+        await alerta.sucesso("Pet atualizado!", "As alterações já aparecem em Meus Pets.");
+      }else{
+        await cadastrarAnimal(dados);
+        await alerta.sucesso("Pet publicado!", "Ele já aparece em Meus Pets.");
+      }
       location.href="/dashboard/meus-pets";
     }catch(e:any){ alerta.erro("Não foi possível publicar", e.message); }
     setLoading(false);
@@ -135,10 +164,30 @@ export default function NovoPage(){
                 </button>
               ))}
             </div>
-            <button onClick={publicar} disabled={loading} style={{background:"#201a4a",color:"#fff",border:"none",borderRadius:"999px",padding:"11px 48px",fontWeight:700,alignSelf:"center",marginTop:"14px",cursor:"pointer"}}>{loading?"Publicando...":"Publicar"}</button>
+            <div style={{display:"flex",flexDirection:"column",gap:"8px",marginTop:"8px"}}>
+              <span style={{fontSize:"13px",fontWeight:800,color:"#201a4a"}}>Convivência</span>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"8px"}}>
+                {Object.entries(CONVIVENCIAS).map(([id,label])=>(
+                  <button key={id} type="button" onClick={()=>alternarConvivencia(id)} aria-pressed={convivencia.includes(id)} style={{border:"1.6px solid #201a4a",borderRadius:"999px",padding:"7px 12px",fontSize:"11px",fontWeight:700,cursor:"pointer",background:convivencia.includes(id)?"#201a4a":"#fff",color:convivencia.includes(id)?"#fff":"#201a4a"}}>{label}</button>
+                ))}
+              </div>
+            </div>
+            <textarea placeholder="História do pet (opcional): como foi resgatado, do que gosta..." value={historia} maxLength={1000} onChange={e=>setHistoria(e.target.value)} style={{border:"1.6px solid #201a4a",borderRadius:"16px",padding:"12px 18px",minHeight:"80px",outline:"none",fontFamily:"inherit",fontSize:"13px",resize:"vertical"}}/>
+            <button onClick={publicar} disabled={loading} style={{background:"#201a4a",color:"#fff",border:"none",borderRadius:"999px",padding:"11px 48px",fontWeight:700,alignSelf:"center",marginTop:"14px",cursor:"pointer"}}>{loading?(editId?"Salvando...":"Publicando..."):(editId?"Salvar alterações":"Publicar")}</button>
           </div>
         </div>
       </div>
     </div>
   )
+}
+
+// A chave recria o formulario quando o ?id= muda (ex.: clicar em "Novo Pet" durante uma edicao),
+// para nao continuar editando o pet anterior.
+function ConteudoNovoPet(){
+  const id = useSearchParams().get("id");
+  return <FormularioPet key={id || "novo"} id={id} />;
+}
+
+export default function NovoPage(){
+  return <Suspense fallback={<div style={{padding:24}}>Carregando...</div>}><ConteudoNovoPet/></Suspense>;
 }

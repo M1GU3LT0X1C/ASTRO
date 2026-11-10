@@ -20,7 +20,7 @@ export default function DashboardExploradorClient({ children, nomeExplorador }: 
   function fazerBusca() {
     const termo = busca.trim();
     if (!termo) return;
-    router.push(`/adocao-clinicas?busca=${encodeURIComponent(termo)}`);
+    router.push(`/adocao-clinicas/resultados?endereco=${encodeURIComponent(termo)}`);
   }
 
   return (

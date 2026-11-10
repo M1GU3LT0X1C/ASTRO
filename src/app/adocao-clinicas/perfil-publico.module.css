@@ -1,0 +1,64 @@
+.main { background: #f6f4ff; min-height: 70vh; padding: 28px 16px 48px; color: #201a4a; }
+.container { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.voltar { align-self: flex-start; font-size: 13px; font-weight: 700; color: #201a4a; text-decoration: none; }
+.estado { background: #fff; border-radius: 20px; padding: 40px 20px; text-align: center; color: #6b6787; }
+
+.capa { height: 200px; border-radius: 22px; background: linear-gradient(135deg, #e9e2ff, #ffd6e2) center / cover no-repeat; }
+
+.topo { display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: start; }
+.cartao { background: #fff; border: 1px solid #ece8f0; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+
+.fotoGrande { width: 100%; aspect-ratio: 1; border-radius: 20px; object-fit: cover; background: #e9e2ff; display: flex; align-items: center; justify-content: center; color: #201a4a; }
+.logo { width: 110px; height: 110px; border-radius: 50%; border: 4px solid #fff; margin-top: -70px; background: #e9e2ff; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(32, 26, 74, .12); }
+.logo img, .fotoGrande img { width: 100%; height: 100%; object-fit: cover; }
+
+.nome { margin: 0; font-size: 28px; font-weight: 900; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sub { margin: 0; color: #6b6787; font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.selo { font-size: 11px; font-weight: 800; background: #d8f5e8; color: #106b48; border-radius: 999px; padding: 4px 10px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 6px 12px; background: #f1edff; color: #201a4a; }
+.chipRosa { background: #ffe1ea; color: #b4204a; }
+.chipVerde { background: #d8f5e8; color: #106b48; }
+.chipAmarelo { background: #fff3d6; color: #8a5a00; }
+
+.secaoTitulo { margin: 4px 0 0; font-size: 15px; font-weight: 900; }
+.texto { margin: 0; font-size: 14px; line-height: 1.55; white-space: pre-line; }
+
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+.botao, .botaoSecundario { border-radius: 999px; padding: 11px 20px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.botao { background: #e63d68; color: #fff; border: none; }
+.botao:disabled { opacity: .5; cursor: not-allowed; }
+.botaoSecundario { background: #fff; color: #201a4a; border: 1.6px solid #201a4a; }
+.botaoSecundario[aria-pressed="true"] { background: #201a4a; color: #fff; }
+
+.formulario { display: flex; flex-direction: column; gap: 10px; background: #f6f4ff; border-radius: 16px; padding: 14px; }
+.formulario textarea { border: 1.4px solid #d8d0ff; border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 13px; min-height: 90px; resize: vertical; }
+.aviso { margin: 0; font-size: 12px; color: #6b6787; }
+.aviso a { color: #e63d68; font-weight: 700; }
+
+.ongMini { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.ongMini span:first-child { width: 48px; height: 48px; border-radius: 50%; background: #e9e2ff; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ongMini img { width: 100%; height: 100%; object-fit: cover; }
+
+.lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.petCard { background: #fff; border: 1px solid #ece8f0; border-radius: 18px; padding: 14px; text-align: center; text-decoration: none; color: #201a4a; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.petCard span:first-child { width: 90px; height: 90px; border-radius: 50%; overflow: hidden; background: #e9e2ff; display: flex; align-items: center; justify-content: center; }
+.petCard img { width: 100%; height: 100%; object-fit: cover; }
+.petCard small { color: #6b6787; font-size: 11px; }
+
+.contatos { display: grid; gap: 6px; font-size: 13px; }
+.contatos a { color: #201a4a; font-weight: 700; word-break: break-all; }
+
+.estrelas { display: inline-flex; gap: 2px; }
+.estrela { border: none; background: none; font-size: 24px; color: #ddd; cursor: pointer; padding: 0; line-height: 1; }
+.estrelaAtiva { color: #f5a524; }
+.avaliacao { border-top: 1px solid #ece8f0; padding-top: 10px; font-size: 13px; }
+.avaliacao p { margin: 4px 0 0; }
+
+@media (max-width: 800px) {
+  .topo { grid-template-columns: 1fr; }
+  .fotoGrande { max-width: 320px; margin: 0 auto; }
+  .capa { height: 140px; }
+  .nome { font-size: 22px; }
+}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
+import { buscarPreferencias, salvarPreferencias } from "@/lib/painel";
 import styles from "./Configuracoes.module.css";
 
 type Section = "seguranca" | "preferencias" | "privacidade" | "adocao";
@@ -19,7 +20,6 @@ const initial: Settings = {
   exibirContato: false, compartilharLocalizacao: false,
   novidadesAdocao: true, atualizacoesSolicitacao: true,
 };
-const storageKey = "astro_explorador_configuracoes_v1";
 const sections: { id: Section; title: string }[] = [
   { id: "seguranca", title: "Conta & Segurança" },
   { id: "preferencias", title: "Preferências" },
@@ -33,23 +33,26 @@ export default function ConfiguracoesExplorador() {
   const [emailLogin, setEmailLogin] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [saved, setSaved] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) setSettings({ ...initial, ...JSON.parse(stored) });
-    } catch { /* Armazenamento indisponível */ }
+    buscarPreferencias(initial).then(setSettings).catch(() => { /* fica com os valores padrao */ });
   }, []);
 
   const update = (key: keyof Settings, value: boolean) => {
     setSettings(previous => ({ ...previous, [key]: value }));
     setSaved(false);
   };
-  const save = () => {
+  const save = async () => {
+    setSalvando(true);
     try {
-      localStorage.setItem(storageKey, JSON.stringify(settings));
+      await salvarPreferencias(settings);
       setSaved(true);
-    } catch { alerta.erro("Não foi possível salvar", "Verifique o armazenamento do navegador."); }
+    } catch (erro) {
+      alerta.erro("Não foi possível salvar", erro instanceof Error ? erro.message : undefined);
+    } finally {
+      setSalvando(false);
+    }
   };
   const alterarEmail = async () => {
     if (!emailLogin.trim()) return;
@@ -57,7 +60,7 @@ export default function ConfiguracoesExplorador() {
     if (!user) { alerta.erro("Entre na sua conta para alterar o e-mail."); return; }
     const { error } = await supabase.auth.updateUser({ email: emailLogin.trim() });
     if (error) alerta.erro("Não foi possível alterar o e-mail", error.message);
-    else { setEmailLogin(""); window.alert("Solicitação enviada. Confira seu e-mail para confirmar."); }
+    else { setEmailLogin(""); alerta.sucesso("Solicitação enviada", "Confira seu e-mail para confirmar."); }
   };
   const alterarSenha = async () => {
     if (novaSenha.length < 6) { alerta.erro("A senha precisa ter pelo menos 6 caracteres."); return; }
@@ -65,7 +68,7 @@ export default function ConfiguracoesExplorador() {
     if (!user) { alerta.erro("Entre na sua conta para alterar a senha."); return; }
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
     if (error) alerta.erro("Não foi possível alterar a senha", error.message);
-    else { setNovaSenha(""); window.alert("Senha atualizada."); }
+    else { setNovaSenha(""); alerta.sucesso("Senha atualizada."); }
   };
   const switchRow = (label: string, key: keyof Settings) => (
     <label className={styles.switchRow} key={key}>
@@ -113,7 +116,7 @@ export default function ConfiguracoesExplorador() {
                 <h2>Visibilidade das informações</h2>
                 {switchRow("Permitir exibição dos meus dados de contato", "exibirContato")}
                 {switchRow("Permitir compartilhamento da minha localização", "compartilharLocalizacao")}
-                <p className={styles.helperText}>Estas preferências são salvas neste navegador. A aplicação dessas permissões em outros serviços depende de integração com o backend.</p>
+                <p className={styles.helperText}>Estas preferências ficam salvas na sua conta.</p>
               </div>}
               {id === "adocao" && <div className={styles.preferences}>
                 <h2>Acompanhamento das Adoções</h2>
@@ -123,8 +126,8 @@ export default function ConfiguracoesExplorador() {
                 <Link href="/perfil-explorador" className={styles.primaryLink}>Editar questionário</Link>
               </div>}
               {(["preferencias", "privacidade", "adocao"] as Section[]).includes(id) && <div className={styles.actions}>
-                <button type="button" className={styles.primary} onClick={save}>Salvar alterações</button>
-                {saved && <span role="status">Salvo neste navegador</span>}
+                <button type="button" className={styles.primary} onClick={save} disabled={salvando}>{salvando ? "Salvando..." : "Salvar alterações"}</button>
+                {saved && <span role="status">Alterações salvas</span>}
               </div>}
             </div>}
           </section>

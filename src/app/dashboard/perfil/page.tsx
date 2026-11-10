@@ -4,27 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { alerta } from "@/lib/alerta";
 import { definirLogo } from "@/lib/perfil";
-import { supabase } from "@/lib/supabase";
+import { buscarMinhaOng, salvarMinhaOng, type StatusVagas } from "@/lib/ong";
+import { enviarImagemPublica, validarImagem } from "@/lib/upload";
 import styles from "./Perfil.module.css";
 
-type StatusVagas = "com" | "lotado" | "superlotado";
 type Contatos = { whatsappContato: string; instagram: string };
-type PerfilSalvo = {
-  nome?: string;
-  bio?: string;
-  endereco?: string;
-  ocultarEndereco?: boolean;
-  cidade?: string;
-  estado?: string;
-  raio?: number;
-  statusVagas?: StatusVagas;
-  capa?: string;
-  emailPublico?: string;
-  facebook?: string;
-};
 
-const CHAVE_PERFIL = "astro_ong_perfil_visual_v1";
-const CHAVE_CONFIG = "astro_ong_configuracoes_v1";
 const OPCOES_VAGAS: { valor: StatusVagas; texto: string }[] = [
   { valor: "com", texto: "COM VAGAS" },
   { valor: "lotado", texto: "LOTADO" },
@@ -46,36 +31,39 @@ export default function PerfilOngPage() {
   const [emailPublico, setEmailPublico] = useState("");
   const [facebook, setFacebook] = useState("");
   const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const [enviandoCapa, setEnviandoCapa] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
+  const [falhaCarga, setFalhaCarga] = useState(false);
   const [salvo, setSalvo] = useState(false);
 
   const inputCapaRef = useRef<HTMLInputElement>(null);
   const inputFotoRef = useRef<HTMLInputElement>(null);
 
-  // Carrega os dados salvos no navegador.
+  // Carrega o perfil salvo no back-end.
   useEffect(() => {
-    try {
-      const perfil: PerfilSalvo = JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
-      const configuracoes: Partial<Contatos> = JSON.parse(localStorage.getItem(CHAVE_CONFIG) || "{}");
-
-      setFoto(localStorage.getItem("ong_foto") || "");
-      setNome(perfil.nome || "");
-      setBio(perfil.bio || "");
-      setEndereco(perfil.endereco || "");
-      setOcultarEndereco(perfil.ocultarEndereco !== false);
-      setCidade(perfil.cidade || "");
-      setEstado(perfil.estado || "");
-      setRaio(perfil.raio ?? 30);
-      setStatusVagas(perfil.statusVagas || "com");
-      setCapa(perfil.capa || "");
-      setEmailPublico(perfil.emailPublico || "");
-      setFacebook(perfil.facebook || "");
-      setContatos({
-        whatsappContato: configuracoes.whatsappContato || "",
-        instagram: configuracoes.instagram || "",
-      });
-    } catch {
-      // Mantém os valores iniciais se o armazenamento estiver inválido.
-    }
+    buscarMinhaOng()
+      .then((ong) => {
+        setFoto(ong.logoUrl || "");
+        setCapa(ong.capaUrl || "");
+        setNome(ong.nomeOrganizacao || "");
+        setBio(ong.descricao || "");
+        setEndereco(ong.endereco || "");
+        setOcultarEndereco(ong.ocultarEndereco !== false);
+        setCidade(ong.cidade || "");
+        setEstado(ong.estado || "");
+        setRaio(ong.raioAtuacao ?? 30);
+        setStatusVagas(ong.statusVagas || "com");
+        setEmailPublico(ong.emailPublico || "");
+        setFacebook(ong.facebook || "");
+        setContatos({ whatsappContato: ong.whatsapp || "", instagram: ong.instagram || "" });
+      })
+      .catch((erro) => {
+        // sem os dados atuais, salvar apagaria o perfil: bloqueia ate recarregar
+        setFalhaCarga(true);
+        alerta.erro("Não foi possível carregar o perfil", erro instanceof Error ? erro.message : "Recarregue a página.");
+      })
+      .finally(() => setCarregando(false));
   }, []);
 
   function atualizarContato(campo: keyof Contatos, valor: string) {
@@ -83,66 +71,54 @@ export default function PerfilOngPage() {
     setSalvo(false);
   }
 
-  function salvarPerfil() {
+  async function salvarPerfil() {
+    if (!nome.trim()) {
+      alerta.aviso("Nome obrigatório", "Informe o nome da ONG ou do protetor.");
+      return;
+    }
+    setSalvando(true);
     try {
-      const perfil: PerfilSalvo = {
-        nome, bio, endereco, ocultarEndereco, cidade, estado,
-        raio, statusVagas, capa, emailPublico, facebook,
-      };
-      const configuracoes = JSON.parse(localStorage.getItem(CHAVE_CONFIG) || "{}");
-
-      localStorage.setItem(CHAVE_PERFIL, JSON.stringify(perfil));
-      localStorage.setItem(CHAVE_CONFIG, JSON.stringify({ ...configuracoes, ...contatos }));
+      await salvarMinhaOng({
+        nomeOrganizacao: nome.trim(), descricao: bio, capaUrl: capa, endereco, ocultarEndereco,
+        cidade, estado, raioAtuacao: raio, statusVagas, emailPublico, facebook,
+        whatsapp: contatos.whatsappContato, instagram: contatos.instagram,
+      });
+      localStorage.setItem("ong_nome", nome.trim());
       setSalvo(true);
-    } catch {
-      alerta.erro("Não foi possível salvar o perfil neste navegador.");
+    } catch (erro) {
+      alerta.erro("Não foi possível salvar o perfil", erro instanceof Error ? erro.message : undefined);
+    } finally {
+      setSalvando(false);
     }
   }
 
-  function trocarCapa(evento: ChangeEvent<HTMLInputElement>) {
+  async function trocarCapa(evento: ChangeEvent<HTMLInputElement>) {
     const arquivo = evento.target.files?.[0];
-    if (!arquivo) return;
-
-    if (!arquivo.type.startsWith("image/") || arquivo.size > 3 * 1024 * 1024) {
-      alerta.erro("Selecione uma imagem de até 3 MB.");
-      return;
-    }
-
-    const leitor = new FileReader();
-    leitor.onload = () => {
-      if (typeof leitor.result === "string") {
-        setCapa(leitor.result);
-        setSalvo(false);
-      }
-    };
-    leitor.readAsDataURL(arquivo);
     evento.target.value = "";
+    if (!arquivo) return;
+    const problema = validarImagem(arquivo, 3);
+    if (problema) { alerta.erro(problema); return; }
+
+    setEnviandoCapa(true);
+    try {
+      setCapa(await enviarImagemPublica(arquivo, "capas"));
+      setSalvo(false);
+    } catch (erro) {
+      alerta.erro("Erro ao enviar a capa", erro instanceof Error ? erro.message : undefined);
+    } finally {
+      setEnviandoCapa(false);
+    }
   }
 
   async function trocarFoto(evento: ChangeEvent<HTMLInputElement>) {
     const arquivo = evento.target.files?.[0];
     if (!arquivo) return;
-
-    if (!arquivo.type.startsWith("image/") || arquivo.size > 5 * 1024 * 1024) {
-      alerta.erro("Selecione uma imagem de até 5 MB.");
-      return;
-    }
+    const problema = validarImagem(arquivo, 5);
+    if (problema) { alerta.erro(problema); return; }
 
     setEnviandoFoto(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alerta.erro("Login necessário", "Entre na conta da ONG para enviar a foto.");
-        return;
-      }
-
-      const extensao = arquivo.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-      const caminho = `logos/${user.id}-${Date.now()}.${extensao}`;
-      const armazenamento = supabase.storage.from("animais-fotos");
-      const { error } = await armazenamento.upload(caminho, arquivo, { contentType: arquivo.type });
-      if (error) throw error;
-
-      const url = armazenamento.getPublicUrl(caminho).data.publicUrl;
+      const url = await enviarImagemPublica(arquivo, "logos");
       await definirLogo(url);
       setFoto(url);
       localStorage.setItem("ong_foto", url);
@@ -154,14 +130,23 @@ export default function PerfilOngPage() {
     }
   }
 
+  if (carregando) return <main className={styles.page}><p>Carregando perfil...</p></main>;
+  if (falhaCarga) {
+    return (
+      <main className={styles.page}>
+        <p>Não foi possível carregar o perfil agora. <button type="button" className={styles.primary} onClick={() => window.location.reload()}>Tentar novamente</button></p>
+      </main>
+    );
+  }
+
   return (
     <>
       <main className={styles.page}>
         <div className={styles.profilePanel}>
           <div className={styles.profileTop}>
             <h2>Configuração do Perfil da ONG</h2>
-            <button type="button" className={styles.primary} onClick={salvarPerfil}>
-              Salvar Alterações
+            <button type="button" className={styles.primary} onClick={salvarPerfil} disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar Alterações"}
             </button>
           </div>
 
@@ -173,7 +158,7 @@ export default function PerfilOngPage() {
               onClick={() => inputCapaRef.current?.click()}
               style={capa ? { backgroundImage: `url(${capa})` } : undefined}
             >
-              <span>{capa ? "Alterar capa" : "Capa de Perfil"}</span>
+              <span>{enviandoCapa ? "Enviando..." : capa ? "Alterar capa" : "Capa de Perfil"}</span>
             </button>
             <input ref={inputCapaRef} className={styles.hiddenInput} type="file" accept="image/*" onChange={trocarCapa} />
 
@@ -197,7 +182,7 @@ export default function PerfilOngPage() {
               <div className={styles.profileText}>
                 <label>
                   Nome da ONG/Protetor
-                  <input placeholder="Digite aqui o nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+                  <input placeholder="Digite aqui o nome" value={nome} onChange={(e) => { setNome(e.target.value); setSalvo(false); }} />
                 </label>
                 <label>
                   Biografia/História
@@ -260,7 +245,7 @@ export default function PerfilOngPage() {
             </div>
           </section>
         </div>
-        {salvo && <p className={styles.saved} role="status">Alterações salvas neste navegador.</p>}
+        {salvo && <p className={styles.saved} role="status">Alterações salvas.</p>}
       </main>
     </>
   );

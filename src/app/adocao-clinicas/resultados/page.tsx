@@ -18,6 +18,9 @@ import styles from "./resultados.module.css";
 import modalStyles from "./favoritos-modal.module.css";
 import cardStyles from "./cards-perfis.module.css";
 import { supabase } from "@/lib/supabase";
+import { CONVIVENCIAS, TEMPERAMENTOS, listarDisponiveis, type AnimalTela } from "@/lib/animais";
+import { listarOngs, localizacaoOng, type Ong } from "@/lib/ong";
+import { adicionarFavorito, listarFavoritos, removerFavorito } from "@/lib/painel";
 
 /* ===== TIPOS ===== */
 
@@ -124,12 +127,46 @@ const filtrosIniciais: Filtros = {
   convivencia: [],
 };
 
-/* ===== DADOS TEMPORÁRIOS ===== */
+/* ===== CONVERSÃO DOS DADOS DA API PARA OS CARDS ===== */
 
-// Serão substituídos pelos dados do banco futuramente.
-const animais: Item[] = [];
-const bases: Item[] = [];
-const clinicas: Item[] = [];
+const ROTULO_ESPECIE: Record<string, string> = { cachorro: "Cachorro", gato: "Gato" };
+const ROTULO_PORTE: Record<string, string> = { pequeno: "Pequeno", medio: "Médio", grande: "Grande" };
+const CAPACIDADE: Record<string, Item["capacidade"]> = { com: "disponivel", lotado: "lotada", superlotado: "superlotada" };
+
+function animalParaItem(pet: AnimalTela): Item {
+  const local = [pet.cidade, pet.estado].filter(Boolean).join(" - ");
+  return {
+    id: pet.id,
+    nome: pet.nome,
+    localizacao: local ? `${pet.nome_ong} · ${local}` : pet.nome_ong,
+    imagem: pet.foto_url || undefined,
+    especie: ROTULO_ESPECIE[pet.especie],
+    porte: ROTULO_PORTE[pet.porte],
+    sexo: pet.sexo === "femea" ? "Fêmea" : "Macho",
+    castracao: pet.castrado ? "Castrado(a)" : undefined,
+    vacinacao: pet.vacinado ? "Vacinado(a)" : undefined,
+    vermifugacao: pet.vermifugado ? "Vermifugado(a)" : undefined,
+    cuidados: pet.cuidados_especiais ? "Precisa de cuidados especiais" : undefined,
+    personalidade: pet.temperamentos.map((t) => TEMPERAMENTOS[t] || t),
+    convivencia: pet.convivencia.map((c) => CONVIVENCIAS[c] || c),
+    href: `/adocao-clinicas/pet/${pet.id}`,
+    criadoEm: pet.created_at,
+    idade: pet.idade ? `${pet.idade} ano${pet.idade === 1 ? "" : "s"}` : undefined,
+  };
+}
+
+function ongParaItem(ong: Ong): Item {
+  return {
+    id: ong.id,
+    nome: ong.nomeOrganizacao,
+    localizacao: localizacaoOng(ong),
+    imagem: ong.logoUrl || undefined,
+    descricao: ong.descricao || undefined,
+    href: `/adocao-clinicas/ong/${ong.id}`,
+    capacidade: CAPACIDADE[ong.statusVagas],
+    avaliacao: ong.totalAvaliacoes > 0 ? ong.mediaAvaliacao : undefined,
+  };
+}
 
 /* ===== COMPONENTE ===== */
 
@@ -153,6 +190,44 @@ function ResultadosConteudo() {
 
   const [modalLoginAberto, setModalLoginAberto] = useState(false);
   const [verificandoLogin, setVerificandoLogin] = useState(false);
+
+  const [animais, setAnimais] = useState<Item[]>([]);
+  const [bases, setBases] = useState<Item[]>([]);
+  const [clinicas, setClinicas] = useState<Item[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erroBusca, setErroBusca] = useState("");
+
+  /* ===== BUSCA NO BACK-END ===== */
+
+  useEffect(() => {
+    let ativo = true;
+    Promise.all([
+      listarDisponiveis(endereco),
+      listarOngs({ tipo: "bases", endereco }),
+      listarOngs({ tipo: "clinicas", endereco }),
+    ])
+      .then(([pets, ongs, estacoes]) => {
+        if (!ativo) return;
+        setErroBusca("");
+        setAnimais(pets.map(animalParaItem));
+        setBases(ongs.map(ongParaItem));
+        setClinicas(estacoes.map(ongParaItem));
+      })
+      .catch(() => { if (ativo) setErroBusca("Não foi possível buscar agora. Tente novamente em instantes."); })
+      .finally(() => { if (ativo) setCarregando(false); });
+    return () => { ativo = false; };
+  }, [endereco]);
+
+  // favoritos ja salvos na conta (se houver login)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      listarFavoritos()
+        .then((lista) => setFavoritos(lista.flatMap((f) =>
+          f.tipo === "pet" ? [`animais:${f.alvoId}`] : [`bases:${f.alvoId}`, `clinicas:${f.alvoId}`])))
+        .catch(() => { /* sem favoritos */ });
+    });
+  }, []);
 
   const painelRef = useRef<HTMLDivElement>(null);
   const botaoFiltroRef = useRef<HTMLButtonElement>(null);
@@ -258,12 +333,20 @@ function ResultadosConteudo() {
         return;
       }
 
-      // Favoritos locais até a integração com a tabela de favoritos.
-      setFavoritos((anteriores) =>
-        anteriores.includes(id)
-          ? anteriores.filter((favorito) => favorito !== id)
-          : [...anteriores, id]
-      );
+      // chave = "<secao>:<id>"; bases e clinicas sao ONGs no back
+      const [secao, alvoId] = id.split(":");
+      const tipo = secao === "animais" ? "pet" : "ong";
+      const chaves = tipo === "pet" ? [id] : [`bases:${alvoId}`, `clinicas:${alvoId}`];
+      const jaFavorito = favoritos.includes(id);
+      try {
+        if (jaFavorito) await removerFavorito(tipo, alvoId);
+        else await adicionarFavorito(tipo, alvoId);
+        setFavoritos((anteriores) => jaFavorito
+          ? anteriores.filter((favorito) => !chaves.includes(favorito))
+          : [...anteriores, ...chaves]);
+      } catch {
+        // falha silenciosa: o coracao continua no estado anterior
+      }
     } finally {
       setVerificandoLogin(false);
     }
@@ -844,9 +927,13 @@ function ResultadosConteudo() {
             {renderizarCards(
               animaisFiltrados,
               "animais",
-              animais.length === 0
-                ? "Nenhum Astro disponível para adoção nesta região ainda."
-                : "Nenhum Astro corresponde aos filtros selecionados."
+              carregando
+                ? "Buscando Astros perto de você..."
+                : erroBusca
+                  ? erroBusca
+                  : animais.length === 0
+                    ? "Nenhum Astro disponível para adoção nesta região ainda."
+                    : "Nenhum Astro corresponde aos filtros selecionados."
             )}
           </section>
 
@@ -860,7 +947,7 @@ function ResultadosConteudo() {
             {renderizarCards(
               ordenarItens(bases),
               "bases",
-              "Nenhuma ONG ou abrigo cadastrada nesta região ainda."
+              carregando ? "Buscando ONGs..." : "Nenhuma ONG ou abrigo cadastrada nesta região ainda."
             )}
           </section>
 
@@ -874,7 +961,7 @@ function ResultadosConteudo() {
             {renderizarCards(
               ordenarItens(clinicas),
               "clinicas",
-              "Nenhuma clínica veterinária cadastrada nesta região ainda."
+              carregando ? "Buscando clínicas..." : "Nenhuma clínica veterinária cadastrada nesta região ainda."
             )}
           </section>
 

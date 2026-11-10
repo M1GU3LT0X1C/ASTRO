@@ -12,6 +12,7 @@ const menu = [
   { label: "Painel", href: "/dashboard", icon: "/painel-vetor.png" },
   { label: "Meus Pets", href: "/dashboard/meus-pets", icon: "/gato-meuspets.png" },
   { label: "Novo Pet", href: "/dashboard/novo", icon: "/mais-novo-pet.png" },
+  { label: "Adoções", href: "/dashboard/adocoes", icon: "/adocaos.svg" },
   { label: "Recompensas", href: "/dashboard/recompensas", icon: "/recompensa.png" },
   { label: "Métricas", href: "/dashboard/metricas", icon: "/metricas.png" },
   { label: "Agenda", href: "/dashboard/agenda", icon: "/agenda.png" },

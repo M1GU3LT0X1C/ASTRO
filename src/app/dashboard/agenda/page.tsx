@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import { alerta } from "@/lib/alerta";
+import { criarCompromisso, excluirCompromisso, horaCurta, listarAgenda, type Compromisso } from "@/lib/painel";
 
 type Tarefa = { id:string, data:string, hora:string, desc:string, pet?:string };
 type Modo = "hoje"|"essa"|"proxima";
@@ -13,12 +15,25 @@ export default function AgendaPage(){
   const [popup, setPopup] = useState(false);
   const [form, setForm] = useState({data:"", hora:"08:30", desc:"", pet:""});
 
+  const paraTarefa = (c:Compromisso):Tarefa => ({ id:c.id, data:c.data, hora:horaCurta(c.hora), desc:c.descricao, pet:c.pet||"" });
+
   useEffect(()=>{
-    setTarefas(JSON.parse(localStorage.getItem("tarefas-agenda")||"[]"));
+    listarAgenda().then(itens=>setTarefas(itens.map(paraTarefa))).catch(()=>alerta.erro("Não foi possível carregar a agenda"));
     setForm(f=>({...f, data: new Date().toISOString().split("T")[0]}));
   },[]);
 
-  const salvar = (n:Tarefa[])=>{ setTarefas(n); localStorage.setItem("tarefas-agenda", JSON.stringify(n)); };
+  const adicionar = async ()=>{
+    if(!form.desc.trim() || !form.data) return;
+    try{
+      const nova = await criarCompromisso({ data:form.data, hora:form.hora||undefined, descricao:form.desc.trim(), pet:form.pet.trim()||undefined });
+      setTarefas(t=>[...t, paraTarefa(nova)]);
+      setPopup(false);
+    }catch(e){ alerta.erro("Não foi possível salvar a tarefa", e instanceof Error ? e.message : undefined); }
+  };
+  const remover = async (id:string)=>{
+    try{ await excluirCompromisso(id); setTarefas(t=>t.filter(x=>x.id!==id)); }
+    catch{ alerta.erro("Não foi possível remover a tarefa"); }
+  };
   const toISO = (d:Date)=> d.toISOString().split("T")[0];
   const fmtBR = (d:Date)=> d.toLocaleDateString("pt-BR",{day:"numeric", month:"long", year:"numeric"});
   const inicioSemana = (d:Date)=>{ const dia=d.getDay(); const diff=d.getDate()-(dia===0?6:dia-1); return new Date(d.getFullYear(), d.getMonth(), diff); };
@@ -146,7 +161,7 @@ export default function AgendaPage(){
                       <span style={{fontSize:"10px", marginLeft:"6px"}}>{t.desc}</span>
                       <small style={{fontSize:"8px", color:"#666", display:"block"}}>{t.hora} • Consulta</small>
                     </div>
-                    <div className="xbtn" onClick={()=>salvar(tarefas.filter(x=>x.id!==t.id))}>
+                    <div className="xbtn" onClick={()=>remover(t.id)}>
                       <span style={{fontSize:"10px", fontWeight:700, lineHeight:1}}>✕</span>
                     </div>
                   </div>
@@ -168,7 +183,7 @@ export default function AgendaPage(){
               <textarea placeholder="Descrição..." value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})} style={{padding:"10px", borderRadius:"10px", border:"1px solid #e9e2ff", minHeight:"70px"}} />
               <div style={{display:"flex", gap:"8px"}}>
                 <button onClick={()=>setPopup(false)} style={{flex:1, padding:"10px", borderRadius:"999px", border:"1px solid #eee", background:"#fff"}}>Cancelar</button>
-                <button onClick={()=>{ if(!form.desc.trim()) return; salvar([...tarefas,{id:Date.now().toString(),...form}]); setPopup(false); }} style={{flex:1, padding:"10px", borderRadius:"999px", border:"none", background:"#1a125f", color:"#fff", fontWeight:700}}>Salvar</button>
+                <button onClick={adicionar} style={{flex:1, padding:"10px", borderRadius:"999px", border:"none", background:"#1a125f", color:"#fff", fontWeight:700}}>Salvar</button>
               </div>
             </div>
           </div>

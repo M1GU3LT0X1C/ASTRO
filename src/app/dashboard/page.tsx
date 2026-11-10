@@ -1,13 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { listarMeusAnimais } from "@/lib/animais";
+import Link from "next/link";
+import { listarMeusAnimais, type AnimalTela } from "@/lib/animais";
 import { buscarMe, garantirOng } from "@/lib/perfil";
+import { buscarMetricas, type Metricas } from "@/lib/ong";
+import { horaCurta, listarAgenda, proximosCompromissos, type Compromisso } from "@/lib/painel";
 import styles from "./Painel.module.css";
 
 export default function DashboardPage() {
   const [nomePessoa, setNomePessoa] = useState("");
-  const [animais, setAnimais] = useState<any[]>([]);
+  const [animais, setAnimais] = useState<AnimalTela[]>([]);
+  const [metricas, setMetricas] = useState<Metricas | null>(null);
+  const [lembretes, setLembretes] = useState<Compromisso[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,7 +40,14 @@ export default function DashboardPage() {
       const { ong } = await buscarMe();
       if (ong) {
         localStorage.setItem("ong_nome", ong.nomeOrganizacao);
-        setAnimais(await listarMeusAnimais());
+        const [pets, numeros, agenda] = await Promise.all([
+          listarMeusAnimais(),
+          buscarMetricas().catch(() => null),
+          listarAgenda().catch(() => []),
+        ]);
+        setAnimais(pets);
+        setMetricas(numeros);
+        setLembretes(proximosCompromissos(agenda).slice(0, 3));
       }
       setLoading(false);
     }
@@ -55,13 +67,19 @@ export default function DashboardPage() {
           <div className={styles.lembretesTitulo}>
             <img src="/lembrete.png" alt="lembretes" className={styles.iconeLembreteTitulo} /> Lembretes
           </div>
-          <div className={styles.lembreteItem} style={{color:'#999', fontStyle:'italic'}}>Nenhum lembrete por enquanto.</div>
+          {lembretes.length===0 ? (
+            <div className={styles.lembreteItem} style={{color:'#999', fontStyle:'italic'}}>Nenhum lembrete por enquanto.</div>
+          ) : lembretes.map((l)=>(
+            <div key={l.id} className={styles.lembreteItem}>
+              {new Date(l.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}{l.hora?` ${horaCurta(l.hora)}`:""} · {l.pet?`${l.pet}: `:""}{l.descricao}
+            </div>
+          ))}
         </div>
       </div>
       <div className={styles.metricas}>
-        <div className={styles.cardVerde}><strong>+{animais.length>0?35:0}%</strong><span>Alcance no bairro este mês</span></div>
-        <div className={styles.cardRoxo}><strong>R$ {animais.length*120},00</strong><span>Economizados em saúde</span></div>
-        <div className={styles.cardRosa}><strong>{animais.length}</strong><span>Interesses para adoção</span></div>
+        <div className={styles.cardVerde}><strong>{metricas?.visualizacoesMes ?? 0}</strong><span>Visualizações dos seus perfis este mês</span></div>
+        <div className={styles.cardRoxo}><strong>{metricas?.adocoesConcluidas ?? 0}</strong><span>Adoções concluídas</span></div>
+        <Link href="/dashboard/adocoes" className={styles.cardRosa} style={{textDecoration:"none"}}><strong>{metricas?.solicitacoesPendentes ?? 0}</strong><span>Interesses para adoção</span></Link>
       </div>
       <div className={styles.petsGrid}>
         {animais.length===0? (

@@ -1,41 +1,44 @@
 "use client";
 import { useState, useEffect } from "react";
 import { alerta } from "@/lib/alerta";
+import { buscarRecompensas, concluirTarefa, fazerCheckin, resgatarCupom, type Cupom, type EstadoRecompensas } from "@/lib/painel";
 
 export default function RecompensasPage(){
   const dias = ["Seg","Ter","Qua","Qui","Sex"];
-  const diasMap: any = {0:-1,1:0,2:1,3:2,4:3,5:4,6:-1};
-  const [pontos,setPontos]=useState(0);
-  const [checks,setChecks]=useState<{[k:string]:boolean}>({});
-  const [tarefas,setTarefas]=useState<{[k:string]:boolean}>({});
+  const diasMap: Record<number, number> = {0:-1,1:0,2:1,3:2,4:3,5:4,6:-1};
+  const [estado,setEstado]=useState<EstadoRecompensas|null>(null);
   const [mostra,setMostra]=useState(true);
   const [hojeIdx,setHojeIdx]=useState(-1);
   const [semanaId,setSemanaId]=useState("");
 
   const getSemanaId = ()=>{
     const now=new Date(); const onejan=new Date(now.getFullYear(),0,1);
-    const week=Math.ceil((((now as any)-(onejan as any))/86400000+onejan.getDay()+1)/7);
+    const week=Math.ceil(((now.getTime()-onejan.getTime())/86400000+onejan.getDay()+1)/7);
     return `${now.getFullYear()}-${week}`;
   };
 
   useEffect(()=>{
-    const now=new Date(); setHojeIdx(diasMap[now.getDay()]);
-    const sid=getSemanaId(); setSemanaId(sid);
-    const sidSalvo=localStorage.getItem("astro_semana");
-    if(sidSalvo!==sid){ localStorage.setItem("astro_semana",sid); localStorage.setItem("astro_checks",JSON.stringify({})); setChecks({}); }
-    else{ const s=localStorage.getItem("astro_checks"); if(s) setChecks(JSON.parse(s)); }
-    const pts=localStorage.getItem("astro_pontos"); setPontos(pts?Number(pts):0);
-    const t=localStorage.getItem("astro_tarefas"); if(t) setTarefas(JSON.parse(t));
+    setHojeIdx(diasMap[new Date().getDay()]);
+    setSemanaId(getSemanaId());
+    buscarRecompensas().then(setEstado).catch(()=>alerta.erro("Não foi possível carregar seus pontos"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
-  const savePontos = (n:number)=>{ setPontos(n); localStorage.setItem("astro_pontos",String(n)); };
+  const pontos = estado?.pontos ?? 0;
+  const tarefas: Record<string, boolean> = Object.fromEntries((estado?.tarefas ?? []).map(t=>[t,true]));
+  // check-ins da semana (datas yyyy-mm-dd) -> dia da semana exibido
+  const checks: Record<string, boolean> = Object.fromEntries((estado?.checkinsSemana ?? []).map(data=>{
+    const idx = diasMap[new Date(data+"T12:00:00").getDay()];
+    return [dias[idx] ?? data, true];
+  }));
 
-  const fazerCheck = (idx:number)=>{
+  const fazerCheck = async (idx:number)=>{
     if(idx!==hojeIdx) return alerta.aviso("Ops!", "Só pode fazer o check-in de hoje!");
-    const dia=dias[idx]; if(checks[dia]) return;
-    const novo={...checks,[dia]:true}; setChecks(novo);
-    localStorage.setItem("astro_checks",JSON.stringify(novo)); savePontos(pontos+10);
-    alerta.sucesso("+10 pontos! 🎉", "Check-in de hoje feito!");
+    if(checks[dias[idx]]) return;
+    try{
+      setEstado(await fazerCheckin());
+      alerta.sucesso("+10 pontos! 🎉", "Check-in de hoje feito!");
+    }catch{ alerta.erro("Não foi possível fazer o check-in"); }
   };
 
   const fazerTarefa = async (id:string,pts:number,nome:string)=>{
@@ -47,22 +50,26 @@ export default function RecompensasPage(){
       cancelText:"Ainda não",
     });
     if(!confirmou) return;
-    const novo={...tarefas,[id]:true}; setTarefas(novo);
-    localStorage.setItem("astro_tarefas",JSON.stringify(novo)); savePontos(pontos+pts);
-    alerta.sucesso(`+${pts} pontos! 🎉`, "Missão concluída!");
+    try{
+      setEstado(await concluirTarefa(id));
+      alerta.sucesso(`+${pts} pontos! 🎉`, "Missão concluída!");
+    }catch{ alerta.erro("Não foi possível registrar a missão"); }
   };
 
-  const usarCupom = async (custo:number)=>{
-    if(pontos < custo) return alerta.aviso("Pontos insuficientes", `Você tem ${pontos} pts e precisa de ${custo} pts. Continue fazendo check-ins!`);
+  const usarCupom = async (cupom:Cupom)=>{
+    if(pontos < cupom.custo) return alerta.aviso("Pontos insuficientes", `Você tem ${pontos} pts e precisa de ${cupom.custo} pts. Continue fazendo check-ins!`);
     const confirmou = await alerta.confirmar({
       title:"Usar cupom?",
-      text:`Usar 25% OFF em banho e tosa por ${custo} pontos?`,
+      text:`Usar ${cupom.titulo} ${cupom.descricao||""} por ${cupom.custo} pontos?`,
       confirmText:"Usar agora",
       cancelText:"Cancelar",
     });
     if(!confirmou) return;
-    savePontos(pontos - custo);
-    alerta.sucesso("Cupom liberado! 🎉", "Código: BANHO25 - copie e use no checkout!");
+    try{
+      const resgate = await resgatarCupom(cupom.id);
+      setEstado(await buscarRecompensas());
+      alerta.sucesso("Cupom liberado! 🎉", `Código: ${resgate.codigo} - copie e use no checkout!`);
+    }catch(e){ alerta.erro("Não foi possível usar o cupom", e instanceof Error ? e.message : undefined); }
   };
 
   const isPerdido = (idx:number)=> idx < hojeIdx &&!checks[dias[idx]];
@@ -122,14 +129,14 @@ export default function RecompensasPage(){
             </div>
             {mostra && (
               <div style={{display:"flex", flexDirection:"column", gap:"14px"}}>
-                <div className={`cupom ${pontos<200?"bloq":""}`}>
-                  <div style={{fontWeight:900, fontSize:"17px"}}>25% OFF</div><div style={{fontSize:"12px", opacity:.8}}>em banho e tosa</div><div style={{fontSize:"10px", marginTop:"4px", opacity:.7}}>custa 200 pts</div>
-                  <button className="btnCupom" onClick={()=>usarCupom(200)} disabled={pontos<200}>{pontos<200? `Falta ${200-pontos} pts` : "Usar cupom"}</button>
-                </div>
-                <div className={`cupom ${pontos<200?"bloq":""}`}>
-                  <div style={{fontWeight:900, fontSize:"17px"}}>25% OFF</div><div style={{fontSize:"12px", opacity:.8}}>em banho e tosa</div><div style={{fontSize:"10px", marginTop:"4px", opacity:.7}}>custa 200 pts</div>
-                  <button className="btnCupom" onClick={()=>usarCupom(200)} disabled={pontos<200}>{pontos<200? `Falta ${200-pontos} pts` : "Usar cupom"}</button>
-                </div>
+                {(estado?.cupons ?? []).length===0 && <small style={{fontSize:"11px", color:"#888"}}>Nenhum cupom disponível no momento.</small>}
+                {(estado?.cupons ?? []).map(cupom=>(
+                  <div key={cupom.id} className={`cupom ${pontos<cupom.custo?"bloq":""}`}>
+                    <div style={{fontWeight:900, fontSize:"17px"}}>{cupom.titulo}</div><div style={{fontSize:"12px", opacity:.8}}>{cupom.descricao}</div><div style={{fontSize:"10px", marginTop:"4px", opacity:.7}}>custa {cupom.custo} pts</div>
+                    <button className="btnCupom" onClick={()=>usarCupom(cupom)} disabled={pontos<cupom.custo}>{pontos<cupom.custo? `Falta ${cupom.custo-pontos} pts` : "Usar cupom"}</button>
+                  </div>
+                ))}
+                {(estado?.resgates ?? []).length>0 && <small style={{fontSize:"11px", color:"#555"}}>Seus cupons: {(estado?.resgates ?? []).map(r=>`${r.titulo} (${r.codigo})`).join(", ")}</small>}
               </div>
             )}
           </div>
