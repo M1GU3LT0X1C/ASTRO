@@ -22,12 +22,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/login')
   }
 
+  const perfilMeta = user.user_metadata?.perfil as string | undefined
+  const escolheuOng =
+    perfilMeta === 'guardiao' ||
+    perfilMeta === 'base-estelar' ||
+    perfilMeta === 'estacao' ||
+    perfilMeta === 'ong'
+
   const me = await apiServidor<Me>('/api/me').catch(() => null)
 
   // O dashboard é exclusivo para ONGs; exploradores usam seu próprio painel.
-  if (me?.tutor) {
+  if (
+    !escolheuOng &&
+    (me?.tutor ||
+      me?.tipo === 'EXPLORADOR' ||
+      (!me && perfilMeta === 'explorador'))
+  ) {
     redirect('/dashboard-explorador')
   }
 
-  return <DashboardClient nomeOng={me?.ong?.nomeOrganizacao || 'Minha ONG'}>{children}</DashboardClient>
+  const nomeFallback =
+    user.user_metadata?.nome ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.email?.split('@')[0] ||
+    'Minha ONG'
+
+  return <DashboardClient nomeOng={me?.ong?.nomeOrganizacao || nomeFallback}>{children}</DashboardClient>
 }

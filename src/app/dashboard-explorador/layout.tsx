@@ -33,20 +33,28 @@ export default async function DashboardExploradorLayout({
     redirect("/login");
   }
 
-  // Verificar se o usuário é explorador
-  const me = await apiServidor<Me>("/api/me").catch(
-    () => null
-  );
-
-  if (me && !me.tutor) {
-    redirect("/dashboard");
-  }
-
   const nome =
     user.user_metadata?.nome ||
     user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
     user.email?.split("@")[0] ||
     "Explorador";
+
+  const perfilMeta = user.user_metadata?.perfil as string | undefined;
+
+  // Verificar se o usuário é explorador ou garantir criação do registro de tutor
+  const me = await apiServidor<Me>("/api/me").catch(() => null);
+
+  if (me && !me.tutor) {
+    const ehOng = Boolean(me.ong || (me.tipo && me.tipo !== "EXPLORADOR"));
+    if (ehOng && perfilMeta !== "explorador") {
+      redirect("/dashboard");
+    }
+    await apiServidor<Me>("/api/me/tutor", {
+      method: "POST",
+      body: { nome },
+    }).catch(() => null);
+  }
 
   return (
     <DashboardExploradorClient nomeExplorador={nome}>

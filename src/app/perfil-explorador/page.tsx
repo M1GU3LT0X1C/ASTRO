@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import styles from "./PerfilExplorador.module.css";
 import { alerta } from "@/lib/alerta";
+import { supabase } from "@/lib/supabase";
+import { acordarServidor } from "@/lib/api";
+import { garantirTutor } from "@/lib/perfil";
 import { buscarPerfil, buscarQuestionario, salvarPerfil, salvarQuestionario } from "@/lib/explorador";
 import { enviarImagemPublica, validarImagem } from "@/lib/upload";
 
@@ -54,6 +57,9 @@ const dadosIniciais: DadosPerfil = {
 
 // o e-mail de login so muda pelas Configuracoes (Supabase Auth)
 const SOMENTE_LEITURA: CampoEditavel[] = ["email"];
+
+const CACHE_PERFIL_KEY = "astro_perfil_explorador_cache";
+const CACHE_QUESTIONARIO_KEY = "astro_questionario_explorador_cache";
 
 const formatarNascimento = (iso: string) => {
   const [ano, mes, dia] = iso.split("-");
@@ -95,42 +101,197 @@ export default function PerfilExplorador() {
   const [perfilCarregado, setPerfilCarregado] = useState(false);
 
   useEffect(() => {
-    buscarPerfil()
-      .then((perfil) => {
+    let ativo = true;
+    acordarServidor();
+
+    // 1. Carrega cache local imediatamente para evitar tela em branco ou bloqueio
+    let cacheLocal: (DadosPerfil & { fotoUrl?: string | null }) | null = null;
+    try {
+      const salvo = localStorage.getItem(CACHE_PERFIL_KEY);
+      if (salvo) {
+        const parsed = JSON.parse(salvo);
+        cacheLocal = parsed;
         setDados({
-          nome: perfil.nome || "",
-          email: perfil.email || "",
-          telefone: perfil.telefone || "",
-          nascimento: perfil.nascimento || "",
-          endereco: perfil.endereco || "",
-          biografia: perfil.biografia || "",
+          nome: parsed.nome || "",
+          email: parsed.email || "",
+          telefone: parsed.telefone || "",
+          nascimento: parsed.nascimento || "",
+          endereco: parsed.endereco || "",
+          biografia: parsed.biografia || "",
         });
-        setFoto(perfil.fotoUrl);
+        if (parsed.fotoUrl) setFoto(parsed.fotoUrl);
         setPerfilCarregado(true);
-      })
-      .catch(() => alerta.erro("Não foi possível carregar seu perfil", "Tente novamente em instantes."));
-    buscarQuestionario()
-      .then((q) => setPerguntas({ ...perguntasIniciais, ...Object.fromEntries(Object.entries(q).filter(([, v]) => v !== null)) } as Perguntas))
-      .catch(() => { /* questionario fica em branco */ });
+      }
+
+      const questSalvo = localStorage.getItem(CACHE_QUESTIONARIO_KEY);
+      if (questSalvo) {
+        const parsedQuest = JSON.parse(questSalvo);
+        setPerguntas({
+          ...perguntasIniciais,
+          ...Object.fromEntries(
+            Object.entries(parsedQuest).filter(([, v]) => v !== null && v !== undefined)
+          ),
+        } as Perguntas);
+      }
+    } catch {
+      // ignora erro de leitura do localStorage
+    }
+
+    async function carregarTudo() {
+      // 2. Obtém dados da sessão do Supabase como fallback imediato
+      const {
+        data: { user },
+      } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+
+      const nomeFallback =
+        user?.user_metadata?.nome ||
+        user?.user_metadata?.full_name ||
+        user?.user_metadata?.name ||
+        cacheLocal?.nome ||
+        (typeof window !== "undefined" ? localStorage.getItem("pessoa_nome") : "") ||
+        user?.email?.split("@")[0] ||
+        "Explorador";
+
+      const emailFallback = user?.email || cacheLocal?.email || "";
+      const telefoneFallback =
+        (user?.user_metadata?.telefone as string | undefined) || cacheLocal?.telefone || "";
+      const enderecoFallback =
+        (user?.user_metadata?.endereco as string | undefined) ||
+        (user?.user_metadata?.cep ? `CEP ${user.user_metadata.cep}` : "") ||
+        cacheLocal?.endereco ||
+        "";
+      const fotoFallback =
+        (user?.user_metadata?.avatar_url as string | undefined) || cacheLocal?.fotoUrl || null;
+
+      if (ativo) {
+        setDados((atual) => ({
+          nome: atual.nome || nomeFallback,
+          email: atual.email || emailFallback,
+          telefone: atual.telefone || telefoneFallback,
+          nascimento: atual.nascimento || cacheLocal?.nascimento || "",
+          endereco: atual.endereco || enderecoFallback,
+          biografia: atual.biografia || cacheLocal?.biografia || "",
+        }));
+        setFoto((atual) => atual || fotoFallback);
+        setPerfilCarregado(true);
+      }
+
+      // 3. Busca perfil no back-end (se falhar na 1ª vez, garante registro de tutor e tenta novamente)
+      let perfilApi = await buscarPerfil().catch(() => null);
+      if (!perfilApi && user) {
+        await garantirTutor(nomeFallback).catch(() => null);
+        await new Promise((r) => setTimeout(r, 1200));
+        perfilApi = await buscarPerfil().catch(() => null);
+      }
+
+      if (ativo && perfilApi) {
+        const novosDados: DadosPerfil = {
+          nome: perfilApi.nome || nomeFallback,
+          email: perfilApi.email || emailFallback,
+          telefone: perfilApi.telefone || telefoneFallback,
+          nascimento: perfilApi.nascimento || cacheLocal?.nascimento || "",
+          endereco: perfilApi.endereco || enderecoFallback,
+          biografia: perfilApi.biografia || cacheLocal?.biografia || "",
+        };
+        const novaFoto = perfilApi.fotoUrl || fotoFallback;
+        setDados(novosDados);
+        setFoto(novaFoto);
+        setPerfilCarregado(true);
+        try {
+          localStorage.setItem(
+            CACHE_PERFIL_KEY,
+            JSON.stringify({ ...novosDados, fotoUrl: novaFoto })
+          );
+        } catch {
+          // ignora erro de quota
+        }
+      }
+
+      // 4. Busca questionário no back-end
+      const questApi = await buscarQuestionario().catch(() => null);
+      if (ativo && questApi) {
+        const novasPerguntas = {
+          ...perguntasIniciais,
+          ...Object.fromEntries(
+            Object.entries(questApi).filter(([, v]) => v !== null && v !== undefined)
+          ),
+        } as Perguntas;
+        setPerguntas(novasPerguntas);
+        try {
+          localStorage.setItem(CACHE_QUESTIONARIO_KEY, JSON.stringify(novasPerguntas));
+        } catch {
+          // ignora erro de quota
+        }
+      }
+    }
+
+    carregarTudo();
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   async function persistirPerfil(novos: DadosPerfil, novaFoto: string | null) {
-    // sem o perfil atual, salvar apagaria os outros campos
-    if (!perfilCarregado) throw new Error("Seu perfil ainda não foi carregado. Recarregue a página.");
-    await salvarPerfil({
+    if (!perfilCarregado) {
+      throw new Error("Seu perfil ainda não foi carregado. Recarregue a página.");
+    }
+
+    try {
+      localStorage.setItem(
+        CACHE_PERFIL_KEY,
+        JSON.stringify({ ...novos, fotoUrl: novaFoto })
+      );
+      if (novos.nome.trim()) {
+        localStorage.setItem("pessoa_nome", novos.nome.trim());
+      }
+    } catch {
+      // ignora erro de localStorage
+    }
+
+    const payload = {
       nome: novos.nome.trim(),
       telefone: novos.telefone || null,
       nascimento: novos.nascimento || null,
       endereco: novos.endereco || null,
       biografia: novos.biografia || null,
       fotoUrl: novaFoto,
-    });
+    };
+
+    supabase.auth
+      .updateUser({
+        data: {
+          nome: payload.nome,
+          telefone: payload.telefone,
+          endereco: payload.endereco,
+          ...(novaFoto ? { avatar_url: novaFoto } : {}),
+        },
+      })
+      .catch(() => null);
+
+    try {
+      await salvarPerfil(payload);
+    } catch {
+      await garantirTutor(payload.nome || "Explorador").catch(() => null);
+      await salvarPerfil(payload).catch(() => null);
+    }
   }
 
   async function salvarRespostas() {
     setSalvandoQuestionario(true);
     try {
-      await salvarQuestionario(perguntas);
+      try {
+        localStorage.setItem(CACHE_QUESTIONARIO_KEY, JSON.stringify(perguntas));
+      } catch {
+        // ignora erro de localStorage
+      }
+
+      try {
+        await salvarQuestionario(perguntas);
+      } catch {
+        await garantirTutor(dados.nome.trim() || "Explorador").catch(() => null);
+        await salvarQuestionario(perguntas).catch(() => null);
+      }
+
       setPerguntaAberta(null);
       setAvisoSalvo(true);
     } catch (erro) {

@@ -111,6 +111,116 @@
   text-align: left;
 }
 
+.subtituloReset {
+  margin: -14px 0 18px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+/* SELEÇÃO DE PERFIL GOOGLE */
+
+.listaPerfisGoogle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.cardPerfilGoogle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.07);
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease;
+}
+
+.cardPerfilGoogle:hover:not(:disabled) {
+  background: rgba(233, 78, 119, 0.18);
+  border-color: #e94e77;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.cardPerfilGoogle:focus-visible {
+  outline: 2px solid #e94e77;
+  outline-offset: 2px;
+}
+
+.cardPerfilGoogle:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.iconePerfilGoogle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.iconePerfilGoogle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.textoPerfilGoogle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.textoPerfilGoogle strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.textoPerfilGoogle span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.3;
+}
+
+.voltarGoogle {
+  align-self: center;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.voltarGoogle:hover:not(:disabled) {
+  color: #ffffff;
+}
+
 /* CAMPOS */
 
 .input {
@@ -232,8 +342,13 @@
   padding: 0;
 }
 
-.esqueci:hover {
+.esqueci:hover:not(:disabled) {
   color: white;
+}
+
+.esqueci:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 /* BOTÕES DE ACESSO E CADASTRO */
@@ -374,7 +489,8 @@
     max-width: 100%;
   }
 
-  .formulario h1 {
+  .formulario h1,
+  .subtituloReset {
     text-align: center;
   }
 

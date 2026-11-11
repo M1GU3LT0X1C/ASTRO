@@ -122,9 +122,30 @@ export default function PerguntasFrequentesPage() {
                 <span aria-hidden="true">✦</span> FAQ Rápido • AstroPets
               </span>
 
-              <Link href="/ajuda" className={styles.linkAjuda}>
-                Ir para a Central de Ajuda completa →
-              </Link>
+              <nav
+                className={styles.atalhosTopo}
+                aria-label="Atalhos da Central de Ajuda e documentos legais"
+              >
+                <Link href="/ajuda" className={styles.atalhoItem}>
+                  Central de Ajuda
+                </Link>
+                <Link
+                  href="/perguntas-frequentes"
+                  className={`${styles.atalhoItem} ${styles.atalhoAtivo}`}
+                  aria-current="page"
+                >
+                  Perguntas Frequentes
+                </Link>
+                <Link href="/termos-de-uso" className={styles.atalhoItem}>
+                  Termos de Uso
+                </Link>
+                <Link
+                  href="/politica-de-privacidade"
+                  className={styles.atalhoItem}
+                >
+                  Privacidade
+                </Link>
+              </nav>
             </div>
 
             <h1>
@@ -170,7 +191,11 @@ export default function PerguntasFrequentesPage() {
                 <button
                   key={f.label}
                   type="button"
-                  onClick={() => setCategoriaAtiva(f.id)}
+                  onClick={() =>
+                    setCategoriaAtiva(
+                      f.id !== null && categoriaAtiva === f.id ? null : f.id
+                    )
+                  }
                   className={`${styles.pill} ${
                     f.cor === "azul" ? styles.pillAzul : styles.pillRosa
                   } ${categoriaAtiva === f.id ? styles.pillAtivo : ""}`}

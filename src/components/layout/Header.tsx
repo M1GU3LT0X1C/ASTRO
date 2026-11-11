@@ -16,16 +16,40 @@ export function Header() {
   const [sessao, setSessao] = useState<Sessao>({ logado: false, tutor: false });
 
   useEffect(() => {
-    async function atualizar(userId?: string) {
+    if (typeof window !== "undefined" && pathname !== "/login") {
+      const hash = window.location.hash;
+      if (hash.includes("type=recovery")) {
+        router.replace(`/login?reset=true${hash}`);
+        return;
+      }
+    }
+
+    async function atualizar(userId?: string, perfilMeta?: string) {
       if (!userId) return setSessao({ logado: false, tutor: false });
-      // se o back estiver fora do ar, ainda mostra "Sair"
-      const tutor = await buscarMe().then((me) => me.tutor).catch(() => false);
+      const fallbackTutor =
+        perfilMeta === "explorador" ||
+        (typeof window !== "undefined" && localStorage.getItem("tipo_usuario") === "explorador");
+      // se o back estiver fora do ar, usa o perfil salvo na sessão e ainda mostra "Sair"
+      const tutor = await buscarMe()
+        .then((me) => me.tutor || me.tipo === "EXPLORADOR")
+        .catch(() => fallbackTutor);
       setSessao({ logado: true, tutor });
     }
-    supabase.auth.getUser().then(({ data }) => atualizar(data.user?.id));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_evento, s) => { atualizar(s?.user.id); });
+
+    supabase.auth.getUser().then(({ data }) =>
+      atualizar(data.user?.id, data.user?.user_metadata?.perfil as string | undefined)
+    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((evento, s) => {
+      if (evento === "PASSWORD_RECOVERY" && pathname !== "/login") {
+        router.replace("/login?reset=true");
+        return;
+      }
+      atualizar(s?.user.id, s?.user?.user_metadata?.perfil as string | undefined);
+    });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [pathname, router]);
 
   useEffect(() => {
     setOpen(false);
@@ -86,7 +110,7 @@ export function Header() {
       </div>
 
       <button className={styles.menuBtn} onClick={() => setOpen(!open)} type="button">
-        {open? "✕" : "☰"}
+        {open ? "✕" : "☰"}
       </button>
 
       {open && (

@@ -7,7 +7,7 @@
 
 .container {
   width: 100%;
-  max-width: 920px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 44px 24px 70px;
 }
@@ -24,14 +24,14 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 14px;
+  padding: 6px 15px;
   border-radius: 999px;
   background: #e9e7f7;
   border: 1.5px solid #1a0a6b;
@@ -44,17 +44,40 @@
   color: #e63d68;
 }
 
-.linkAjuda {
-  font-size: 13px;
-  font-weight: 700;
-  color: #e63d68;
-  text-decoration: none;
-  transition: color 0.2s ease, transform 0.2s ease;
+.atalhosTopo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  background: #f5eff7;
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid #dfd9f2;
+  box-sizing: border-box;
 }
 
-.linkAjuda:hover {
+.atalhoItem {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
   color: #1a0a6b;
-  transform: translateX(2px);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .atalhoItem:hover {
+    color: #e63d68;
+  }
+}
+
+.atalhoAtivo {
+  background: #1a0a6b;
+  color: #ffffff !important;
 }
 
 .topo h1 {
@@ -107,7 +130,7 @@
 
 .buscaInput {
   width: 100%;
-  height: 42px;
+  height: 44px;
   background: #ffffff;
   border: 1.8px solid #1a0a6b;
   border-radius: 999px;
@@ -126,8 +149,8 @@
 .limparBusca {
   position: absolute;
   right: 12px;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: none;
   background: #e9e7f7;
@@ -135,6 +158,8 @@
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .pills {
@@ -144,13 +169,15 @@
 }
 
 .pill {
-  height: 30px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: none;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
@@ -164,9 +191,11 @@
   color: #ffffff;
 }
 
-.pill:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
+@media (hover: hover) {
+  .pill:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+  }
 }
 
 .pillAtivo {
@@ -190,10 +219,12 @@
   transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
-.cardItem:hover {
-  transform: translateY(-2px);
-  border-color: #e63d68;
-  box-shadow: 0 10px 22px rgba(26, 10, 107, 0.16);
+@media (hover: hover) {
+  .cardItem:hover {
+    transform: translateY(-2px);
+    border-color: #e63d68;
+    box-shadow: 0 10px 22px rgba(26, 10, 107, 0.16);
+  }
 }
 
 .cardAberto {
@@ -213,6 +244,8 @@
   justify-content: space-between;
   gap: 14px;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   line-height: 1.35;
 }
 
@@ -295,7 +328,7 @@
 
 .btnAzul,
 .btnRosa {
-  height: 38px;
+  height: 40px;
   padding: 0 18px;
   border-radius: 999px;
   font-size: 13px;
@@ -304,6 +337,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
@@ -317,19 +352,62 @@
   color: #ffffff;
 }
 
-.btnAzul:hover,
-.btnRosa:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
+@media (hover: hover) {
+  .btnAzul:hover,
+  .btnRosa:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+  }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 680px) {
   .container {
     padding: 28px 16px 50px;
   }
 
+  .topoLinha {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .badge {
+    align-self: flex-start;
+  }
+
+  .atalhosTopo {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    border-radius: 18px;
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .atalhoItem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px 8px;
+    font-size: 12.5px;
+    border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .topo h1 {
     font-size: 22px;
+  }
+
+  .buscaInput {
+    font-size: 16px;
+  }
+
+  .pill {
+    min-height: 36px;
+    padding: 8px 14px;
+    font-size: 12px;
   }
 
   .perguntaEsquerda {
@@ -345,10 +423,11 @@
 
   .rodapeAcoes {
     width: 100%;
+    flex-direction: column;
   }
 
   .btnAzul,
   .btnRosa {
-    flex: 1;
+    width: 100%;
   }
 }

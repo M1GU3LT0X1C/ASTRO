@@ -194,10 +194,21 @@ export function Cadastro() {
       );
       return;
     }
+    localStorage.removeItem("astro_reset_pendente");
+    localStorage.setItem("astro_google_login", "true");
     localStorage.setItem("astro_perfil_pendente", perfilSelecionado);
+    localStorage.setItem("tipo_usuario", perfilSelecionado);
+    if (nome.trim() && perfilSelecionado !== "explorador") {
+      localStorage.setItem("temp_ong_nome", nome.trim());
+    }
+    document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfilSelecionado)}; path=/; max-age=900; SameSite=Lax`;
+
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: "google", 
-      options: { redirectTo: `${window.location.origin}/auth/callback` } 
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: "select_account" },
+      } 
     });
     if (error) alerta.erro("Não foi possível continuar com o Google", traduzirErroAuth(error.message));
   }

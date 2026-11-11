@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -235,7 +234,9 @@ function ResultadosConteudo() {
   /* ===== FECHAR FILTRO AO CLICAR FORA ===== */
 
   useEffect(() => {
-    function clicarFora(event: MouseEvent) {
+    if (!filtrosAbertos) return;
+
+    function clicarFora(event: PointerEvent) {
       const alvo = event.target as Node;
 
       if (
@@ -246,15 +247,15 @@ function ResultadosConteudo() {
       }
     }
 
-    document.addEventListener("mousedown", clicarFora);
+    document.addEventListener("pointerdown", clicarFora);
 
     return () => {
       document.removeEventListener(
-        "mousedown",
+        "pointerdown",
         clicarFora
       );
     };
-  }, []);
+  }, [filtrosAbertos]);
 
   /* ===== SELEÇÃO DE FILTROS ===== */
 
@@ -628,14 +629,14 @@ function ResultadosConteudo() {
                   className={styles.botaoFiltro}
                   onClick={() =>
                     setFiltrosAbertos(
-                      !filtrosAbertos
+                      (aberto) => !aberto
                     )
                   }
                   aria-expanded={filtrosAbertos}
                   aria-controls="painel-filtros"
                 >
                   <SlidersHorizontal size={17} />
-                  Filtro
+                  Filtro {selecionados.length > 0 ? `(${selecionados.length})` : ""}
                 </button>
 
                 <button
@@ -858,6 +859,15 @@ function ResultadosConteudo() {
                 >
                   <button
                     type="button"
+                    className={styles.botaoLimparPainel}
+                    onClick={limparFiltros}
+                    disabled={selecionados.length === 0}
+                  >
+                    Limpar
+                  </button>
+
+                  <button
+                    type="button"
                     className={
                       styles.botaoConcluir
                     }
@@ -865,7 +875,7 @@ function ResultadosConteudo() {
                       setFiltrosAbertos(false)
                     }
                   >
-                    Concluir
+                    Concluir {selecionados.length > 0 ? `(${selecionados.length})` : ""}
                   </button>
                 </div>
               </div>

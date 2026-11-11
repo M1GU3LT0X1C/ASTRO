@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, ClipboardCheck, Heart, MessageCircle, Search, PawPrint, CalendarDays, XCircle } from "lucide-react";
 import { alerta } from "@/lib/alerta";
+import { acordarServidor } from "@/lib/api";
+import { garantirTutor } from "@/lib/perfil";
 import { EM_ANDAMENTO, ROTULO_STATUS, cancelarSolicitacao, minhasSolicitacoes, type Solicitacao, type StatusAdocao } from "@/lib/adocoes";
 import styles from "./Adocoes.module.css";
 
@@ -23,10 +25,28 @@ export default function MinhasAdocoes() {
   const [selecionada, setSelecionada] = useState<string | null>(null);
 
   useEffect(() => {
-    minhasSolicitacoes()
-      .then(setSolicitacoes)
-      .catch(() => alerta.erro("Não foi possível carregar suas solicitações"))
-      .finally(() => setCarregado(true));
+    let ativo = true;
+    acordarServidor();
+
+    async function carregar() {
+      try {
+        const lista = await minhasSolicitacoes();
+        if (ativo) setSolicitacoes(lista);
+      } catch {
+        const nome =
+          (typeof window !== "undefined" && localStorage.getItem("pessoa_nome")) || "Explorador";
+        await garantirTutor(nome).catch(() => null);
+        const listaRetry = await minhasSolicitacoes().catch(() => []);
+        if (ativo) setSolicitacoes(listaRetry);
+      } finally {
+        if (ativo) setCarregado(true);
+      }
+    }
+
+    carregar();
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   const atual = solicitacoes.find((item) => item.id === selecionada) ?? solicitacoes[0];

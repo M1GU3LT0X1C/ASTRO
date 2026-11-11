@@ -1,4 +1,6 @@
 .footer {
+  position: relative;
+  z-index: 10;
   width: 100%;
   background: #0d0062;
   color: #fff;
@@ -55,19 +57,18 @@
 
 .column a:not(.socialIcon) {
   position: relative;
+  display: inline-block;
+  padding: 3px 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.column a:not(.socialIcon):hover {
-  color: #e94e77;
-  transform: translateY(-1px);
 }
 
 .column a:not(.socialIcon)::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -5px;
+  bottom: -3px;
   width: 0;
   height: 2px;
   background: #e94e77;
@@ -76,9 +77,23 @@
   transition: width 0.2s ease;
 }
 
-.column a:not(.socialIcon):hover::after,
+.column a:not(.socialIcon):active {
+  color: #e94e77;
+}
+
 .column a:not(.socialIcon):focus-visible::after {
   width: 100%;
+}
+
+@media (hover: hover) {
+  .column a:not(.socialIcon):hover {
+    color: #e94e77;
+    transform: translateY(-1px);
+  }
+
+  .column a:not(.socialIcon):hover::after {
+    width: 100%;
+  }
 }
 
 .column a:focus-visible {
@@ -100,14 +115,23 @@
   border: 1px solid #4534bf;
   border-radius: 50%;
   color: #fff;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.socialIcon:hover,
+.socialIcon:active,
 .socialIcon:focus-visible {
   color: #e94e77;
   border-color: #e94e77;
-  transform: translateY(-1px);
+}
+
+@media (hover: hover) {
+  .socialIcon:hover {
+    color: #e94e77;
+    border-color: #e94e77;
+    transform: translateY(-1px);
+  }
 }
 
 .socialIcon svg {
@@ -163,6 +187,10 @@
   .column a:not(.socialIcon),
   .column span {
     font-size: 14px;
+  }
+
+  .column a:not(.socialIcon) {
+    padding: 5px 0;
   }
 
   .socials {
