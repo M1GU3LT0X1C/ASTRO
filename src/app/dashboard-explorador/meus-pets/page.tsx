@@ -3,6 +3,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { PawPrint, Plus, Trash2, CalendarDays, Pencil } from "lucide-react";
 import { alerta } from "@/lib/alerta";
+import { acordarServidor } from "@/lib/api";
+import { garantirTutor } from "@/lib/perfil";
 import { CONVIVENCIAS } from "@/lib/animais";
 import {
   adicionarRegistroSaude, excluirPetTutor, listarPetsTutor, removerRegistroSaude, type PetExplorador,
@@ -21,7 +23,28 @@ export default function MeusPets() {
   const [tipo, setTipo] = useState<"vacina" | "exame">("vacina");
 
   useEffect(() => {
-    listarPetsTutor().then(setPets).catch(() => alerta.erro("Não foi possível carregar seus pets")).finally(() => setCarregando(false));
+    let ativo = true;
+    acordarServidor();
+
+    async function carregar() {
+      try {
+        const lista = await listarPetsTutor();
+        if (ativo) setPets(lista);
+      } catch {
+        const nome =
+          (typeof window !== "undefined" && localStorage.getItem("pessoa_nome")) || "Explorador";
+        await garantirTutor(nome).catch(() => null);
+        const listaRetry = await listarPetsTutor().catch(() => []);
+        if (ativo) setPets(listaRetry);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    carregar();
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   const pet = pets.find((p) => p.id === atual) || pets[0];

@@ -188,7 +188,7 @@ export default function AjudaPage() {
 
             <nav
               className={styles.atalhosTopo}
-              aria-label="Atalhos para documentos legais"
+              aria-label="Atalhos da Central de Ajuda e documentos legais"
             >
               <Link
                 href="/ajuda"
@@ -197,6 +197,9 @@ export default function AjudaPage() {
               >
                 Central de Ajuda
               </Link>
+              <Link href="/perguntas-frequentes" className={styles.atalhoItem}>
+                Perguntas Frequentes
+              </Link>
               <Link href="/termos-de-uso" className={styles.atalhoItem}>
                 Termos de Uso
               </Link>
@@ -204,7 +207,7 @@ export default function AjudaPage() {
                 href="/politica-de-privacidade"
                 className={styles.atalhoItem}
               >
-                Política de Privacidade
+                Privacidade
               </Link>
             </nav>
           </div>
@@ -372,7 +375,7 @@ export default function AjudaPage() {
             <p>
               {busca
                 ? `Filtrar resultados para "${busca}" por categoria:`
-                : "Tópicos mais procurados (clique novamente para mostrar todos):"}
+                : "Tópicos mais procurados (toque novamente para mostrar todos):"}
             </p>
             <div className={styles.pills}>
               {topicos.map((t) => (

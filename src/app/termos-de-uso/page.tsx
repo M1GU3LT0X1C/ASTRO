@@ -213,10 +213,13 @@ export default function TermosDeUsoPage() {
 
             <nav
               className={styles.switchLegal}
-              aria-label="Alternar entre Central de Ajuda e documentos legais"
+              aria-label="Atalhos da Central de Ajuda e documentos legais"
             >
               <Link href="/ajuda" className={styles.switchItem}>
                 Central de Ajuda
+              </Link>
+              <Link href="/perguntas-frequentes" className={styles.switchItem}>
+                Perguntas Frequentes
               </Link>
               <Link
                 href="/termos-de-uso"
@@ -229,7 +232,7 @@ export default function TermosDeUsoPage() {
                 href="/politica-de-privacidade"
                 className={styles.switchItem}
               >
-                Política de Privacidade
+                Privacidade
               </Link>
             </nav>
           </div>
@@ -396,7 +399,7 @@ export default function TermosDeUsoPage() {
           </div>
 
           <p className={styles.labelTopicos}>
-            Filtrar cláusulas por tema (clique novamente para exibir todas):
+            Filtrar cláusulas por tema (toque novamente para exibir todas):
           </p>
           <div className={styles.pills}>
             {topicos.map((t) => (

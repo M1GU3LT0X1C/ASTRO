@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart, House, PawPrint, Stethoscope, Trash2 } from "lucide-react";
 import { alerta } from "@/lib/alerta";
+import { acordarServidor } from "@/lib/api";
+import { garantirTutor } from "@/lib/perfil";
 import { listarFavoritos, removerFavorito, type Favorito } from "@/lib/painel";
 import styles from "../painel-interno.module.css";
 
@@ -12,7 +14,28 @@ export default function Favoritos() {
   const [aba, setAba] = useState<"pet" | "ong">("pet");
 
   useEffect(() => {
-    listarFavoritos().then(setItens).catch(() => alerta.erro("Não foi possível carregar seus favoritos")).finally(() => setCarregando(false));
+    let ativo = true;
+    acordarServidor();
+
+    async function carregar() {
+      try {
+        const lista = await listarFavoritos();
+        if (ativo) setItens(lista);
+      } catch {
+        const nome =
+          (typeof window !== "undefined" && localStorage.getItem("pessoa_nome")) || "Explorador";
+        await garantirTutor(nome).catch(() => null);
+        const listaRetry = await listarFavoritos().catch(() => []);
+        if (ativo) setItens(listaRetry);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    carregar();
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   async function remover(item: Favorito) {

@@ -5,9 +5,17 @@ import type { NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Se o Supabase redirecionar um código OAuth/recuperação para a raiz (Site URL),
+  // encaminha para /auth/callback preservando os parâmetros.
+  if (pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   const modoTesteExplorador =
-  process.env.NODE_ENV === "development" &&
-  process.env.MODO_TESTE_EXPLORADOR === "true";
+    process.env.NODE_ENV === "development" &&
+    process.env.MODO_TESTE_EXPLORADOR === "true";
 
   const rotaExplorador =
     pathname === "/dashboard-explorador" ||
@@ -63,7 +71,7 @@ export async function middleware(request: NextRequest) {
   const rotasProtegidas = [
     "/dashboard",
     "/dashboard-explorador",
-    "/perfil-explorador", // Ajuste se o caminho real do perfil for diferente.
+    "/perfil-explorador",
   ];
 
   const rotaProtegida = rotasProtegidas.some(
@@ -77,13 +85,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  const emRecuperacaoSenha =
+    pathname === "/login" &&
+    (request.nextUrl.searchParams.get("reset") === "true" ||
+      request.nextUrl.searchParams.get("type") === "recovery" ||
+      request.nextUrl.searchParams.has("code") ||
+      request.nextUrl.searchParams.has("token_hash"));
+
   const rotaAutenticacao = ["/login", "/cadastro"].some(
     (rota) => pathname === rota || pathname.startsWith(`${rota}/`)
   );
 
-  if (rotaAutenticacao && user) {
+  if (rotaAutenticacao && user && !emRecuperacaoSenha) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    const perfil = user.user_metadata?.perfil;
+    url.pathname = perfil === "explorador" ? "/dashboard-explorador" : "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
   }

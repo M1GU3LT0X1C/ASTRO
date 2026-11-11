@@ -239,10 +239,13 @@ export default function PoliticaDePrivacidadePage() {
 
             <nav
               className={styles.switchLegal}
-              aria-label="Alternar entre Central de Ajuda e documentos legais"
+              aria-label="Atalhos da Central de Ajuda e documentos legais"
             >
               <Link href="/ajuda" className={styles.switchItem}>
                 Central de Ajuda
+              </Link>
+              <Link href="/perguntas-frequentes" className={styles.switchItem}>
+                Perguntas Frequentes
               </Link>
               <Link href="/termos-de-uso" className={styles.switchItem}>
                 Termos de Uso
@@ -252,7 +255,7 @@ export default function PoliticaDePrivacidadePage() {
                 className={`${styles.switchItem} ${styles.switchAtivo}`}
                 aria-current="page"
               >
-                Política de Privacidade
+                Privacidade
               </Link>
             </nav>
           </div>
@@ -420,7 +423,7 @@ export default function PoliticaDePrivacidadePage() {
           </div>
 
           <p className={styles.labelTopicos}>
-            Filtrar tópicos de privacidade (clique novamente para exibir todos):
+            Filtrar tópicos de privacidade (toque novamente para exibir todos):
           </p>
           <div className={styles.pills}>
             {topicos.map((t) => (
