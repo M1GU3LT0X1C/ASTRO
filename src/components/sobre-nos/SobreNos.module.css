@@ -12,6 +12,27 @@
   background: #fffdfd;
 }
 
+@keyframes surgirBloco {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flutuarIconeSuave {
+  0%,
+  100% {
+    translate: 0px 0px;
+  }
+  50% {
+    translate: 0px -6px;
+  }
+}
+
 
 /* =========================
    BLOCO 1
@@ -37,6 +58,7 @@
 .blocoUmTexto {
   width: 520px;
   max-width: 100%;
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .blocoUmTexto h1 {
@@ -75,6 +97,16 @@
   object-fit: cover;
 
   border-radius: 38px;
+
+  animation: surgirBloco 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+  transition:
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.blocoUmImagem:hover {
+  transform: translateY(-5px) scale(1.015);
+  box-shadow: 0 18px 34px rgba(21, 5, 111, 0.16);
 }
 
 
@@ -105,6 +137,16 @@
   border-radius: 48px;
 
   text-align: center;
+
+  animation: surgirBloco 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.blocoDoisConteudo:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 38px rgba(22, 8, 119, 0.26);
 }
 
 .blocoDoisConteudo h2 {
@@ -196,6 +238,15 @@
   object-fit: cover;
 
   border-radius: 28px;
+
+  transition:
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.blocoTresImagem:hover {
+  transform: translateY(-5px) scale(1.015);
+  box-shadow: 0 16px 32px rgba(21, 5, 111, 0.22);
 }
 
 
@@ -224,6 +275,29 @@
   padding: 22px 27px;
 
   border-radius: 28px;
+  border: 2px solid transparent;
+
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.cardBeneficio:nth-child(1) {
+  animation-delay: 0.06s;
+}
+
+.cardBeneficio:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.cardBeneficio:nth-child(3) {
+  animation-delay: 0.22s;
+}
+
+.cardBeneficio:hover {
+  transform: translateY(-5px) scale(1.012);
 }
 
 
@@ -243,6 +317,11 @@
   height: 30px;
 
   flex-shrink: 0;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cardBeneficio:hover .estrela {
+  transform: rotate(45deg) scale(1.16);
 }
 
 .cardBeneficio h3 {
@@ -276,14 +355,29 @@
   color: white;
 }
 
+.cardAzul:hover {
+  box-shadow: 0 18px 34px rgba(21, 5, 111, 0.32);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
 .cardRosa {
   background: #df3b67;
   color: white;
 }
 
+.cardRosa:hover {
+  box-shadow: 0 18px 34px rgba(223, 59, 103, 0.34);
+  border-color: #ffffff;
+}
+
 .cardBranco {
   background: white;
   color: #111111;
+}
+
+.cardBranco:hover {
+  box-shadow: 0 18px 34px rgba(21, 5, 111, 0.18);
+  border-color: #df3b67;
 }
 
 
@@ -384,6 +478,29 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.recurso:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.recurso:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.recurso:nth-child(3) {
+  animation-delay: 0.19s;
+}
+
+.recurso:nth-child(4) {
+  animation-delay: 0.26s;
+}
+
+.recurso:hover {
+  transform: translateY(-5px);
 }
 
 
@@ -398,6 +515,27 @@
   display: block;
 
   margin-bottom: 18px;
+
+  will-change: translate, scale, rotate, filter;
+  animation: flutuarIconeSuave 5.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transition:
+    scale 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    rotate 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.5s ease;
+}
+
+.recurso:nth-child(2) .iconeRecurso {
+  animation-delay: 0.8s;
+}
+
+.recurso:nth-child(3) .iconeRecurso {
+  animation-delay: 1.6s;
+}
+
+.recurso:hover .iconeRecurso {
+  scale: 1.07;
+  rotate: -3.5deg;
+  filter: drop-shadow(0 14px 24px rgba(21, 5, 111, 0.15));
 }
 
 

@@ -4,6 +4,28 @@
   padding: 40px 20px;
   overflow-x: hidden;
 }
+
+@keyframes surgirBloco {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flutuarIconeSuave {
+  0%,
+  100% {
+    translate: 0px 0px;
+  }
+  50% {
+    translate: 0px -5px;
+  }
+}
+
 .conteudo {
   max-width: 1200px;
   margin: 0 auto;
@@ -11,6 +33,7 @@
 .introducao {
   text-align: center;
   margin-bottom: 30px;
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .introducao h1 {
   color: #1a0b5c;
@@ -43,16 +66,34 @@
   padding: 28px 18px 22px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.25s ease;
+  animation: surgirBloco 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease,
+    background-color 0.35s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 300px;
   box-sizing: border-box;
 }
+.perfilCard:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.perfilCard:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.perfilCard:nth-child(3) {
+  animation-delay: 0.19s;
+}
+.perfilCard:nth-child(4) {
+  animation-delay: 0.26s;
+}
 .perfilCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(26, 11, 92, 0.1);
+  transform: translateY(-5px) scale(1.012);
+  border-color: #e63d68;
+  box-shadow: 0 16px 32px rgba(26, 11, 92, 0.14);
 }
 .perfilSelecionado {
   background: #ffb3c6 !important;
@@ -69,6 +110,24 @@
   height: 88px;
   margin-bottom: 16px;
   object-fit: contain;
+  will-change: translate, scale, rotate;
+  animation: flutuarIconeSuave 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transition:
+    scale 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    rotate 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.perfilCard:nth-child(2) .perfilIcone {
+  animation-delay: 0.6s;
+}
+.perfilCard:nth-child(3) .perfilIcone {
+  animation-delay: 1.2s;
+}
+.perfilCard:nth-child(4) .perfilIcone {
+  animation-delay: 1.8s;
+}
+.perfilCard:hover .perfilIcone {
+  scale: 1.08;
+  rotate: -4deg;
 }
 .perfilCard h2 {
   color: #1a0b5c;
@@ -105,6 +164,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  animation: surgirBloco 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .inputGrande,
 .inputMetade,
@@ -121,6 +181,14 @@
   color: #1a0b5c;
   appearance: none;
   -webkit-appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.inputGrande:focus,
+.inputMetade:focus,
+.inputSenha:focus,
+.selectBonito:focus {
+  border-color: #1a0b5c;
+  box-shadow: 0 0 0 3px rgba(26, 11, 92, 0.14);
 }
 .inputGrande::placeholder,
 .inputMetade::placeholder,
@@ -185,10 +253,19 @@
   border: none;
   margin-top: 6px;
   font-size: 15px;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s ease,
+    background-color 0.25s ease;
 }
 .botaoContinuar {
   background: #1a0b5c;
   color: white;
+}
+.botaoContinuar:hover:not(:disabled) {
+  background: #271282;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(26, 11, 92, 0.26);
 }
 .botaoContinuar:disabled {
   opacity: 0.6;
@@ -202,6 +279,12 @@
   justify-content: center;
   gap: 10px;
   color: #1a0b5c;
+}
+.botaoGoogle:hover:not(:disabled) {
+  background: #fdf7fa;
+  border-color: #e63d68;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(230, 61, 104, 0.14);
 }
 .voltar {
   display: inline-flex;

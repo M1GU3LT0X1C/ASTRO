@@ -14,6 +14,20 @@ class EmailJaCadastradoError extends Error {}
 
 type DadosIniciais = { nome: string; email: string; senha: string };
 
+const NOMES_PERFIL: Record<Perfil, string> = {
+  explorador: "Explorador",
+  guardiao: "Guardião de Órbita",
+  "base-estelar": "Base Estelar",
+  estacao: "Estação de Cuidado",
+};
+
+const SUBTITULOS_PERFIL: Record<Perfil, string> = {
+  explorador: "Você poderá adotar pets, salvar favoritos e encontrar clínicas parceiras.",
+  guardiao: "Você poderá cadastrar pets resgatados para adoção e gerenciar seus acolhimentos.",
+  "base-estelar": "Você poderá cadastrar pets para adoção e gerenciar sua Base Estelar.",
+  estacao: "Você poderá divulgar seus serviços veterinários, cupons e atender tutores e ONGs.",
+};
+
 export function Cadastro() {
   const router = useRouter();
   const [etapa, setEtapa] = useState<1 | 2>(1);
@@ -100,8 +114,14 @@ export function Cadastro() {
     if (!perfilSelecionado) return;
     if (!senhaOk) { setErroSenha("Sua senha precisa cumprir todos os requisitos"); return; }
     if (senha !== confirmarSenha) { setErroSenha("As senhas não coincidem!"); return; }
+    const ehPessoaFisica = perfilSelecionado === "explorador" || perfilSelecionado === "guardiao";
     if (!aceitouTermos) {
-      alerta.aviso("Aceite os termos para continuar", "Confirme que você tem 18 anos ou mais e que aceita os Termos de Uso e a Política de Privacidade.");
+      alerta.aviso(
+        "Aceite os termos para continuar",
+        ehPessoaFisica
+          ? "Confirme que você tem 18 anos ou mais e que aceita os Termos de Uso e a Política de Privacidade."
+          : "Confirme que você leu e aceita os Termos de Uso e a Política de Privacidade para cadastrar a instituição."
+      );
       return;
     }
     if (enviando.current) return;
@@ -164,8 +184,14 @@ export function Cadastro() {
 
   async function handleGoogleCadastro() {
     if (!perfilSelecionado) { alerta.aviso("Escolha um perfil primeiro", "Selecione como você vai orbitar com a gente."); return; }
+    const ehPessoaFisica = perfilSelecionado === "explorador" || perfilSelecionado === "guardiao";
     if (!aceitouTermos) {
-      alerta.aviso("Aceite os termos para continuar", "Confirme que você tem 18 anos ou mais e que aceita os Termos de Uso e a Política de Privacidade antes de continuar com o Google.");
+      alerta.aviso(
+        "Aceite os termos para continuar",
+        ehPessoaFisica
+          ? "Confirme que você tem 18 anos ou mais e que aceita os Termos de Uso e a Política de Privacidade antes de continuar com o Google."
+          : "Confirme que você leu e aceita os Termos de Uso e a Política de Privacidade antes de continuar com o Google."
+      );
       return;
     }
     localStorage.setItem("astro_perfil_pendente", perfilSelecionado);
@@ -183,6 +209,9 @@ export function Cadastro() {
   const isGuardiao = perfilSelecionado === "guardiao";
   const isEstacao = perfilSelecionado === "estacao";
   const isExplorador = perfilSelecionado === "explorador";
+  const isPessoaFisica = isExplorador || isGuardiao;
+  const nomePerfilExibicao = perfilSelecionado ? NOMES_PERFIL[perfilSelecionado] : "";
+  const subtituloPerfilExibicao = perfilSelecionado ? SUBTITULOS_PERFIL[perfilSelecionado] : "";
   const placeholderDoc = isOng ? "CNPJ - 00.000.000/0000-00" : isEstacao ? "CNPJ ou CPF" : isGuardiao ? "CPF - 000.000.000-00" : "";
 
   return (
@@ -209,8 +238,8 @@ export function Cadastro() {
           <>
             <button className={styles.voltar} onClick={() => setEtapa(1)}>← Voltar</button>
             <div className={styles.introducao}>
-              <h1>Criando sua conta de <span style={{color:'#e63d68'}}>{perfilSelecionado}</span></h1>
-              <p>{isExplorador ? "Você poderá adotar e salvar pets favoritos" : "Você poderá cadastrar pets para adoção e gerenciar sua base"}</p>
+              <h1>Criando sua conta de <span style={{color:'#e63d68'}}>{nomePerfilExibicao}</span></h1>
+              <p>{subtituloPerfilExibicao}</p>
             </div>
 
             <form className={styles.formulario} onSubmit={finalizarCadastro}>
@@ -259,7 +288,15 @@ export function Cadastro() {
                   required
                 />
                 <span className={styles.termoTexto}>
-                  Declaro ter <strong>18 anos ou mais</strong> e que li e aceito os{" "}
+                  {isPessoaFisica ? (
+                    <>
+                      Declaro ter <strong>18 anos ou mais</strong> e que li e aceito os{" "}
+                    </>
+                  ) : (
+                    <>
+                      Declaro ser responsável autorizado(a) pela instituição e que li e aceito os{" "}
+                    </>
+                  )}
                   <Link
                     href="/termos-de-uso"
                     target="_blank"
@@ -284,7 +321,7 @@ export function Cadastro() {
               </label>
 
               <button type="submit" className={styles.botaoContinuar} disabled={carregando || !senhaOk || !confirmOk || !aceitouTermos}>
-                {carregando ? "Criando conta..." : `Criar conta de ${perfilSelecionado}`}
+                {carregando ? "Criando conta..." : `Criar conta de ${nomePerfilExibicao}`}
               </button>
 
               <div className={styles.divisor}>ou</div>

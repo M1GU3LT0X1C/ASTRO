@@ -10,6 +10,15 @@
   border: 1.5px solid #ef3869;
   border-radius: 22px;
   background: #fff;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.28s ease;
+}
+.cardPerfil:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 16px 32px rgba(229, 56, 104, 0.18);
+  border-color: #df3b67;
 }
 .fotoArea { position: relative; width: 124px; height: 124px; flex: 0 0 auto; margin-bottom: 16px; }
 .fotoCircular {
@@ -21,6 +30,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s ease;
+}
+.cardPerfil:hover .fotoCircular {
+  transform: scale(1.05);
+  box-shadow: 0 8px 18px rgba(21, 5, 111, 0.15);
 }
 .fotoCircular img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .fotoPlaceholder { display: block; width: 100%; height: 100%; background: #d9d9d9; }
@@ -62,6 +78,14 @@
   font-weight: 700;
   text-decoration: none;
   text-align: center;
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease,
+    background-color 0.22s ease;
+}
+.botaoPerfil:hover:not(.botaoSemLink) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(229, 56, 104, 0.3);
 }
 .botaoSemLink { background: #e43968 !important; color: #fff !important; opacity: 0.7; cursor: not-allowed; }
 @media (max-width: 600px) { .cardPerfil { min-height: 370px; } }
