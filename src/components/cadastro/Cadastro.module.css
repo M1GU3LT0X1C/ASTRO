@@ -202,6 +202,49 @@
 .inputMetade {
   flex: 1;
 }
+.linhaCrmv {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.selectUfWrapper {
+  position: relative;
+  width: 175px;
+  flex-shrink: 0;
+}
+.selectUfWrapper::after {
+  content: "⌄";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-65%);
+  color: #1a0b5c;
+  font-size: 18px;
+  pointer-events: none;
+}
+.statusValidacao {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 14px;
+  margin-top: -6px;
+  line-height: 1.4;
+}
+.statusOk {
+  color: #0e7a46;
+  background: #e3fcef;
+  border: 1px solid #a7f3d0;
+}
+.statusErro {
+  color: #b91c46;
+  background: #ffe4ec;
+  border: 1px solid #fecdd3;
+}
+.statusCarregando {
+  color: #1a0b5c;
+  background: #efecf9;
+  border: 1px solid #d8d0f5;
+}
 .inputComOlho {
   flex: 1;
   position: relative;
@@ -429,6 +472,8 @@
   .dots { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
   .dots span { width: 8px; height: 8px; background: #e8d5f2; border-radius: 50%; }
   .formulario { padding: 0 20px; }
-  .linhaInputs { flex-direction: column; gap: 14px; }
+  .linhaInputs,
+  .linhaCrmv { flex-direction: column; gap: 14px; }
+  .selectUfWrapper { width: 100%; }
   @keyframes pisca { 0%,100%{opacity:0.45} 50%{opacity:1} }
 }

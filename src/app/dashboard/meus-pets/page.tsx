@@ -58,7 +58,7 @@ function ConteudoMeusPets() {
 
   useEffect(()=>{
     const q = searchParams.get("busca") || localStorage.getItem("astro_busca") || "";
-    setBusca(q);
+    queueMicrotask(() => setBusca(q));
   },[searchParams]);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ function ConteudoMeusPets() {
       <div className={styles.topBar}>
         {busca && (
           <div style={{fontSize:13, color:"#555"}}>
-            Buscando por: <b>"{busca}"</b> <button onClick={()=>{setBusca(""); localStorage.removeItem("astro_busca");}} style={{marginLeft:8, background:"none", border:"none", color:"#e63d68", cursor:"pointer"}}>✕ limpar</button>
+            Buscando por: <b>&quot;{busca}&quot;</b> <button onClick={()=>{setBusca(""); localStorage.removeItem("astro_busca");}} style={{marginLeft:8, background:"none", border:"none", color:"#e63d68", cursor:"pointer"}}>✕ limpar</button>
           </div>
         )}
         <div style={{marginLeft:"auto"}} className={styles.ordenarWrap}>

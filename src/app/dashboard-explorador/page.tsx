@@ -10,7 +10,7 @@ const acoes = [
   { titulo: "Adicionar Pet", href: "/dashboard-explorador/novo", icone: "/add-pet.svg", cor: "azul" },
   { titulo: "Agendar Consulta", href: "/dashboard-explorador/agenda", icone: "/agendar.svg", cor: "rosa" },
   { titulo: "Cupons Ativos", href: "/dashboard-explorador/recompensas", icone: "/cupom-ativo.svg", cor: "azul" },
-  { titulo: "Ver Estações", href: "/adocao-clinicas", icone: "/ver-estacao.svg", cor: "rosa" },
+  { titulo: "Ver Estações", href: "/dashboard-explorador/clinicas", icone: "/ver-estacao.svg", cor: "rosa" },
 ] as const;
 
 export default function DashboardExploradorPage() {

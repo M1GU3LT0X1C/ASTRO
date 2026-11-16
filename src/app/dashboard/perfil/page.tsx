@@ -42,9 +42,16 @@ export default function PerfilOngPage() {
 
   // Carrega o perfil salvo no back-end.
   useEffect(() => {
+    const fotoCache = typeof window !== "undefined" ? localStorage.getItem("ong_foto") || "" : "";
+    if (fotoCache) queueMicrotask(() => setFoto(fotoCache));
+
     buscarMinhaOng()
       .then((ong) => {
-        setFoto(ong.logoUrl || "");
+        const logoInicial = ong.logoUrl || fotoCache || "";
+        setFoto(logoInicial);
+        if (logoInicial) {
+          localStorage.setItem("ong_foto", logoInicial);
+        }
         setCapa(ong.capaUrl || "");
         setNome(ong.nomeOrganizacao || "");
         setBio(ong.descricao || "");
@@ -84,6 +91,7 @@ export default function PerfilOngPage() {
         whatsapp: contatos.whatsappContato, instagram: contatos.instagram,
       });
       localStorage.setItem("ong_nome", nome.trim());
+      window.dispatchEvent(new Event("astro-perfil-atualizado"));
       setSalvo(true);
     } catch (erro) {
       alerta.erro("Não foi possível salvar o perfil", erro instanceof Error ? erro.message : undefined);
@@ -119,9 +127,10 @@ export default function PerfilOngPage() {
     setEnviandoFoto(true);
     try {
       const url = await enviarImagemPublica(arquivo, "logos");
-      await definirLogo(url);
       setFoto(url);
       localStorage.setItem("ong_foto", url);
+      window.dispatchEvent(new Event("astro-perfil-atualizado"));
+      await definirLogo(url).catch(() => null);
     } catch (erro) {
       alerta.erro("Erro ao salvar a foto", erro instanceof Error ? erro.message : undefined);
     } finally {

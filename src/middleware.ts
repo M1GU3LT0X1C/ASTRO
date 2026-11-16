@@ -7,7 +7,11 @@ export async function middleware(request: NextRequest) {
 
   // Se o Supabase redirecionar um código OAuth/recuperação para a raiz (Site URL),
   // encaminha para /auth/callback preservando os parâmetros.
-  if (pathname === "/" && request.nextUrl.searchParams.has("code")) {
+  if (
+    pathname === "/" &&
+    (request.nextUrl.searchParams.has("code") ||
+      request.nextUrl.searchParams.has("token_hash"))
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/callback";
     return NextResponse.redirect(url);
@@ -86,11 +90,13 @@ export async function middleware(request: NextRequest) {
   }
 
   const emRecuperacaoSenha =
-    pathname === "/login" &&
-    (request.nextUrl.searchParams.get("reset") === "true" ||
-      request.nextUrl.searchParams.get("type") === "recovery" ||
-      request.nextUrl.searchParams.has("code") ||
-      request.nextUrl.searchParams.has("token_hash"));
+    pathname === "/recuperar-senha" ||
+    pathname.startsWith("/recuperar-senha/") ||
+    (pathname === "/login" &&
+      (request.nextUrl.searchParams.get("reset") === "true" ||
+        request.nextUrl.searchParams.get("type") === "recovery" ||
+        request.nextUrl.searchParams.has("code") ||
+        request.nextUrl.searchParams.has("token_hash")));
 
   const rotaAutenticacao = ["/login", "/cadastro"].some(
     (rota) => pathname === rota || pathname.startsWith(`${rota}/`)

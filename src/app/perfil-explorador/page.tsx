@@ -107,31 +107,39 @@ export default function PerfilExplorador() {
     // 1. Carrega cache local imediatamente para evitar tela em branco ou bloqueio
     let cacheLocal: (DadosPerfil & { fotoUrl?: string | null }) | null = null;
     try {
+      const fotoSalvaDireta = localStorage.getItem("explorador_foto");
       const salvo = localStorage.getItem(CACHE_PERFIL_KEY);
       if (salvo) {
         const parsed = JSON.parse(salvo);
         cacheLocal = parsed;
-        setDados({
-          nome: parsed.nome || "",
-          email: parsed.email || "",
-          telefone: parsed.telefone || "",
-          nascimento: parsed.nascimento || "",
-          endereco: parsed.endereco || "",
-          biografia: parsed.biografia || "",
+        queueMicrotask(() => {
+          setDados({
+            nome: parsed.nome || "",
+            email: parsed.email || "",
+            telefone: parsed.telefone || "",
+            nascimento: parsed.nascimento || "",
+            endereco: parsed.endereco || "",
+            biografia: parsed.biografia || "",
+          });
+          const fotoInicial = parsed.fotoUrl || fotoSalvaDireta || null;
+          if (fotoInicial) setFoto(fotoInicial);
+          setPerfilCarregado(true);
         });
-        if (parsed.fotoUrl) setFoto(parsed.fotoUrl);
-        setPerfilCarregado(true);
+      } else if (fotoSalvaDireta) {
+        queueMicrotask(() => setFoto(fotoSalvaDireta));
       }
 
       const questSalvo = localStorage.getItem(CACHE_QUESTIONARIO_KEY);
       if (questSalvo) {
         const parsedQuest = JSON.parse(questSalvo);
-        setPerguntas({
-          ...perguntasIniciais,
-          ...Object.fromEntries(
-            Object.entries(parsedQuest).filter(([, v]) => v !== null && v !== undefined)
-          ),
-        } as Perguntas);
+        queueMicrotask(() => {
+          setPerguntas({
+            ...perguntasIniciais,
+            ...Object.fromEntries(
+              Object.entries(parsedQuest).filter(([, v]) => v !== null && v !== undefined)
+            ),
+          } as Perguntas);
+        });
       }
     } catch {
       // ignora erro de leitura do localStorage
@@ -160,8 +168,13 @@ export default function PerfilExplorador() {
         (user?.user_metadata?.cep ? `CEP ${user.user_metadata.cep}` : "") ||
         cacheLocal?.endereco ||
         "";
+      const fotoSalva =
+        typeof window !== "undefined" ? localStorage.getItem("explorador_foto") : null;
       const fotoFallback =
-        (user?.user_metadata?.avatar_url as string | undefined) || cacheLocal?.fotoUrl || null;
+        cacheLocal?.fotoUrl ||
+        fotoSalva ||
+        (user?.user_metadata?.avatar_url as string | undefined) ||
+        null;
 
       if (ativo) {
         setDados((atual) => ({
@@ -173,6 +186,13 @@ export default function PerfilExplorador() {
           biografia: atual.biografia || cacheLocal?.biografia || "",
         }));
         setFoto((atual) => atual || fotoFallback);
+        if (fotoFallback) {
+          try {
+            localStorage.setItem("explorador_foto", fotoFallback);
+          } catch {
+            // ignora erro de storage
+          }
+        }
         setPerfilCarregado(true);
       }
 
@@ -202,6 +222,13 @@ export default function PerfilExplorador() {
             CACHE_PERFIL_KEY,
             JSON.stringify({ ...novosDados, fotoUrl: novaFoto })
           );
+          if (novaFoto) {
+            localStorage.setItem("explorador_foto", novaFoto);
+          }
+          if (novosDados.nome) {
+            localStorage.setItem("pessoa_nome", novosDados.nome);
+          }
+          window.dispatchEvent(new Event("astro-perfil-atualizado"));
         } catch {
           // ignora erro de quota
         }
@@ -241,9 +268,13 @@ export default function PerfilExplorador() {
         CACHE_PERFIL_KEY,
         JSON.stringify({ ...novos, fotoUrl: novaFoto })
       );
+      if (novaFoto) {
+        localStorage.setItem("explorador_foto", novaFoto);
+      }
       if (novos.nome.trim()) {
         localStorage.setItem("pessoa_nome", novos.nome.trim());
       }
+      window.dispatchEvent(new Event("astro-perfil-atualizado"));
     } catch {
       // ignora erro de localStorage
     }
@@ -257,13 +288,15 @@ export default function PerfilExplorador() {
       fotoUrl: novaFoto,
     };
 
+    const ehDataUrl = Boolean(novaFoto && novaFoto.startsWith("data:"));
+
     supabase.auth
       .updateUser({
         data: {
           nome: payload.nome,
           telefone: payload.telefone,
           endereco: payload.endereco,
-          ...(novaFoto ? { avatar_url: novaFoto } : {}),
+          ...(!ehDataUrl && novaFoto ? { avatar_url: novaFoto } : {}),
         },
       })
       .catch(() => null);
@@ -384,8 +417,8 @@ export default function PerfilExplorador() {
     setEnviandoFoto(true);
     try {
       const url = await enviarImagemPublica(arquivo, "explorador");
-      await persistirPerfil(dados, url);
       setFoto(url);
+      await persistirPerfil(dados, url);
     } catch (erro) {
       alerta.erro("Não foi possível alterar a foto", erro instanceof Error ? erro.message : undefined);
     } finally {

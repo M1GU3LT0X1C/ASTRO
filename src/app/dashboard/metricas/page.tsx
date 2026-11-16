@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { buscarMetricas, type Metricas } from "@/lib/ong";
 
-function Card({ title, subtitle, children, defaultOpen=true }: any){
+function Card({ title, subtitle, children, defaultOpen=true }: { title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean }){
   const [open,setOpen]=useState(defaultOpen);
   return(
     <div style={{background:"#fff", border:"1px solid #ece8f0", borderRadius:"18px", padding:"14px", width:"100%", boxSizing:"border-box"}}>
