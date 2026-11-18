@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
+import { traduzirErroAuth } from "@/lib/errosAuth";
 import { buscarPreferencias, salvarPreferencias } from "@/lib/painel";
 import styles from "./Configuracoes.module.css";
 
@@ -53,6 +54,7 @@ export default function ConfiguracoesExplorador() {
   const [settings, setSettings] = useState<Settings>(initial);
   const [emailLogin, setEmailLogin] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
+  const [enviandoLinkSenha, setEnviandoLinkSenha] = useState(false);
   const [saved, setSaved] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [mostrarTodasPersonalidades, setMostrarTodasPersonalidades] = useState(false);
@@ -171,16 +173,45 @@ export default function ConfiguracoesExplorador() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { alerta.erro("Entre na sua conta para alterar o e-mail."); return; }
     const { error } = await supabase.auth.updateUser({ email: emailLogin.trim() });
-    if (error) alerta.erro("Não foi possível alterar o e-mail", error.message);
+    if (error) alerta.erro("Não foi possível alterar o e-mail", traduzirErroAuth(error.message));
     else { setEmailLogin(""); alerta.sucesso("Solicitação enviada", "Confira seu e-mail para confirmar."); }
   };
   const alterarSenha = async () => {
-    if (novaSenha.length < 6) { alerta.erro("A senha precisa ter pelo menos 6 caracteres."); return; }
+    if (novaSenha.length < 8) {
+      alerta.aviso("Senha muito curta", "A nova senha precisa ter pelo menos 8 caracteres.");
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { alerta.erro("Entre na sua conta para alterar a senha."); return; }
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
-    if (error) alerta.erro("Não foi possível alterar a senha", error.message);
-    else { setNovaSenha(""); alerta.sucesso("Senha atualizada."); }
+    if (error) alerta.erro("Não foi possível alterar a senha", traduzirErroAuth(error.message));
+    else { setNovaSenha(""); alerta.sucesso("Senha atualizada!", "Sua nova senha foi salva com sucesso."); }
+  };
+  const enviarLinkRedefinicao = async () => {
+    setEnviandoLinkSenha(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const emailConta = user?.email || emailLogin.trim();
+      if (!emailConta) {
+        alerta.aviso("E-mail não identificado", "Entre novamente na conta ou use a tela de recuperação de senha.");
+        return;
+      }
+      localStorage.setItem("astro_reset_pendente", String(Date.now()));
+      localStorage.setItem("astro_reset_email", emailConta);
+      const { error } = await supabase.auth.resetPasswordForEmail(emailConta, {
+        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
+      });
+      if (error) {
+        alerta.erro("Não foi possível enviar o link", traduzirErroAuth(error.message));
+      } else {
+        alerta.sucesso(
+          "Link enviado!",
+          `Enviamos as instruções de redefinição para ${emailConta}. Confira sua caixa de entrada e o spam.`
+        );
+      }
+    } finally {
+      setEnviandoLinkSenha(false);
+    }
   };
   const switchRow = (label: string, key: keyof Settings) => (
     <label className={styles.switchRow} key={key}>
@@ -209,7 +240,25 @@ export default function ConfiguracoesExplorador() {
                   <label className={styles.securityLabel} htmlFor="explorador-email">E-mail de Login:</label>
                   <div className={styles.inlineField}><input id="explorador-email" type="email" placeholder="Digite o novo e-mail" value={emailLogin} onChange={e => setEmailLogin(e.target.value)} /><button type="button" className={styles.primary} onClick={alterarEmail}><img src="/icons-ong/chave.svg" alt="" className={styles.buttonIcon} /> Alterar</button></div>
                   <label className={styles.securityLabel} htmlFor="explorador-senha">Alteração de Senha:</label>
-                  <div className={styles.inlineField}><input id="explorador-senha" type="password" placeholder="Digite a nova senha" value={novaSenha} onChange={e => setNovaSenha(e.target.value)} /><button type="button" className={styles.primary} onClick={alterarSenha}><img src="/icons-ong/chave.svg" alt="" className={styles.buttonIcon} /> Alterar</button></div>
+                  <div className={styles.inlineField}><input id="explorador-senha" type="password" placeholder="Digite a nova senha (mín. 8 caracteres)" value={novaSenha} onChange={e => setNovaSenha(e.target.value)} /><button type="button" className={styles.primary} onClick={alterarSenha}><img src="/icons-ong/chave.svg" alt="" className={styles.buttonIcon} /> Alterar</button></div>
+                  <button
+                    type="button"
+                    onClick={enviarLinkRedefinicao}
+                    disabled={enviandoLinkSenha}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: "4px 0 8px",
+                      color: "#e94e77",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      textDecoration: "underline",
+                      cursor: enviandoLinkSenha ? "wait" : "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    {enviandoLinkSenha ? "Enviando link de recuperação..." : "Prefere recuperar por e-mail? Enviar link de redefinição"}
+                  </button>
                 </div>
                 <div className={styles.verification}>
                   <h2><img src="/icons-ong/verificacao.svg" alt="" className={styles.securityIcon} /> Segurança da Conta</h2>

@@ -54,13 +54,16 @@
   font-size: 14px;
   font-weight: 700;
 }
-.bolinha {
+.bolinha,
+.fotoBolinha {
   width: 32px;
   height: 32px;
   background: #e63d68;
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px #eee;
+  object-fit: cover;
+  display: block;
 }
 .nomeTopo { font-size: 14px; font-weight: 700; color: #111; }
 .conteudo { padding: 28px; color: #222; background: #fff; border-radius: 0 0 24px 24px; }

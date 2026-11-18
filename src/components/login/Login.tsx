@@ -45,23 +45,40 @@ const OPCOES_PERFIL_GOOGLE: {
   },
 ];
 
-export function Login() {
+interface LoginProps {
+  modoInicial?: "login" | "recuperar" | "redefinir";
+}
+
+function gravarCookiePerfilLogin(perfil: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfil)}; path=/; max-age=900; SameSite=Lax`;
+}
+
+export function Login({ modoInicial = "login" }: LoginProps) {
   const router = useRouter();
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const emailRecuperacaoRef = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [lembrar, setLembrar] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [enviandoReset, setEnviandoReset] = useState(false);
 
   // Modo de seleção de perfil ao clicar em "Continuar com Google"
   const [modoPerfilGoogle, setModoPerfilGoogle] = useState(false);
   const [perfilGoogleLoading, setPerfilGoogleLoading] = useState<PerfilGoogle | null>(null);
 
-  // Estados para o modo de redefinição de senha ("Esqueci minha senha")
-  const [modoRedefinir, setModoRedefinir] = useState(false);
+  // Etapa 1 e 2 da recuperação de senha ("Esqueci minha senha")
+  const [modoEsqueciSenha, setModoEsqueciSenha] = useState(modoInicial === "recuperar");
+  const [emailResetEnviado, setEmailResetEnviado] = useState(false);
+  const [enviandoReset, setEnviandoReset] = useState(false);
+  const [segundosReenvio, setSegundosReenvio] = useState(0);
+  const [codigoReset, setCodigoReset] = useState("");
+  const [validandoCodigo, setValidandoCodigo] = useState(false);
+
+  // Etapa 3: Redefinição da nova senha
+  const [modoRedefinir, setModoRedefinir] = useState(modoInicial === "redefinir");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
   const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
@@ -69,12 +86,25 @@ export function Login() {
   const [salvandoNovaSenha, setSalvandoNovaSenha] = useState(false);
 
   useEffect(() => {
+    if (segundosReenvio <= 0) return;
+    const timer = setInterval(() => {
+      setSegundosReenvio((atual) => (atual > 0 ? atual - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [segundosReenvio]);
+
+  useEffect(() => {
     acordarServidor(); // o back no Render pode estar dormindo; vai subindo enquanto a pessoa digita
-    const saved = localStorage.getItem("astro_remember_email");
-    if (saved) {
-      setEmail(saved);
-      setLembrar(true);
-    }
+    queueMicrotask(() => {
+      const saved = localStorage.getItem("astro_remember_email");
+      const emailResetSalvo = localStorage.getItem("astro_reset_email");
+      if (saved) {
+        setEmail(saved);
+        setLembrar(true);
+      } else if (emailResetSalvo) {
+        setEmail(emailResetSalvo);
+      }
+    });
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -84,16 +114,43 @@ export function Login() {
         params.get("type") === "recovery" ||
         hashParams.get("type") === "recovery";
 
-      if (ehReset) {
-        setModoRedefinir(true);
+      const erroUrl =
+        params.get("error_description") ||
+        hashParams.get("error_description") ||
+        params.get("error") ||
+        hashParams.get("error");
+
+      if (erroUrl && (ehReset || window.location.pathname === "/recuperar-senha")) {
+        alerta.erro("Link de recuperação inválido ou expirado", traduzirErroAuth(erroUrl));
+        queueMicrotask(() => {
+          setModoRedefinir(false);
+          setModoEsqueciSenha(true);
+        });
+      } else if (ehReset) {
+        queueMicrotask(() => {
+          setModoEsqueciSenha(false);
+          setModoRedefinir(true);
+        });
       }
 
       const code = params.get("code");
       if (code) {
         supabase.auth
           .exchangeCodeForSession(code)
-          .then(({ data }) => {
-            if (ehReset || data?.session) {
+          .then(({ data, error }) => {
+            if (error) {
+              if (ehReset || window.location.pathname === "/recuperar-senha") {
+                alerta.aviso(
+                  "Valide pelo código ou solicite um novo link",
+                  "Se você abriu o link em outro navegador ou dispositivo, digite o código recebido no e-mail ou solicite um novo envio."
+                );
+                setModoRedefinir(false);
+                setModoEsqueciSenha(true);
+              }
+              return;
+            }
+            if (ehReset || data?.session || window.location.pathname === "/recuperar-senha") {
+              setModoEsqueciSenha(false);
               setModoRedefinir(true);
             }
           })
@@ -105,7 +162,16 @@ export function Login() {
       if (tokenHash && tipoOtp === "recovery") {
         supabase.auth
           .verifyOtp({ token_hash: tokenHash, type: "recovery" })
-          .then(() => setModoRedefinir(true))
+          .then(({ error }) => {
+            if (error) {
+              alerta.erro("Link expirado ou inválido", traduzirErroAuth(error.message));
+              setModoRedefinir(false);
+              setModoEsqueciSenha(true);
+              return;
+            }
+            setModoEsqueciSenha(false);
+            setModoRedefinir(true);
+          })
           .catch(() => null);
       }
     }
@@ -114,6 +180,7 @@ export function Login() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((evento) => {
       if (evento === "PASSWORD_RECOVERY") {
+        setModoEsqueciSenha(false);
         setModoRedefinir(true);
       }
     });
@@ -185,7 +252,7 @@ export function Login() {
     localStorage.setItem("astro_google_login", "true");
     localStorage.setItem("astro_perfil_pendente", perfilEscolhido);
     localStorage.setItem("tipo_usuario", perfilEscolhido);
-    document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfilEscolhido)}; path=/; max-age=900; SameSite=Lax`;
+    gravarCookiePerfilLogin(perfilEscolhido);
 
     const result = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -229,7 +296,7 @@ export function Login() {
       try {
         const me = await buscarMe();
 
-        if (me.tutor || me.tipo === "EXPLORADOR") {
+        if (perfilMeta === "explorador" || me.tutor || me.tipo === "EXPLORADOR") {
           if (!me.tutor) {
             await garantirTutor(nome).catch(() => null);
           }
@@ -279,31 +346,45 @@ export function Login() {
     }
   }
 
-  async function handleEsqueciSenha() {
+  function abrirTelaEsqueciSenha() {
+    setModoPerfilGoogle(false);
+    setModoRedefinir(false);
+    setModoEsqueciSenha(true);
+    setTimeout(() => emailRecuperacaoRef.current?.focus(), 50);
+  }
+
+  async function handleEnviarEmailRecuperacao() {
     const emailLimpo = email.trim();
     if (!emailLimpo) {
-      emailInputRef.current?.focus();
-      alerta.aviso(
-        "Digite seu e-mail primeiro",
-        "Informe seu e-mail no campo acima e clique novamente em \"Esqueci minha senha\" para enviarmos o link de recuperação."
-      );
+      emailRecuperacaoRef.current?.focus();
+      alerta.aviso("Informe seu e-mail", "Digite o e-mail cadastrado na sua conta para enviarmos a recuperação.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
+      emailRecuperacaoRef.current?.focus();
+      alerta.aviso("E-mail inválido", "Verifique se o endereço de e-mail foi digitado corretamente.");
       return;
     }
 
     setEnviandoReset(true);
     try {
       localStorage.setItem("astro_reset_pendente", String(Date.now()));
+      localStorage.setItem("astro_reset_email", emailLimpo);
+
       const result = await supabase.auth.resetPasswordForEmail(emailLimpo, {
-        redirectTo: `${window.location.origin}/login?reset=true`,
+        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
       });
 
       if (result.error) {
         localStorage.removeItem("astro_reset_pendente");
-        alerta.erro("Não foi possível enviar o link", traduzirErroAuth(result.error.message));
+        alerta.erro("Não foi possível enviar o e-mail", traduzirErroAuth(result.error.message));
       } else {
+        setEmailResetEnviado(true);
+        setSegundosReenvio(60);
         alerta.sucesso(
-          "Link enviado!",
-          `Enviamos um link de recuperação para ${emailLimpo}. Verifique sua caixa de entrada e a pasta de spam.`
+          "Instruções enviadas!",
+          `Enviamos o link de recuperação para ${emailLimpo}. Verifique sua caixa de entrada e a pasta de spam.`
         );
       }
     } finally {
@@ -311,13 +392,68 @@ export function Login() {
     }
   }
 
+  async function handleValidarCodigoOtp() {
+    const emailLimpo = email.trim();
+    const tokenLimpo = codigoReset.replace(/\s+/g, "");
+
+    if (!emailLimpo || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
+      alerta.aviso("Informe seu e-mail", "Preencha o e-mail da conta acima antes de validar o código.");
+      return;
+    }
+
+    if (!tokenLimpo || tokenLimpo.length < 6) {
+      alerta.aviso("Código incompleto", "Digite o código recebido no seu e-mail.");
+      return;
+    }
+
+    setValidandoCodigo(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: emailLimpo,
+        token: tokenLimpo,
+        type: "recovery",
+      });
+
+      if (error) {
+        alerta.erro("Código inválido ou expirado", traduzirErroAuth(error.message));
+        return;
+      }
+
+      setCodigoReset("");
+      setModoEsqueciSenha(false);
+      setEmailResetEnviado(false);
+      setModoRedefinir(true);
+    } finally {
+      setValidandoCodigo(false);
+    }
+  }
+
+  // Requisitos da nova senha em tempo real (mesmo padrão do Cadastro)
+  const reqTamanho = novaSenha.length >= 8 && novaSenha.length <= 18;
+  const reqMaiuscula = /[A-Z]/.test(novaSenha);
+  const reqMinuscula = /[a-z]/.test(novaSenha);
+  const reqNumero = /[0-9]/.test(novaSenha);
+  const reqEspecial = /[^A-Za-z0-9]/.test(novaSenha);
+  const reqSenhasIguais = novaSenha.length > 0 && novaSenha === confirmarNovaSenha;
+
+  const pontosForca = [reqTamanho, reqMaiuscula, reqMinuscula, reqNumero, reqEspecial].filter(Boolean).length;
+  const corBarraForca =
+    pontosForca <= 2 ? "#f87171" : pontosForca <= 4 ? "#fbbf24" : "#34d399";
+
   async function handleSalvarNovaSenha() {
     if (!novaSenha || !confirmarNovaSenha) {
       alerta.aviso("Preencha os campos", "Digite e confirme a sua nova senha.");
       return;
     }
-    if (novaSenha.length < 8) {
-      alerta.aviso("Senha muito curta", "A nova senha precisa ter pelo menos 8 caracteres.");
+    if (!reqTamanho) {
+      alerta.aviso("Tamanho da senha", "A nova senha deve ter entre 8 e 18 caracteres.");
+      return;
+    }
+    if (!reqMaiuscula || !reqMinuscula || !reqNumero || !reqEspecial) {
+      alerta.aviso(
+        "Senha fraca",
+        "A nova senha precisa conter letra maiúscula, minúscula, número e caractere especial (ex: @, #, !)."
+      );
       return;
     }
     if (novaSenha !== confirmarNovaSenha) {
@@ -330,11 +466,11 @@ export function Login() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         await alerta.erro(
-          "Link expirado ou inválido",
-          "Solicite um novo link clicando em \"Esqueci minha senha\" na tela de login."
+          "Sessão de recuperação expirada",
+          "Solicite um novo link ou valide o código novamente para redefinir sua senha."
         );
         setModoRedefinir(false);
-        router.replace("/login");
+        setModoEsqueciSenha(true);
         return;
       }
 
@@ -345,6 +481,7 @@ export function Login() {
       }
 
       localStorage.removeItem("astro_reset_pendente");
+      localStorage.removeItem("astro_reset_email");
       await alerta.sucesso("Senha atualizada!", "Sua nova senha foi salva com sucesso.");
       setModoRedefinir(false);
       await checkAndRedirect(data.user);
@@ -353,12 +490,19 @@ export function Login() {
     }
   }
 
-  function cancelarRedefinicao() {
+  function voltarParaLogin() {
     localStorage.removeItem("astro_reset_pendente");
     setModoRedefinir(false);
+    setModoEsqueciSenha(false);
+    setEmailResetEnviado(false);
+    setCodigoReset("");
     setNovaSenha("");
     setConfirmarNovaSenha("");
-    router.replace("/login");
+    if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+      router.replace("/login");
+    } else if (typeof window !== "undefined" && window.location.search) {
+      router.replace("/login");
+    }
   }
 
   const renderIconeOlho = (visivel: boolean) => (
@@ -406,15 +550,15 @@ export function Login() {
         <div className={styles.formulario}>
           {modoRedefinir ? (
             <>
-              <h1>Redefinir sua senha</h1>
+              <h1>Criar nova senha</h1>
               <p className={styles.subtituloReset}>
-                Digite sua nova senha abaixo (mínimo de 8 caracteres) para recuperar o acesso à sua conta.
+                Escolha uma nova senha segura para acessar sua conta na Astro.
               </p>
 
               <div className={styles.inputWrap}>
                 <input
                   type={mostrarNovaSenha ? "text" : "password"}
-                  placeholder="Nova senha"
+                  placeholder="Nova senha (8 a 18 caracteres)"
                   className={styles.input}
                   value={novaSenha}
                   maxLength={18}
@@ -455,25 +599,192 @@ export function Login() {
                 </button>
               </div>
 
-              <div className={styles.botoesLinha} style={{ marginTop: 12 }}>
+              <div className={styles.forcaSenhaBox} aria-live="polite">
+                <div className={styles.barraForcaTrilha}>
+                  <div
+                    className={styles.barraForcaPreenchimento}
+                    style={{
+                      width: `${(pontosForca / 5) * 100}%`,
+                      backgroundColor: corBarraForca,
+                    }}
+                  />
+                </div>
+                <ul className={styles.listaRequisitosSenha}>
+                  <li className={`${styles.itemRequisito} ${reqTamanho ? styles.itemRequisitoOk : ""}`}>
+                    <span>{reqTamanho ? "✓" : "•"}</span> 8 a 18 caracteres
+                  </li>
+                  <li className={`${styles.itemRequisito} ${reqMaiuscula ? styles.itemRequisitoOk : ""}`}>
+                    <span>{reqMaiuscula ? "✓" : "•"}</span> Letra maiúscula
+                  </li>
+                  <li className={`${styles.itemRequisito} ${reqMinuscula ? styles.itemRequisitoOk : ""}`}>
+                    <span>{reqMinuscula ? "✓" : "•"}</span> Letra minúscula
+                  </li>
+                  <li className={`${styles.itemRequisito} ${reqNumero ? styles.itemRequisitoOk : ""}`}>
+                    <span>{reqNumero ? "✓" : "•"}</span> Número
+                  </li>
+                  <li className={`${styles.itemRequisito} ${reqEspecial ? styles.itemRequisitoOk : ""}`}>
+                    <span>{reqEspecial ? "✓" : "•"}</span> Símbolo (@, #, !...)
+                  </li>
+                  <li className={`${styles.itemRequisito} ${reqSenhasIguais ? styles.itemRequisitoOk : ""}`}>
+                    <span>{reqSenhasIguais ? "✓" : "•"}</span> Senhas coincidem
+                  </li>
+                </ul>
+              </div>
+
+              <div className={styles.acoesRecuperacao}>
                 <button
                   type="button"
-                  className={styles.botaoPrimario}
+                  className={styles.botaoPrimarioLargo}
                   onClick={handleSalvarNovaSenha}
                   disabled={salvandoNovaSenha}
                 >
-                  {salvandoNovaSenha ? "Salvando..." : "Salvar senha"}
+                  {salvandoNovaSenha ? "Salvando nova senha..." : "Salvar nova senha"}
                 </button>
 
                 <button
                   type="button"
-                  className={styles.botaoSecundario}
-                  onClick={cancelarRedefinicao}
+                  className={styles.voltarGoogle}
+                  onClick={voltarParaLogin}
                   disabled={salvandoNovaSenha}
                 >
-                  Voltar ao login
+                  ← Voltar ao login
                 </button>
               </div>
+            </>
+          ) : modoEsqueciSenha ? (
+            <>
+              <h1>Recuperar sua senha</h1>
+              {!emailResetEnviado ? (
+                <>
+                  <p className={styles.subtituloReset}>
+                    Informe o e-mail da sua conta para enviarmos o link de redefinição de senha.
+                  </p>
+
+                  <input
+                    ref={emailRecuperacaoRef}
+                    type="email"
+                    placeholder="Digite o e-mail da sua conta"
+                    className={styles.input}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleEnviarEmailRecuperacao();
+                    }}
+                  />
+
+                  <div className={styles.acoesRecuperacao}>
+                    <button
+                      type="button"
+                      className={styles.botaoPrimarioLargo}
+                      onClick={handleEnviarEmailRecuperacao}
+                      disabled={enviandoReset}
+                    >
+                      {enviandoReset ? "Enviando instruções..." : "Enviar link de recuperação"}
+                    </button>
+
+                    <div className={styles.linksSecundariosReset}>
+                      <button
+                        type="button"
+                        className={styles.voltarGoogle}
+                        onClick={voltarParaLogin}
+                        disabled={enviandoReset}
+                      >
+                        ← Voltar ao login
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.voltarGoogle}
+                        onClick={() => setEmailResetEnviado(true)}
+                        disabled={enviandoReset}
+                      >
+                        Já tenho um código
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.cardConfirmacaoEmail}>
+                    Enviamos as instruções de recuperação para{" "}
+                    <strong>{email.trim() || "seu e-mail"}</strong>. Clique no link recebido no e-mail
+                    (verifique também a caixa de spam) ou informe o código abaixo:
+                  </div>
+
+                  {!email.trim() && (
+                    <input
+                      type="email"
+                      placeholder="Confirme o e-mail da sua conta"
+                      className={styles.input}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  )}
+
+                  <div className={styles.blocoCodigoOtp}>
+                    <span className={styles.labelOtp}>
+                      Recebeu um código no e-mail? Digite aqui:
+                    </span>
+                    <div className={styles.linhaOtp}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Código do e-mail"
+                        className={styles.inputOtp}
+                        value={codigoReset}
+                        maxLength={10}
+                        onChange={(e) => setCodigoReset(e.target.value.replace(/\s+/g, ""))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleValidarCodigoOtp();
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={styles.botaoOtp}
+                        onClick={handleValidarCodigoOtp}
+                        disabled={validandoCodigo || !codigoReset.trim()}
+                      >
+                        {validandoCodigo ? "Validando..." : "Validar"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={styles.linksSecundariosReset}>
+                    <button
+                      type="button"
+                      className={styles.voltarGoogle}
+                      onClick={() => {
+                        setEmailResetEnviado(false);
+                        setCodigoReset("");
+                      }}
+                    >
+                      Alterar e-mail
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.voltarGoogle}
+                      onClick={handleEnviarEmailRecuperacao}
+                      disabled={enviandoReset || segundosReenvio > 0}
+                    >
+                      {enviandoReset
+                        ? "Reenviando..."
+                        : segundosReenvio > 0
+                          ? `Reenviar e-mail (${segundosReenvio}s)`
+                          : "Reenviar e-mail"}
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={styles.voltarGoogle}
+                    style={{ marginTop: 6 }}
+                    onClick={voltarParaLogin}
+                  >
+                    ← Voltar ao login
+                  </button>
+                </>
+              )}
             </>
           ) : modoPerfilGoogle ? (
             <>
@@ -566,10 +877,9 @@ export function Login() {
                 <button
                   type="button"
                   className={styles.esqueci}
-                  onClick={handleEsqueciSenha}
-                  disabled={enviandoReset}
+                  onClick={abrirTelaEsqueciSenha}
                 >
-                  {enviandoReset ? "Enviando link..." : "Esqueci minha senha"}
+                  Esqueci minha senha
                 </button>
               </div>
 

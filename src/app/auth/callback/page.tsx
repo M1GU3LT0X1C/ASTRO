@@ -67,6 +67,18 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
       recuperacao = true;
     }
 
+    const tokenHash = params.get("token_hash");
+    const tipoOtp = params.get("type");
+    if (tokenHash && tipoOtp === "recovery") {
+      recuperacao = true;
+      const verificado = await supabase.auth
+        .verifyOtp({ token_hash: tokenHash, type: "recovery" })
+        .catch(() => null);
+      if (verificado?.data?.session?.user) {
+        return { user: verificado.data.session.user, recuperacao: true };
+      }
+    }
+
     const resetPendente = localStorage.getItem("astro_reset_pendente");
     const googleLogin = localStorage.getItem("astro_google_login");
     const perfilPendente = localStorage.getItem("astro_perfil_pendente") || lerCookiePerfil();
@@ -218,7 +230,7 @@ export default function CallbackPage() {
           alerta.fechar();
           localStorage.removeItem("astro_google_login");
           limparCookiePerfil();
-          await alerta.erro("Não foi possível entrar com o Google", traduzirErroAuth(erroOAuth));
+          await alerta.erro("Não foi possível concluir a autenticação", traduzirErroAuth(erroOAuth));
           router.replace("/login");
           return;
         }
@@ -230,7 +242,7 @@ export default function CallbackPage() {
         clearTimeout(aviso);
         alerta.fechar();
         localStorage.removeItem("astro_reset_pendente");
-        router.replace("/login?reset=true");
+        router.replace("/recuperar-senha?reset=true");
         return;
       }
 

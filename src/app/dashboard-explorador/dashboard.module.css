@@ -92,7 +92,8 @@
 
 .avatarLink:focus-visible { outline: 2px solid #100064; outline-offset: 3px; }
 
-.bolinha {
+.bolinha,
+.fotoBolinha {
   display: block;
   width: 32px;
   height: 32px;
@@ -100,6 +101,7 @@
   border-radius: 50%;
   background: #e63d68;
   box-shadow: 0 0 0 1px #eee;
+  object-fit: cover;
 }
 
 .nomeTopo {

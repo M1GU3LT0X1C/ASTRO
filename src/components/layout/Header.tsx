@@ -16,10 +16,10 @@ export function Header() {
   const [sessao, setSessao] = useState<Sessao>({ logado: false, tutor: false });
 
   useEffect(() => {
-    if (typeof window !== "undefined" && pathname !== "/login") {
+    if (typeof window !== "undefined" && pathname !== "/login" && pathname !== "/recuperar-senha") {
       const hash = window.location.hash;
       if (hash.includes("type=recovery")) {
-        router.replace(`/login?reset=true${hash}`);
+        router.replace(`/recuperar-senha?reset=true${hash}`);
         return;
       }
     }
@@ -29,10 +29,12 @@ export function Header() {
       const fallbackTutor =
         perfilMeta === "explorador" ||
         (typeof window !== "undefined" && localStorage.getItem("tipo_usuario") === "explorador");
-      // se o back estiver fora do ar, usa o perfil salvo na sessão e ainda mostra "Sair"
-      const tutor = await buscarMe()
-        .then((me) => me.tutor || me.tipo === "EXPLORADOR")
-        .catch(() => fallbackTutor);
+      // se a pessoa escolheu Explorador ou tem perfil de tutor, direciona para o painel do Explorador
+      const tutor = fallbackTutor
+        ? true
+        : await buscarMe()
+            .then((me) => Boolean(me.tutor || me.tipo === "EXPLORADOR"))
+            .catch(() => fallbackTutor);
       setSessao({ logado: true, tutor });
     }
 
@@ -42,8 +44,8 @@ export function Header() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((evento, s) => {
-      if (evento === "PASSWORD_RECOVERY" && pathname !== "/login") {
-        router.replace("/login?reset=true");
+      if (evento === "PASSWORD_RECOVERY" && pathname !== "/login" && pathname !== "/recuperar-senha") {
+        router.replace("/recuperar-senha?reset=true");
         return;
       }
       atualizar(s?.user.id, s?.user?.user_metadata?.perfil as string | undefined);
@@ -52,7 +54,7 @@ export function Header() {
   }, [pathname, router]);
 
   useEffect(() => {
-    setOpen(false);
+    queueMicrotask(() => setOpen(false));
     // destrava o scroll se travou
     document.body.style.overflow = "auto";
   }, [pathname]);
@@ -90,10 +92,6 @@ export function Header() {
       </nav>
 
       <div className={styles.acoes}>
-        <div className={styles.busca}>
-          <img src="/lupa.svg" alt="" className={styles.buscaIcone} />
-          <input type="text" className={styles.buscaInput} aria-label="Pesquisar" />
-        </div>
         <div className={styles.botoes}>
           {sessao.logado ? (
             <>
@@ -122,10 +120,6 @@ export function Header() {
           <button onClick={() => goTo("/ajuda")} className={styles.mobileLink}>Ajuda</button>
 
           <div className={styles.mobileAcoes}>
-            <div className={styles.mobileBusca}>
-              <img src="/lupa.svg" alt="" className={styles.buscaIcone} />
-              <input type="text" className={styles.buscaInput} placeholder="Pesquisar" />
-            </div>
             <div className={styles.botoes}>
               {sessao.logado ? (
                 <>

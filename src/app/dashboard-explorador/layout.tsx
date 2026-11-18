@@ -40,16 +40,10 @@ export default async function DashboardExploradorLayout({
     user.email?.split("@")[0] ||
     "Explorador";
 
-  const perfilMeta = user.user_metadata?.perfil as string | undefined;
-
-  // Verificar se o usuário é explorador ou garantir criação do registro de tutor
+  // Garante o registro de tutor caso ainda não exista, sem redirecionar para /dashboard
   const me = await apiServidor<Me>("/api/me").catch(() => null);
 
-  if (me && !me.tutor) {
-    const ehOng = Boolean(me.ong || (me.tipo && me.tipo !== "EXPLORADOR"));
-    if (ehOng && perfilMeta !== "explorador") {
-      redirect("/dashboard");
-    }
+  if (!me || !me.tutor) {
     await apiServidor<Me>("/api/me/tutor", {
       method: "POST",
       body: { nome },

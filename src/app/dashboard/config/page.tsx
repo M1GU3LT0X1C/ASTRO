@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
+import { traduzirErroAuth } from "@/lib/errosAuth";
 import { buscarMinhaOng, registrarDocumento, salvarMinhaOng, type Ong } from "@/lib/ong";
 import { buscarPreferencias, salvarPreferencias } from "@/lib/painel";
 import { enviarDocumentoPrivado } from "@/lib/upload";
@@ -45,6 +46,7 @@ export default function Page() {
   const [falhaCarga, setFalhaCarga] = useState(false);
   const [emailLogin, setEmailLogin] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
+  const [enviandoLinkSenha, setEnviandoLinkSenha] = useState(false);
   const [twoFactor] = useState<boolean | null>(null);
   const [documento, setDocumento] = useState<File | null>(null);
   const [enviandoDocumento, setEnviandoDocumento] = useState(false);
@@ -59,10 +61,12 @@ export default function Page() {
   const [integracaoAviso, setIntegracaoAviso] = useState("");
 
   useEffect(() => {
-    try {
-      const rascunhos = localStorage.getItem(CHAVE_CONVITES);
-      if (rascunhos) setConvites(JSON.parse(rascunhos));
-    } catch { /* armazenamento indisponivel */ }
+    queueMicrotask(() => {
+      try {
+        const rascunhos = localStorage.getItem(CHAVE_CONVITES);
+        if (rascunhos) setConvites(JSON.parse(rascunhos));
+      } catch { /* armazenamento indisponivel */ }
+    });
     Promise.all([buscarMinhaOng(), buscarPreferencias(preferenciasIniciais)])
       .then(([dadosOng, preferencias]) => {
         setOng(dadosOng);
@@ -92,16 +96,45 @@ export default function Page() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { alerta.erro("Entre na sua conta para alterar o e-mail."); return; }
     const { error } = await supabase.auth.updateUser({ email: emailLogin.trim() });
-    if (error) alerta.erro("Não foi possível alterar o e-mail", error.message);
+    if (error) alerta.erro("Não foi possível alterar o e-mail", traduzirErroAuth(error.message));
     else { setEmailLogin(""); alerta.sucesso("Solicitação enviada", "Verifique seu e-mail para confirmar a alteração."); }
   };
   const alterarSenha = async () => {
-    if (novaSenha.length < 6) { alerta.erro("A senha precisa ter pelo menos 6 caracteres."); return; }
+    if (novaSenha.length < 8) {
+      alerta.aviso("Senha muito curta", "A nova senha precisa ter pelo menos 8 caracteres.");
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { alerta.erro("Entre na sua conta para alterar a senha."); return; }
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
-    if (error) alerta.erro("Não foi possível alterar a senha", error.message);
-    else { setNovaSenha(""); alerta.sucesso("Senha atualizada."); }
+    if (error) alerta.erro("Não foi possível alterar a senha", traduzirErroAuth(error.message));
+    else { setNovaSenha(""); alerta.sucesso("Senha atualizada!", "Sua nova senha foi salva com sucesso."); }
+  };
+  const enviarLinkRedefinicao = async () => {
+    setEnviandoLinkSenha(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const emailConta = user?.email || emailLogin.trim();
+      if (!emailConta) {
+        alerta.aviso("E-mail não identificado", "Entre novamente na conta ou use a tela de recuperação de senha.");
+        return;
+      }
+      localStorage.setItem("astro_reset_pendente", String(Date.now()));
+      localStorage.setItem("astro_reset_email", emailConta);
+      const { error } = await supabase.auth.resetPasswordForEmail(emailConta, {
+        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
+      });
+      if (error) {
+        alerta.erro("Não foi possível enviar o link", traduzirErroAuth(error.message));
+      } else {
+        alerta.sucesso(
+          "Link enviado!",
+          `Enviamos as instruções de redefinição para ${emailConta}. Confira sua caixa de entrada e o spam.`
+        );
+      }
+    } finally {
+      setEnviandoLinkSenha(false);
+    }
   };
   const update = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings((previous) => ({ ...previous, [key]: value }));
@@ -188,7 +221,7 @@ export default function Page() {
     setColaborador("");
     const subject = "Convite para colaborar com nossa ONG no ASTRO";
     const body = `Olá! Gostaríamos de convidar você para colaborar com nossa ONG no ASTRO.\nNível de acesso proposto: ${nivel}.\n\nEste é um convite por e-mail; o acesso à plataforma ainda precisa ser cadastrado por um administrador.`;
-    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_self");
   };
   const salvarIntegracao = async () => {
     if (!integracaoEditando) return;
@@ -239,7 +272,25 @@ export default function Page() {
               {id === "seguranca" && <div className={styles.securityGrid}>
                 <div className={styles.credentials}><h2><img src="/icons-ong/cadeado.svg" alt="" className={styles.securityIcon}/> Credenciais de Acesso</h2>
                   <label className={styles.securityLabel}>E-mail de Login:</label><div className={styles.inlineField}><input type="email" placeholder="e-mail atual da conta/digite novo e-mail" value={emailLogin} onChange={e=>setEmailLogin(e.target.value)}/><button type="button" className={styles.primary} onClick={alterarEmail}><img src="/icons-ong/chave.svg" alt="" className={styles.buttonIcon}/> alterar</button></div>
-                  <label className={styles.securityLabel}>Alteração de Senha:</label><div className={styles.inlineField}><input type="password" placeholder="digite nova senha" value={novaSenha} onChange={e=>setNovaSenha(e.target.value)}/><button type="button" className={styles.primary} onClick={alterarSenha}><img src="/icons-ong/chave.svg" alt="" className={styles.buttonIcon}/> alterar</button></div>
+                  <label className={styles.securityLabel}>Alteração de Senha:</label><div className={styles.inlineField}><input type="password" placeholder="digite nova senha (mín. 8 caracteres)" value={novaSenha} onChange={e=>setNovaSenha(e.target.value)}/><button type="button" className={styles.primary} onClick={alterarSenha}><img src="/icons-ong/chave.svg" alt="" className={styles.buttonIcon}/> alterar</button></div>
+                  <button
+                    type="button"
+                    onClick={enviarLinkRedefinicao}
+                    disabled={enviandoLinkSenha}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: "4px 0 8px",
+                      color: "#e94e77",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      textDecoration: "underline",
+                      cursor: enviandoLinkSenha ? "wait" : "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    {enviandoLinkSenha ? "Enviando link de recuperação..." : "Prefere recuperar por e-mail? Enviar link de redefinição"}
+                  </button>
                   <label className={styles.securityLabel}>Autenticação em Duas Etapas (2FA)</label><div className={styles.twoFactor}><button type="button" role="switch" aria-checked={twoFactor===true} className={`${styles.twoFactorSwitch} ${twoFactor===true?styles.isOn:""}`} onClick={()=>alerta.info("A ativação do 2FA deve ser concluída com verificação na conta. Não é possível ativá-lo apenas por este botão.")}>✓</button><span>Status: {twoFactor===null?"Não verificado":twoFactor?"Ativado":"Desativado"}</span></div>
                 </div>
                 <div className={styles.verification}><h2><img src="/icons-ong/verificacao.svg" alt="" className={styles.securityIcon}/> Documentação & Verificação</h2><p className={styles.verificationSubtitle}>(Selo de Confiança)</p>

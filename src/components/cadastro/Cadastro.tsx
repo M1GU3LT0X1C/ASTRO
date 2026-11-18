@@ -8,11 +8,18 @@ import styles from "./Cadastro.module.css";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
 import { acordarServidor } from "@/lib/api";
+import { garantirOng, garantirTutor } from "@/lib/perfil";
 
 type Perfil = "explorador" | "guardiao" | "base-estelar" | "estacao";
 class EmailJaCadastradoError extends Error {}
 
 type DadosIniciais = { nome: string; email: string; senha: string };
+
+const UFS_BRASIL = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
+  "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
+  "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+] as const;
 
 const NOMES_PERFIL: Record<Perfil, string> = {
   explorador: "Explorador",
@@ -28,6 +35,79 @@ const SUBTITULOS_PERFIL: Record<Perfil, string> = {
   estacao: "Você poderá divulgar seus serviços veterinários, cupons e atender tutores e ONGs.",
 };
 
+// Algoritmo oficial da Receita Federal para validação de CPF (Módulo 11)
+function validarCPF(valor: string): boolean {
+  const cpf = valor.replace(/\D/g, "");
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += Number(cpf[i]) * (10 - i);
+  }
+  let resto = (soma * 10) % 11;
+  if (resto === 10) resto = 0;
+  if (resto !== Number(cpf[9])) return false;
+
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += Number(cpf[i]) * (11 - i);
+  }
+  resto = (soma * 10) % 11;
+  if (resto === 10) resto = 0;
+  return resto === Number(cpf[10]);
+}
+
+// Algoritmo oficial da Receita Federal para validação de CNPJ (Módulo 11)
+function validarCNPJ(valor: string): boolean {
+  const cnpj = valor.replace(/\D/g, "");
+  if (cnpj.length !== 14) return false;
+  if (/^(\d)\1{13}$/.test(cnpj)) return false;
+
+  const calcularDigito = (base: string, pesos: number[]) => {
+    const soma = pesos.reduce((acc, peso, i) => acc + Number(base[i]) * peso, 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+
+  const pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+  const digito1 = calcularDigito(cnpj.slice(0, 12), pesos1);
+  if (digito1 !== Number(cnpj[12])) return false;
+
+  const digito2 = calcularDigito(cnpj.slice(0, 13), pesos2);
+  return digito2 === Number(cnpj[13]);
+}
+
+function validarNumeroCRMV(valor: string): boolean {
+  const limpo = valor.trim().toUpperCase();
+  return /^\d{3,7}(-?PJ)?$/.test(limpo) && !/^0+$/.test(limpo.replace(/\D/g, ""));
+}
+
+function IconeOlhoAberto() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a0b5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconeOlhoFechado() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a0b5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.53 9.53a3 3 0 1 0 4.24 4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function gravarCookiePerfil(perfil: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfil)}; path=/; max-age=900; SameSite=Lax`;
+}
+
 export function Cadastro() {
   const router = useRouter();
   const [etapa, setEtapa] = useState<1 | 2>(1);
@@ -39,7 +119,8 @@ export function Cadastro() {
   const [cep, setCep] = useState("");
   const [telefone, setTelefone] = useState("");
   const [documento, setDocumento] = useState("");
-  const [moradia, setMoradia] = useState("");
+  const [crmvUf, setCrmvUf] = useState("SP");
+  const [crmvNumero, setCrmvNumero] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [instagram, setInstagram] = useState("");
   const [erroSenha, setErroSenha] = useState("");
@@ -47,38 +128,170 @@ export function Cadastro() {
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [carregando, setCarregando] = useState(false);
+
+  // Estados de consulta na Receita Federal (CNPJ) e CEP (BrasilAPI)
+  const [statusCnpjApi, setStatusCnpjApi] = useState<{
+    estado: "idle" | "loading" | "ok" | "erro";
+    mensagem: string;
+  }>({ estado: "idle", mensagem: "" });
+
+  const [statusCepApi, setStatusCepApi] = useState<{
+    estado: "idle" | "loading" | "ok" | "erro";
+    mensagem: string;
+  }>({ estado: "idle", mensagem: "" });
+
   // trava síncrona: o estado "carregando" só chega ao botão no próximo render, um clique duplo rápido passaria
   const enviando = useRef(false);
 
   function maskCPF(v: string) {
-    return v.replace(/\D/g, "").slice(0,11)
+    return v.replace(/\D/g, "").slice(0, 11)
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   }
   function maskCNPJ(v: string) {
-    return v.replace(/\D/g, "").slice(0,14)
+    return v.replace(/\D/g, "").slice(0, 14)
       .replace(/^(\d{2})(\d)/, "$1.$2")
       .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
       .replace(/\.(\d{3})(\d)/, ".$1/$2")
       .replace(/(\d{4})(\d)/, "$1-$2");
   }
   function maskPhone(v: string) {
-    const nums = v.replace(/\D/g, "").slice(0,11);
+    const nums = v.replace(/\D/g, "").slice(0, 11);
     if (nums.length <= 10) return nums.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
     return nums.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
   }
   function maskCEP(v: string) {
-    return v.replace(/\D/g, "").slice(0,8).replace(/(\d{5})(\d)/, "$1-$2");
+    return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
   }
+  function maskCRMV(v: string) {
+    const limpo = v.toUpperCase().replace(/[^0-9PJ-]/g, "");
+    const numeros = limpo.replace(/\D/g, "").slice(0, 7);
+    const temPJ = limpo.includes("P") || limpo.includes("J");
+    return numeros ? `${numeros}${temPJ ? "-PJ" : ""}` : "";
+  }
+
   function handleDocumento(v: string) {
     const clean = v.replace(/\D/g, "");
-    if (perfilSelecionado === "base-estelar" || perfilSelecionado === "estacao") {
-      setDocumento(clean.length <= 11 ? maskCPF(v) : maskCNPJ(v));
+    if (perfilSelecionado === "base-estelar") {
+      setDocumento(maskCNPJ(clean));
+    } else if (perfilSelecionado === "estacao") {
+      setDocumento(clean.length <= 11 ? maskCPF(clean) : maskCNPJ(clean));
     } else {
-      setDocumento(maskCPF(v));
+      setDocumento(maskCPF(clean));
+    }
+    const aceitaCnpj = perfilSelecionado === "base-estelar" || perfilSelecionado === "estacao";
+    if (!aceitaCnpj || clean.length !== 14 || !validarCNPJ(clean)) {
+      setStatusCnpjApi({ estado: "idle", mensagem: "" });
+    } else {
+      setStatusCnpjApi({
+        estado: "loading",
+        mensagem: "Consultando CNPJ na Receita Federal...",
+      });
     }
   }
+
+  function handleCepInput(v: string) {
+    const mascarado = maskCEP(v);
+    setCep(mascarado);
+    const digitos = mascarado.replace(/\D/g, "");
+    if (digitos.length !== 8) {
+      setStatusCepApi({ estado: "idle", mensagem: "" });
+    } else {
+      setStatusCepApi({ estado: "loading", mensagem: "Verificando CEP..." });
+    }
+  }
+
+  // Consulta automática do CNPJ na Receita Federal via BrasilAPI quando tem 14 dígitos matematicamente válidos
+  useEffect(() => {
+    const digitos = documento.replace(/\D/g, "");
+    const aceitaCnpj = perfilSelecionado === "base-estelar" || perfilSelecionado === "estacao";
+    if (!aceitaCnpj || digitos.length !== 14 || !validarCNPJ(digitos)) {
+      return;
+    }
+
+    let ativo = true;
+
+    fetch(`https://brasilapi.com.br/api/cnpj/v1/${digitos}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("CNPJ não localizado na base da Receita Federal.");
+        return res.json();
+      })
+      .then((dados) => {
+        if (!ativo) return;
+        const razao = dados.nome_fantasia || dados.razao_social || "Empresa localizada";
+        const situacao = String(dados.descricao_situacao_cadastral || "").toUpperCase();
+        const ativa = dados.situacao_cadastral === 2 || situacao === "ATIVA";
+
+        if (!ativa && situacao) {
+          setStatusCnpjApi({
+            estado: "erro",
+            mensagem: `✕ CNPJ consta como ${situacao} na Receita Federal (${razao}).`,
+          });
+          return;
+        }
+
+        setStatusCnpjApi({
+          estado: "ok",
+          mensagem: `✓ CNPJ ativo na Receita Federal: ${razao}`,
+        });
+
+        if (dados.cep) {
+          setCep((atual) => (atual.replace(/\D/g, "").length === 8 ? atual : maskCEP(String(dados.cep))));
+        }
+        if (dados.uf && UFS_BRASIL.includes(dados.uf)) {
+          setCrmvUf(dados.uf);
+        }
+      })
+      .catch(() => {
+        if (!ativo) return;
+        setStatusCnpjApi({
+          estado: "erro",
+          mensagem: "✕ CNPJ não encontrado na Receita Federal. Verifique os números digitados.",
+        });
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [documento, perfilSelecionado]);
+
+  // Consulta automática de CEP via BrasilAPI
+  useEffect(() => {
+    const digitos = cep.replace(/\D/g, "");
+    if (digitos.length !== 8) {
+      return;
+    }
+
+    let ativo = true;
+
+    fetch(`https://brasilapi.com.br/api/cep/v1/${digitos}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("CEP não encontrado");
+        return res.json();
+      })
+      .then((dados) => {
+        if (!ativo) return;
+        const local = [dados.neighborhood, dados.city && `${dados.city} - ${dados.state}`]
+          .filter(Boolean)
+          .join(", ");
+        setStatusCepApi({
+          estado: "ok",
+          mensagem: `✓ CEP válido: ${local}`,
+        });
+      })
+      .catch(() => {
+        if (!ativo) return;
+        setStatusCepApi({
+          estado: "erro",
+          mensagem: "✕ CEP não encontrado. Confira os 8 dígitos.",
+        });
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [cep]);
 
   const checks = {
     length: senha.length >= 8 && senha.length <= 18,
@@ -91,20 +304,53 @@ export function Cadastro() {
   const senhaOk = senhaForca === 5;
   const confirmOk = confirmarSenha !== "" && senha === confirmarSenha && senha.length <= 18;
 
+  const isOng = perfilSelecionado === "base-estelar";
+  const isGuardiao = perfilSelecionado === "guardiao";
+  const isEstacao = perfilSelecionado === "estacao";
+  const isExplorador = perfilSelecionado === "explorador";
+  const isPessoaFisica = isExplorador || isGuardiao;
+
+  // Validação do documento (CPF ou CNPJ) conforme o perfil escolhido
+  const docDigitos = documento.replace(/\D/g, "");
+  const docValidoMatematicamente = isPessoaFisica
+    ? validarCPF(docDigitos)
+    : isOng
+    ? validarCNPJ(docDigitos)
+    : isEstacao
+    ? docDigitos.length <= 11
+      ? validarCPF(docDigitos)
+      : validarCNPJ(docDigitos)
+    : false;
+
+  const docOk =
+    docValidoMatematicamente &&
+    statusCnpjApi.estado !== "erro" &&
+    statusCnpjApi.estado !== "loading";
+
+  const crmvOk = !isEstacao || (Boolean(crmvUf) && validarNumeroCRMV(crmvNumero));
+  const cepOk = cep.replace(/\D/g, "").length === 8 && statusCepApi.estado !== "erro";
+  const telefoneOk = telefone.replace(/\D/g, "").length >= 10;
+
   useEffect(() => {
     acordarServidor(); // o back no Render pode estar dormindo; vai subindo enquanto a pessoa preenche
     const dadosSalvos = sessionStorage.getItem("astroCadastroInicial");
     if (!dadosSalvos) return;
-    try {
-      const dados: DadosIniciais = JSON.parse(dadosSalvos);
-      setNome(dados.nome ?? "");
-      setEmail(dados.email ?? "");
-      setSenha(dados.senha ?? "");
-    } catch { sessionStorage.removeItem("astroCadastroInicial"); }
+    queueMicrotask(() => {
+      try {
+        const dados: DadosIniciais = JSON.parse(dadosSalvos);
+        setNome(dados.nome ?? "");
+        setEmail(dados.email ?? "");
+        setSenha(dados.senha ?? "");
+      } catch {
+        sessionStorage.removeItem("astroCadastroInicial");
+      }
+    });
   }, []);
 
   function selecionarPerfil(perfil: Perfil) {
     setPerfilSelecionado(perfil);
+    setDocumento("");
+    setStatusCnpjApi({ estado: "idle", mensagem: "" });
     setEtapa(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -112,6 +358,42 @@ export function Cadastro() {
   async function finalizarCadastro(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!perfilSelecionado) return;
+
+    if (!docValidoMatematicamente) {
+      alerta.aviso(
+        isPessoaFisica ? "CPF inválido" : "Documento inválido",
+        isPessoaFisica
+          ? "Informe um CPF válido com 11 dígitos."
+          : isOng
+          ? "Informe um CNPJ válido com 14 dígitos."
+          : "Informe um CNPJ ou CPF válido."
+      );
+      return;
+    }
+
+    if (statusCnpjApi.estado === "erro") {
+      alerta.aviso("CNPJ inválido na Receita Federal", statusCnpjApi.mensagem);
+      return;
+    }
+
+    if (isEstacao && !crmvOk) {
+      alerta.aviso(
+        "CRMV inválido",
+        "Informe a UF e o número de registro ativo no CRMV (ex.: 12345 ou 12345-PJ)."
+      );
+      return;
+    }
+
+    if (!telefoneOk) {
+      alerta.aviso("Telefone incompleto", "Informe um telefone com DDD.");
+      return;
+    }
+
+    if (!cepOk) {
+      alerta.aviso("CEP inválido", "Informe um CEP válido de 8 dígitos.");
+      return;
+    }
+
     if (!senhaOk) { setErroSenha("Sua senha precisa cumprir todos os requisitos"); return; }
     if (senha !== confirmarSenha) { setErroSenha("As senhas não coincidem!"); return; }
     const ehPessoaFisica = perfilSelecionado === "explorador" || perfilSelecionado === "guardiao";
@@ -129,16 +411,35 @@ export function Cadastro() {
     setCarregando(true);
     try {
       const ehOng = perfilSelecionado !== "explorador";
+      const crmvFormatado = isEstacao ? `CRMV-${crmvUf} ${crmvNumero.trim()}` : undefined;
+      const partesDescricao = [
+        perfilSelecionado,
+        crmvFormatado ? `| ${crmvFormatado}` : "",
+        responsavel ? `| Resp:${responsavel}` : "",
+        instagram ? `| IG:${instagram}` : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
       // os registros em "usuarios" e "ongs" são criados pelo trigger do banco a partir destes dados
       // (Astro-Back-end/sql/002_trigger_perfil_no_cadastro.sql), junto com o usuário de login
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email, password: senha, options: { data: {
-          nome, perfil: perfilSelecionado, telefone, cep,
-          ...(ehOng && {
+        email: email.trim(),
+        password: senha,
+        options: {
+          data: {
+            nome: nome.trim(),
+            perfil: perfilSelecionado,
+            telefone,
+            cep,
             documento,
-            descricao: `${perfilSelecionado} ${responsavel ? '| Resp:'+responsavel : ''} ${instagram ? '| IG:'+instagram : ''}`.trim(),
-          }),
-        } }
+            ...(crmvFormatado && { crmv: crmvFormatado }),
+            ...(ehOng && {
+              descricao: partesDescricao,
+            }),
+          },
+        },
       });
       // com "Confirm email" desligado, o Supabase devolve erro para e-mail repetido
       if (authError?.code === "user_already_exists") throw new EmailJaCadastradoError();
@@ -156,7 +457,8 @@ export function Cadastro() {
       if (!authData.user) throw new Error("Erro ao criar usuário");
 
       localStorage.setItem("tipo_usuario", perfilSelecionado);
-      if (ehOng) localStorage.setItem("ong_nome", nome);
+      localStorage.setItem("pessoa_nome", nome.trim());
+      if (ehOng) localStorage.setItem("ong_nome", nome.trim());
       sessionStorage.removeItem("astroCadastroInicial");
 
       // sem sessão = o projeto exige confirmar o e-mail antes do primeiro login
@@ -165,8 +467,15 @@ export function Cadastro() {
         router.push("/login");
         return;
       }
+
+      if (ehOng) {
+        await garantirOng(nome.trim() || "Minha ONG", perfilSelecionado).catch(() => null);
+      } else {
+        await garantirTutor(nome.trim() || "Explorador").catch(() => null);
+      }
+
       router.push(ehOng ? "/dashboard" : "/dashboard-explorador");
-    } catch (err: any) {
+    } catch (err: unknown) {
       // só libera o botão em caso de erro; no sucesso ele fica travado até a página trocar
       enviando.current = false;
       setCarregando(false);
@@ -178,7 +487,10 @@ export function Cadastro() {
           cancelText: "Continuar aqui", confirmText: "Ir para o login",
         });
         if (irParaLogin) router.push("/login");
-      } else alerta.erro("Não foi possível cadastrar", traduzirErroAuth(err.message || "Erro ao cadastrar"));
+      } else {
+        const msg = err instanceof Error ? err.message : "Erro ao cadastrar";
+        alerta.erro("Não foi possível cadastrar", traduzirErroAuth(msg));
+      }
     }
   }
 
@@ -201,7 +513,7 @@ export function Cadastro() {
     if (nome.trim() && perfilSelecionado !== "explorador") {
       localStorage.setItem("temp_ong_nome", nome.trim());
     }
-    document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfilSelecionado)}; path=/; max-age=900; SameSite=Lax`;
+    gravarCookiePerfil(perfilSelecionado);
 
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: "google", 
@@ -213,17 +525,13 @@ export function Cadastro() {
     if (error) alerta.erro("Não foi possível continuar com o Google", traduzirErroAuth(error.message));
   }
 
-  const IconeOlhoAberto = () => (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a0b5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>);
-  const IconeOlhoFechado = () => (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a0b5c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.53 9.53a3 3 0 1 0 4.24 4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>);
-
-  const isOng = perfilSelecionado === "base-estelar";
-  const isGuardiao = perfilSelecionado === "guardiao";
-  const isEstacao = perfilSelecionado === "estacao";
-  const isExplorador = perfilSelecionado === "explorador";
-  const isPessoaFisica = isExplorador || isGuardiao;
   const nomePerfilExibicao = perfilSelecionado ? NOMES_PERFIL[perfilSelecionado] : "";
   const subtituloPerfilExibicao = perfilSelecionado ? SUBTITULOS_PERFIL[perfilSelecionado] : "";
-  const placeholderDoc = isOng ? "CNPJ - 00.000.000/0000-00" : isEstacao ? "CNPJ ou CPF" : isGuardiao ? "CPF - 000.000.000-00" : "";
+  const placeholderDoc = isOng
+    ? "CNPJ - 00.000.000/0000-00"
+    : isEstacao
+    ? "CNPJ (00.000.000/0000-00) ou CPF"
+    : "CPF - 000.000.000-00";
 
   return (
     <main className={styles.cadastro}>
@@ -254,15 +562,121 @@ export function Cadastro() {
             </div>
 
             <form className={styles.formulario} onSubmit={finalizarCadastro}>
-              <input type="text" placeholder={isOng ? "Nome da ONG / Abrigo" : isEstacao ? "Nome da Clínica" : "Seu nome completo"} className={styles.inputGrande} value={nome} onChange={(e) => setNome(e.target.value)} required />
+              <input type="text" placeholder={isOng ? "Nome da ONG / Abrigo" : isEstacao ? "Nome da Clínica / Consultório" : "Seu nome completo"} className={styles.inputGrande} value={nome} onChange={(e) => setNome(e.target.value)} required />
               <input type="email" placeholder="E-mail principal" className={styles.inputGrande} value={email} onChange={(e) => setEmail(e.target.value)} required />
 
               <div className={styles.linhaInputs}>
-                {!isExplorador && <input type="text" placeholder={placeholderDoc} className={styles.inputMetade} value={documento} onChange={(e) => handleDocumento(e.target.value)} />}
+                <input
+                  type="text"
+                  placeholder={placeholderDoc}
+                  className={`${styles.inputMetade} ${
+                    docDigitos.length > 0
+                      ? docOk
+                        ? styles.inputOk
+                        : styles.inputErro
+                      : ""
+                  }`}
+                  value={documento}
+                  onChange={(e) => handleDocumento(e.target.value)}
+                  required
+                />
                 <input type="text" placeholder="Telefone (11) 99999-9999" className={styles.inputMetade} value={telefone} onChange={(e) => setTelefone(maskPhone(e.target.value))} required />
               </div>
 
-              {isOng && <><input type="text" placeholder="Nome do responsável" className={styles.inputGrande} value={responsavel} onChange={(e) => setResponsavel(e.target.value)} required /><input type="text" placeholder="Instagram da ONG @" className={styles.inputGrande} value={instagram} onChange={(e) => setInstagram(e.target.value)} /></>}
+              {docDigitos.length > 0 && !docValidoMatematicamente && (
+                <div className={`${styles.statusValidacao} ${styles.statusErro}`}>
+                  {isPessoaFisica
+                    ? "✕ CPF inválido. Confira os 11 números digitados."
+                    : isOng
+                    ? "✕ CNPJ inválido. Confira os 14 números digitados."
+                    : docDigitos.length <= 11
+                    ? "✕ CPF inválido. Confira os 11 números ou digite os 14 dígitos do CNPJ."
+                    : "✕ CNPJ inválido. Confira os 14 números digitados."}
+                </div>
+              )}
+
+              {docValidoMatematicamente && docDigitos.length === 11 && (
+                <div className={`${styles.statusValidacao} ${styles.statusOk}`}>
+                  ✓ CPF válido
+                </div>
+              )}
+
+              {statusCnpjApi.estado !== "idle" && (
+                <div
+                  className={`${styles.statusValidacao} ${
+                    statusCnpjApi.estado === "ok"
+                      ? styles.statusOk
+                      : statusCnpjApi.estado === "erro"
+                      ? styles.statusErro
+                      : styles.statusCarregando
+                  }`}
+                >
+                  {statusCnpjApi.mensagem}
+                </div>
+              )}
+
+              {isEstacao && (
+                <>
+                  <div className={styles.linhaCrmv}>
+                    <div className={styles.selectUfWrapper}>
+                      <select
+                        className={styles.selectBonito}
+                        value={crmvUf}
+                        onChange={(e) => setCrmvUf(e.target.value)}
+                        aria-label="Estado (UF) do CRMV"
+                      >
+                        {UFS_BRASIL.map((uf) => (
+                          <option key={uf} value={uf}>
+                            CRMV-{uf}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Nº do CRMV (ex.: 12345 ou 12345-PJ)"
+                      className={`${styles.inputMetade} ${
+                        crmvNumero.length > 0
+                          ? crmvOk
+                            ? styles.inputOk
+                            : styles.inputErro
+                          : ""
+                      }`}
+                      value={crmvNumero}
+                      onChange={(e) => setCrmvNumero(maskCRMV(e.target.value))}
+                      required
+                    />
+                  </div>
+
+                  {crmvNumero.length > 0 && (
+                    <div
+                      className={`${styles.statusValidacao} ${
+                        crmvOk ? styles.statusOk : styles.statusErro
+                      }`}
+                    >
+                      {crmvOk
+                        ? `✓ Registro formatado: CRMV-${crmvUf} ${crmvNumero}`
+                        : "✕ Informe de 3 a 7 dígitos numéricos para o CRMV (opcional -PJ no final)."}
+                    </div>
+                  )}
+
+                  <input
+                    type="text"
+                    placeholder="Nome do(a) Médico(a) Veterinário(a) Responsável Técnico(a)"
+                    className={styles.inputGrande}
+                    value={responsavel}
+                    onChange={(e) => setResponsavel(e.target.value)}
+                    required
+                  />
+                </>
+              )}
+
+              {isOng && (
+                <>
+                  <input type="text" placeholder="Nome do responsável" className={styles.inputGrande} value={responsavel} onChange={(e) => setResponsavel(e.target.value)} required />
+                  <input type="text" placeholder="Instagram da ONG @" className={styles.inputGrande} value={instagram} onChange={(e) => setInstagram(e.target.value)} />
+                </>
+              )}
 
               <div className={styles.linhaInputs}>
                 <div className={styles.inputComOlho}>
@@ -288,7 +702,34 @@ export function Cadastro() {
               )}
 
               {erroSenha && <span className={styles.erroSenha}>{erroSenha}</span>}
-              <input type="text" placeholder="CEP - 00000-000" className={styles.inputGrande} value={cep} onChange={(e) => setCep(maskCEP(e.target.value))} required />
+              <input
+                type="text"
+                placeholder="CEP - 00000-000"
+                className={`${styles.inputGrande} ${
+                  cep.replace(/\D/g, "").length > 0
+                    ? cepOk
+                      ? styles.inputOk
+                      : styles.inputErro
+                    : ""
+                }`}
+                value={cep}
+                onChange={(e) => handleCepInput(e.target.value)}
+                required
+              />
+
+              {statusCepApi.estado !== "idle" && (
+                <div
+                  className={`${styles.statusValidacao} ${
+                    statusCepApi.estado === "ok"
+                      ? styles.statusOk
+                      : statusCepApi.estado === "erro"
+                      ? styles.statusErro
+                      : styles.statusCarregando
+                  }`}
+                >
+                  {statusCepApi.mensagem}
+                </div>
+              )}
 
               <label className={styles.termoLabel}>
                 <input
@@ -331,7 +772,11 @@ export function Cadastro() {
                 </span>
               </label>
 
-              <button type="submit" className={styles.botaoContinuar} disabled={carregando || !senhaOk || !confirmOk || !aceitouTermos}>
+              <button
+                type="submit"
+                className={styles.botaoContinuar}
+                disabled={carregando || !senhaOk || !confirmOk || !aceitouTermos || !docOk || !crmvOk || !cepOk}
+              >
                 {carregando ? "Criando conta..." : `Criar conta de ${nomePerfilExibicao}`}
               </button>
 
