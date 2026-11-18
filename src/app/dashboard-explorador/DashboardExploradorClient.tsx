@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { SidebarExplorador } from "@/components/dashboard-explorador/SidebarExplorador";
 import { supabase } from "@/lib/supabase";
 import { buscarPerfil } from "@/lib/explorador";
+import { garantirTutor } from "@/lib/perfil";
 import styles from "./dashboard.module.css";
 
 type Props = {
@@ -48,13 +49,14 @@ export default function DashboardExploradorClient({ children, nomeExplorador }: 
     queueMicrotask(lerCacheLocal);
 
     supabase.auth
-      .getUser()
+      .getSession()
       .then(({ data }) => {
-        if (!ativo || !data.user) return;
-        const avatarMeta = data.user.user_metadata?.avatar_url as string | undefined;
+        const user = data.session?.user;
+        if (!ativo || !user) return;
+        const avatarMeta = user.user_metadata?.avatar_url as string | undefined;
         const nomeMeta =
-          (data.user.user_metadata?.nome as string | undefined) ||
-          (data.user.user_metadata?.full_name as string | undefined);
+          (user.user_metadata?.nome as string | undefined) ||
+          (user.user_metadata?.full_name as string | undefined);
         if (avatarMeta) {
           setFotoExplorador((atual) => atual || avatarMeta);
         }
@@ -79,7 +81,9 @@ export default function DashboardExploradorClient({ children, nomeExplorador }: 
           setNomeExibido(perfil.nome);
         }
       })
-      .catch(() => null);
+      .catch(() => {
+        garantirTutor(nomeExplorador).catch(() => null);
+      });
 
     window.addEventListener("astro-perfil-atualizado", lerCacheLocal);
     window.addEventListener("storage", lerCacheLocal);

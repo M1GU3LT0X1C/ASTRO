@@ -1,7 +1,5 @@
 // src/app/dashboard/layout.tsx
 import { createServerSupabase } from '@/lib/supabase-server'
-import { apiServidor } from '@/lib/api-servidor'
-import type { Me } from '@/lib/perfil'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
 
@@ -16,28 +14,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const supabase = await createServerSupabase()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const user =
+    session?.user ??
+    (await supabase.auth.getUser().then((r) => r.data.user).catch(() => null))
 
   if (!user) {
     redirect('/login')
   }
 
   const perfilMeta = user.user_metadata?.perfil as string | undefined
-  const escolheuOng =
-    perfilMeta === 'guardiao' ||
-    perfilMeta === 'base-estelar' ||
-    perfilMeta === 'estacao' ||
-    perfilMeta === 'ong'
-
-  const me = await apiServidor<Me>('/api/me').catch(() => null)
 
   // O dashboard é exclusivo para ONGs; exploradores usam seu próprio painel.
-  if (
-    !escolheuOng &&
-    (me?.tutor ||
-      me?.tipo === 'EXPLORADOR' ||
-      (!me && perfilMeta === 'explorador'))
-  ) {
+  if (perfilMeta === 'explorador') {
     redirect('/dashboard-explorador')
   }
 
@@ -48,5 +40,5 @@ export default async function DashboardLayout({ children }: { children: React.Re
     user.email?.split('@')[0] ||
     'Minha ONG'
 
-  return <DashboardClient nomeOng={me?.ong?.nomeOrganizacao || nomeFallback}>{children}</DashboardClient>
+  return <DashboardClient nomeOng={nomeFallback}>{children}</DashboardClient>
 }

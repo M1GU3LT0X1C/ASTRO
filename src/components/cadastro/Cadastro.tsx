@@ -469,12 +469,12 @@ export function Cadastro() {
       }
 
       if (ehOng) {
-        await garantirOng(nome.trim() || "Minha ONG", perfilSelecionado).catch(() => null);
+        void garantirOng(nome.trim() || "Minha ONG", perfilSelecionado).catch(() => null);
       } else {
-        await garantirTutor(nome.trim() || "Explorador").catch(() => null);
+        void garantirTutor(nome.trim() || "Explorador").catch(() => null);
       }
 
-      router.push(ehOng ? "/dashboard" : "/dashboard-explorador");
+      router.replace(ehOng ? "/dashboard" : "/dashboard-explorador");
     } catch (err: unknown) {
       // só libera o botão em caso de erro; no sucesso ele fica travado até a página trocar
       enviando.current = false;

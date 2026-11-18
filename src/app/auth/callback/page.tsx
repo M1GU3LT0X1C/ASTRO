@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { buscarMe, garantirOng, garantirTutor } from "@/lib/perfil";
+import { garantirOng, garantirTutor } from "@/lib/perfil";
 import { acordarServidor } from "@/lib/api";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
@@ -134,12 +134,12 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
       if (data.session?.user) {
         finalizar(data.session.user);
       }
-    }, 400);
+    }, 150);
 
     const limite = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
       finalizar(data.session?.user ?? null);
-    }, 5500);
+    }, 4500);
   });
 }
 
@@ -150,9 +150,7 @@ export default function CallbackPage() {
   const [finalizandoEscolha, setFinalizandoEscolha] = useState(false);
 
   async function finalizarComPerfil(user: User, perfilEscolhido: string) {
-    const MSG_ESPERA = "O servidor está iniciando, isso pode levar até 2 minutos.";
     alerta.carregando("Entrando...");
-    const aviso = setTimeout(() => alerta.carregando("Entrando...", MSG_ESPERA), 3000);
 
     const nomeOngTemp = localStorage.getItem("temp_ong_nome");
     const nomePessoa =
@@ -164,36 +162,44 @@ export default function CallbackPage() {
 
     const ehExplorador = perfilEscolhido === "explorador";
 
-    await supabase.auth
-      .updateUser({
-        data: {
-          perfil: perfilEscolhido,
-          nome: nomePessoa,
-        },
-      })
-      .catch(() => null);
-
-    try {
-      if (ehExplorador) {
-        await garantirTutor(nomePessoa);
-      } else {
-        await garantirOng(nomeOngTemp || nomePessoa || "Minha ONG", perfilEscolhido);
-      }
-    } catch {
-      // Se o back estiver dormindo ou a conta já tiver vínculo anterior, prossegue para o painel escolhido
-    } finally {
-      clearTimeout(aviso);
-      alerta.fechar();
-    }
-
     localStorage.removeItem("astro_perfil_pendente");
     localStorage.removeItem("temp_ong_nome");
     limparCookiePerfil();
     localStorage.setItem("ultimo_user_id", user.id);
     localStorage.setItem("pessoa_nome", nomePessoa);
     if (user.user_metadata?.avatar_url) {
-      localStorage.setItem("ong_foto", user.user_metadata.avatar_url);
+      localStorage.setItem(ehExplorador ? "explorador_foto" : "ong_foto", user.user_metadata.avatar_url);
     }
+
+    // Dispara a garantia de vínculo no back-end em segundo plano sem bloquear o redirecionamento
+    if (ehExplorador) {
+      void garantirTutor(nomePessoa).catch(() => null);
+    } else {
+      void garantirOng(nomeOngTemp || nomePessoa || "Minha ONG", perfilEscolhido)
+        .then((r) => {
+          if (r.ong?.nomeOrganizacao) {
+            localStorage.setItem("ong_nome", r.ong.nomeOrganizacao);
+          }
+        })
+        .catch(() => null);
+    }
+
+    // Atualiza os metadados no Supabase com limite curto para não atrasar a entrada no painel
+    if (user.user_metadata?.perfil !== perfilEscolhido) {
+      await Promise.race([
+        supabase.auth
+          .updateUser({
+            data: {
+              perfil: perfilEscolhido,
+              nome: nomePessoa,
+            },
+          })
+          .catch(() => null),
+        new Promise((resolve) => setTimeout(resolve, 1200)),
+      ]);
+    }
+
+    alerta.fechar();
 
     if (ehExplorador) {
       localStorage.setItem("tipo_usuario", "explorador");

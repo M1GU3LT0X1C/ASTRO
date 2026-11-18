@@ -26,20 +26,38 @@ export function Header() {
 
     async function atualizar(userId?: string, perfilMeta?: string) {
       if (!userId) return setSessao({ logado: false, tutor: false });
-      const fallbackTutor =
-        perfilMeta === "explorador" ||
-        (typeof window !== "undefined" && localStorage.getItem("tipo_usuario") === "explorador");
-      // se a pessoa escolheu Explorador ou tem perfil de tutor, direciona para o painel do Explorador
-      const tutor = fallbackTutor
-        ? true
-        : await buscarMe()
-            .then((me) => Boolean(me.tutor || me.tipo === "EXPLORADOR"))
-            .catch(() => fallbackTutor);
+      const tipoLocal =
+        typeof window !== "undefined" ? localStorage.getItem("tipo_usuario") : null;
+      const perfilConhecido = perfilMeta || tipoLocal;
+
+      if (perfilConhecido === "explorador") {
+        setSessao({ logado: true, tutor: true });
+        return;
+      }
+
+      if (
+        perfilConhecido === "guardiao" ||
+        perfilConhecido === "base-estelar" ||
+        perfilConhecido === "estacao" ||
+        perfilConhecido === "ong"
+      ) {
+        setSessao({ logado: true, tutor: false });
+        return;
+      }
+
+      // Mostra imediatamente como logado sem esperar o servidor do Render
+      setSessao({ logado: true, tutor: false });
+      const tutor = await buscarMe({ timeoutMs: 4000 })
+        .then((me) => Boolean(me.tutor || me.tipo === "EXPLORADOR"))
+        .catch(() => false);
       setSessao({ logado: true, tutor });
     }
 
-    supabase.auth.getUser().then(({ data }) =>
-      atualizar(data.user?.id, data.user?.user_metadata?.perfil as string | undefined)
+    supabase.auth.getSession().then(({ data }) =>
+      atualizar(
+        data.session?.user?.id,
+        data.session?.user?.user_metadata?.perfil as string | undefined
+      )
     );
     const {
       data: { subscription },

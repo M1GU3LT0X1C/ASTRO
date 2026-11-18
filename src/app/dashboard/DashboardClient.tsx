@@ -40,10 +40,11 @@ export default function DashboardClient({ children, nomeOng }: { children: React
     queueMicrotask(lerCacheLocal);
 
     supabase.auth
-      .getUser()
+      .getSession()
       .then(({ data }) => {
-        if (!ativo || !data.user) return;
-        const avatarMeta = data.user.user_metadata?.avatar_url as string | undefined;
+        const user = data.session?.user;
+        if (!ativo || !user) return;
+        const avatarMeta = user.user_metadata?.avatar_url as string | undefined;
         if (avatarMeta) {
           setFotoOng((atual) => atual || avatarMeta);
         }
@@ -51,20 +52,32 @@ export default function DashboardClient({ children, nomeOng }: { children: React
       .catch(() => null);
 
     buscarMe()
-      .then(({ ong, parceiro }) => {
+      .then((me) => {
         if (!ativo) return;
-        if (parceiro?.logoUrl) {
-          setFotoOng(parceiro.logoUrl);
+        const tipoLocal = localStorage.getItem("tipo_usuario");
+        const escolheuOngLocal =
+          tipoLocal === "guardiao" ||
+          tipoLocal === "base-estelar" ||
+          tipoLocal === "estacao" ||
+          tipoLocal === "ong";
+
+        if (!escolheuOngLocal && !me.ong && (me.tutor || me.tipo === "EXPLORADOR")) {
+          router.replace("/dashboard-explorador");
+          return;
+        }
+
+        if (me.parceiro?.logoUrl) {
+          setFotoOng(me.parceiro.logoUrl);
           try {
-            localStorage.setItem("ong_foto", parceiro.logoUrl);
+            localStorage.setItem("ong_foto", me.parceiro.logoUrl);
           } catch {
             // ignora
           }
         }
-        if (ong?.nomeOrganizacao) {
-          setNomeExibido(ong.nomeOrganizacao);
+        if (me.ong?.nomeOrganizacao) {
+          setNomeExibido(me.ong.nomeOrganizacao);
           try {
-            localStorage.setItem("ong_nome", ong.nomeOrganizacao);
+            localStorage.setItem("ong_nome", me.ong.nomeOrganizacao);
           } catch {
             // ignora
           }

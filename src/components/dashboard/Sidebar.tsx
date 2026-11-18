@@ -65,8 +65,14 @@ export function Sidebar() {
     async function carregarDados() {
       lerCacheLocal();
       const {
-        data: { user },
-      } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+        data: { session },
+      } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+      const user =
+        session?.user ??
+        (await supabase.auth
+          .getUser()
+          .then((r) => r.data.user)
+          .catch(() => null));
       if (!user || !ativo) return;
 
       const ultimoUser = localStorage.getItem("ultimo_user_id");

@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { apiServidor } from "@/lib/api-servidor";
-import type { Me } from "@/lib/perfil";
 import DashboardExploradorClient from "./DashboardExploradorClient";
 
 export default async function DashboardExploradorLayout({
@@ -22,12 +20,16 @@ export default async function DashboardExploradorLayout({
     );
   }
 
-  // Autenticação normal
+  // Autenticação já validada pelo middleware; lê sessão do cookie sem bloquear a renderização
   const supabase = await createServerSupabase();
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const user =
+    session?.user ??
+    (await supabase.auth.getUser().then((r) => r.data.user).catch(() => null));
 
   if (!user) {
     redirect("/login");
@@ -39,16 +41,6 @@ export default async function DashboardExploradorLayout({
     user.user_metadata?.name ||
     user.email?.split("@")[0] ||
     "Explorador";
-
-  // Garante o registro de tutor caso ainda não exista, sem redirecionar para /dashboard
-  const me = await apiServidor<Me>("/api/me").catch(() => null);
-
-  if (!me || !me.tutor) {
-    await apiServidor<Me>("/api/me/tutor", {
-      method: "POST",
-      body: { nome },
-    }).catch(() => null);
-  }
 
   return (
     <DashboardExploradorClient nomeExplorador={nome}>

@@ -43,6 +43,49 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const rotasProtegidas = [
+    "/dashboard",
+    "/dashboard-explorador",
+    "/perfil-explorador",
+  ];
+
+  const rotaProtegida = rotasProtegidas.some(
+    (rota) => pathname === rota || pathname.startsWith(`${rota}/`)
+  );
+
+  const emRecuperacaoSenha =
+    pathname === "/recuperar-senha" ||
+    pathname.startsWith("/recuperar-senha/") ||
+    (pathname === "/login" &&
+      (request.nextUrl.searchParams.get("reset") === "true" ||
+        request.nextUrl.searchParams.get("type") === "recovery" ||
+        request.nextUrl.searchParams.has("code") ||
+        request.nextUrl.searchParams.has("token_hash")));
+
+  const rotaAutenticacao = ["/login", "/cadastro"].some(
+    (rota) => pathname === rota || pathname.startsWith(`${rota}/`)
+  );
+
+  // Rotas públicas não precisam aguardar roundtrip de autenticação no Edge Middleware
+  if (!rotaProtegida && (!rotaAutenticacao || emRecuperacaoSenha)) {
+    return NextResponse.next({ request });
+  }
+
+  const temCookieSupabase = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-"));
+
+  // Sem cookie de sessão do Supabase, evita chamada de rede desnecessária ao Supabase Auth
+  if (!temCookieSupabase) {
+    if (rotaProtegida) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -72,35 +115,12 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const rotasProtegidas = [
-    "/dashboard",
-    "/dashboard-explorador",
-    "/perfil-explorador",
-  ];
-
-  const rotaProtegida = rotasProtegidas.some(
-    (rota) => pathname === rota || pathname.startsWith(`${rota}/`)
-  );
-
   if (rotaProtegida && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
     return NextResponse.redirect(url);
   }
-
-  const emRecuperacaoSenha =
-    pathname === "/recuperar-senha" ||
-    pathname.startsWith("/recuperar-senha/") ||
-    (pathname === "/login" &&
-      (request.nextUrl.searchParams.get("reset") === "true" ||
-        request.nextUrl.searchParams.get("type") === "recovery" ||
-        request.nextUrl.searchParams.has("code") ||
-        request.nextUrl.searchParams.has("token_hash")));
-
-  const rotaAutenticacao = ["/login", "/cadastro"].some(
-    (rota) => pathname === rota || pathname.startsWith(`${rota}/`)
-  );
 
   if (rotaAutenticacao && user && !emRecuperacaoSenha) {
     const url = request.nextUrl.clone();

@@ -9,52 +9,92 @@ import { horaCurta, listarAgenda, proximosCompromissos, type Compromisso } from 
 import styles from "./Painel.module.css";
 
 export default function DashboardPage() {
-  const [nomePessoa, setNomePessoa] = useState("");
+  const [nomePessoa, setNomePessoa] = useState("Explorador");
   const [animais, setAnimais] = useState<AnimalTela[]>([]);
   const [metricas, setMetricas] = useState<Metricas | null>(null);
   const [lembretes, setLembretes] = useState<Compromisso[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let ativo = true;
+
+    try {
+      const salvo = localStorage.getItem("pessoa_nome") || localStorage.getItem("ong_nome");
+      if (salvo) {
+        queueMicrotask(() => {
+          if (ativo) setNomePessoa(salvo);
+        });
+      }
+    } catch {
+      // ignora erro de leitura
+    }
+
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-      const ultimoUser = localStorage.getItem("ultimo_user_id");
-      if (ultimoUser && ultimoUser!== user.id) localStorage.clear();
-      localStorage.setItem("ultimo_user_id", user.id);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const user =
+          session?.user ??
+          (await supabase.auth.getUser().then((r) => r.data.user).catch(() => null));
 
-      const perfilPendente = localStorage.getItem("astro_perfil_pendente");
-      if (perfilPendente && perfilPendente !== "explorador") {
-        await garantirOng(localStorage.getItem("temp_ong_nome") || user.user_metadata.full_name || user.email?.split("@")[0] || "Minha ONG", perfilPendente);
-      }
-      if (perfilPendente) {
-        localStorage.removeItem("astro_perfil_pendente");
-        localStorage.removeItem("temp_ong_nome");
-      }
+        if (!user || !ativo) return;
 
-      const nomeGoogle = user.user_metadata?.full_name || "";
-      const pessoaSalva = localStorage.getItem("pessoa_nome") || nomeGoogle || user.email?.split("@")[0] || "explorador";
-      setNomePessoa(pessoaSalva);
-      localStorage.setItem("pessoa_nome", pessoaSalva);
+        const ultimoUser = localStorage.getItem("ultimo_user_id");
+        if (ultimoUser && ultimoUser !== user.id) localStorage.clear();
+        localStorage.setItem("ultimo_user_id", user.id);
 
-      const { ong } = await buscarMe();
-      if (ong) {
-        localStorage.setItem("ong_nome", ong.nomeOrganizacao);
-        const [pets, numeros, agenda] = await Promise.all([
-          listarMeusAnimais(),
+        const nomeGoogle =
+          user.user_metadata?.nome ||
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          "";
+        const pessoaSalva =
+          localStorage.getItem("pessoa_nome") ||
+          nomeGoogle ||
+          user.email?.split("@")[0] ||
+          "Explorador";
+        if (ativo) setNomePessoa(pessoaSalva);
+        localStorage.setItem("pessoa_nome", pessoaSalva);
+
+        const perfilPendente = localStorage.getItem("astro_perfil_pendente");
+        if (perfilPendente) {
+          const nomeOngTemp = localStorage.getItem("temp_ong_nome");
+          localStorage.removeItem("astro_perfil_pendente");
+          localStorage.removeItem("temp_ong_nome");
+          if (perfilPendente !== "explorador") {
+            void garantirOng(
+              nomeOngTemp || nomeGoogle || user.email?.split("@")[0] || "Minha ONG",
+              perfilPendente
+            ).catch(() => null);
+          }
+        }
+
+        const [me, pets, numeros, agenda] = await Promise.all([
+          buscarMe().catch(() => null),
+          listarMeusAnimais().catch(() => []),
           buscarMetricas().catch(() => null),
           listarAgenda().catch(() => []),
         ]);
+
+        if (!ativo) return;
+
+        if (me?.ong?.nomeOrganizacao) {
+          localStorage.setItem("ong_nome", me.ong.nomeOrganizacao);
+        }
         setAnimais(pets);
         setMetricas(numeros);
         setLembretes(proximosCompromissos(agenda).slice(0, 3));
+      } finally {
+        if (ativo) setLoading(false);
       }
-      setLoading(false);
     }
     load();
-  }, []);
 
-  if (loading) return <div style={{padding:24}}>Carregando...</div>;
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   return (
     <div className={styles.painelContainer}>
@@ -82,7 +122,9 @@ export default function DashboardPage() {
         <Link href="/dashboard/adocoes" className={styles.cardRosa} style={{textDecoration:"none"}}><strong>{metricas?.solicitacoesPendentes ?? 0}</strong><span>Interesses para adoção</span></Link>
       </div>
       <div className={styles.petsGrid}>
-        {animais.length===0? (
+        {loading ? (
+          <div className={styles.vazio}><p>Carregando seus pets...</p></div>
+        ) : animais.length===0? (
           <div className={styles.vazio}><p>Nenhum pet cadastrado ainda.</p><span>Vai em <b>Novo Pet</b>.</span></div>
         ) : animais.map((pet)=>(
           <div key={pet.id} className={styles.petCard}>

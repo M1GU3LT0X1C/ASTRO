@@ -279,71 +279,93 @@ export function Login({ modoInicial = "login" }: LoginProps) {
       return;
     }
 
+    const ultimoUser = localStorage.getItem("ultimo_user_id");
+    const mesmoUsuario = !ultimoUser || ultimoUser === user.id;
+
     const nome =
       user.user_metadata?.nome ||
       user.user_metadata?.full_name ||
       user.user_metadata?.name ||
+      (mesmoUsuario ? localStorage.getItem("pessoa_nome") : null) ||
       user.email?.split("@")[0] ||
       "Explorador";
     const perfilMeta =
       (user.user_metadata?.perfil as string | undefined) ||
-      localStorage.getItem("tipo_usuario");
+      (mesmoUsuario ? localStorage.getItem("tipo_usuario") : null);
+
+    if (!mesmoUsuario) {
+      localStorage.removeItem("ong_nome");
+      localStorage.removeItem("ong_foto");
+      localStorage.removeItem("explorador_foto");
+      localStorage.removeItem("astro_perfil_explorador_cache");
+    }
 
     localStorage.setItem("ultimo_user_id", user.id);
     localStorage.setItem("pessoa_nome", nome);
 
-    for (let tentativa = 0; tentativa < 2; tentativa++) {
-      try {
-        const me = await buscarMe();
+    // Se o perfil já está nos metadados (ou salvo para o mesmo usuário),
+    // redireciona imediatamente sem esperar o servidor no Render acordar.
+    if (perfilMeta === "explorador") {
+      localStorage.setItem("tipo_usuario", "explorador");
+      void garantirTutor(nome).catch(() => null);
+      router.replace("/dashboard-explorador");
+      return;
+    }
 
-        if (perfilMeta === "explorador" || me.tutor || me.tipo === "EXPLORADOR") {
-          if (!me.tutor) {
-            await garantirTutor(nome).catch(() => null);
+    if (
+      perfilMeta === "guardiao" ||
+      perfilMeta === "base-estelar" ||
+      perfilMeta === "estacao" ||
+      perfilMeta === "ong"
+    ) {
+      localStorage.setItem("tipo_usuario", perfilMeta);
+      if (!localStorage.getItem("ong_nome")) {
+        localStorage.setItem("ong_nome", nome || "Minha ONG");
+      }
+      void garantirOng(nome || "Minha ONG", perfilMeta)
+        .then((r) => {
+          if (r.ong?.nomeOrganizacao) {
+            localStorage.setItem("ong_nome", r.ong.nomeOrganizacao);
           }
-          localStorage.setItem("tipo_usuario", "explorador");
-          router.push("/dashboard-explorador");
-          return;
-        }
+        })
+        .catch(() => null);
+      router.replace("/dashboard");
+      return;
+    }
 
-        if (me.ong || me.tipo) {
-          const ong =
-            me.ong || (await garantirOng(nome || "Minha ONG").then((r) => r.ong));
-          localStorage.setItem("tipo_usuario", perfilMeta && perfilMeta !== "explorador" ? perfilMeta : "ong");
-          localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nome || "Minha ONG");
-          router.push("/dashboard");
-          return;
-        }
+    // Conta antiga sem perfil nos metadados: tenta consultar o back-end com timeout curto (3.5s)
+    // para não travar o login caso o Render esteja hibernando.
+    try {
+      const me = await buscarMe({ timeoutMs: 3500 });
 
-        if (perfilMeta === "explorador" || !perfilMeta) {
-          await garantirTutor(nome);
-          localStorage.setItem("tipo_usuario", "explorador");
-          router.push("/dashboard-explorador");
-          return;
+      if (me.tutor || me.tipo === "EXPLORADOR") {
+        if (!me.tutor) {
+          void garantirTutor(nome).catch(() => null);
         }
-
-        const { ong } = await garantirOng(nome || "Minha ONG", perfilMeta);
-        localStorage.setItem("tipo_usuario", perfilMeta);
-        localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nome || "Minha ONG");
-        router.push("/dashboard");
-        return;
-      } catch {
-        if (tentativa === 0) {
-          await new Promise((r) => setTimeout(r, 2000));
-          continue;
-        }
-
-        if (perfilMeta === "guardiao" || perfilMeta === "base-estelar" || perfilMeta === "estacao" || perfilMeta === "ong") {
-          localStorage.setItem("tipo_usuario", perfilMeta);
-          localStorage.setItem("ong_nome", nome || "Minha ONG");
-          router.push("/dashboard");
-          return;
-        }
-
         localStorage.setItem("tipo_usuario", "explorador");
-        router.push("/dashboard-explorador");
+        void supabase.auth.updateUser({ data: { perfil: "explorador", nome } }).catch(() => null);
+        router.replace("/dashboard-explorador");
         return;
       }
+
+      if (me.ong || me.tipo) {
+        const tipoInferido = me.ong?.tipoPerfil || "ong";
+        localStorage.setItem("tipo_usuario", tipoInferido);
+        localStorage.setItem("ong_nome", me.ong?.nomeOrganizacao || nome || "Minha ONG");
+        if (!me.ong) {
+          void garantirOng(nome || "Minha ONG").catch(() => null);
+        }
+        void supabase.auth.updateUser({ data: { perfil: tipoInferido, nome } }).catch(() => null);
+        router.replace("/dashboard");
+        return;
+      }
+    } catch {
+      // Se o servidor estiver acordando, segue direto para o painel sem travar a tela de login
     }
+
+    void garantirTutor(nome).catch(() => null);
+    localStorage.setItem("tipo_usuario", "explorador");
+    router.replace("/dashboard-explorador");
   }
 
   function abrirTelaEsqueciSenha() {
