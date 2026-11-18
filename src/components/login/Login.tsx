@@ -54,6 +54,43 @@ function gravarCookiePerfilLogin(perfil: string) {
   document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfil)}; path=/; max-age=900; SameSite=Lax`;
 }
 
+function limparCookiePerfilLogin() {
+  if (typeof document === "undefined") return;
+  document.cookie = "astro_perfil_pendente=; path=/; max-age=0; SameSite=Lax";
+}
+
+function gravarCookieResetPendente() {
+  if (typeof document === "undefined") return;
+  document.cookie = "astro_reset_pendente=true; path=/; max-age=3600; SameSite=Lax";
+}
+
+function limparCookieResetPendente() {
+  if (typeof document === "undefined") return;
+  document.cookie = "astro_reset_pendente=; path=/; max-age=0; SameSite=Lax";
+}
+
+function tokenTemAmrRecovery(accessToken?: string): boolean {
+  if (!accessToken) return false;
+  try {
+    const partes = accessToken.split(".");
+    if (partes.length < 2) return false;
+    const base64 = partes[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(base64));
+    if (Array.isArray(payload?.amr)) {
+      return payload.amr.some(
+        (item: { method?: string } | string) =>
+          (typeof item === "string" && (item === "recovery" || item === "otp")) ||
+          (typeof item === "object" &&
+            item !== null &&
+            (item.method === "recovery" || item.method === "otp"))
+      );
+    }
+  } catch {
+    // ignora erro de decode
+  }
+  return false;
+}
+
 export function Login({ modoInicial = "login" }: LoginProps) {
   const router = useRouter();
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -74,6 +111,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
   const [emailResetEnviado, setEmailResetEnviado] = useState(false);
   const [enviandoReset, setEnviandoReset] = useState(false);
   const [segundosReenvio, setSegundosReenvio] = useState(0);
+  const [mostrarCampoCodigo, setMostrarCampoCodigo] = useState(false);
   const [codigoReset, setCodigoReset] = useState("");
   const [validandoCodigo, setValidandoCodigo] = useState(false);
 
@@ -174,12 +212,29 @@ export function Login({ modoInicial = "login" }: LoginProps) {
           })
           .catch(() => null);
       }
+
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          const sessao = data.session;
+          if (!sessao) return;
+          const resetPendenteAtivo = Boolean(localStorage.getItem("astro_reset_pendente"));
+          if (
+            ehReset ||
+            tokenTemAmrRecovery(sessao.access_token) ||
+            (window.location.pathname === "/recuperar-senha" && resetPendenteAtivo)
+          ) {
+            setModoEsqueciSenha(false);
+            setModoRedefinir(true);
+          }
+        })
+        .catch(() => null);
     }
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((evento) => {
-      if (evento === "PASSWORD_RECOVERY") {
+    } = supabase.auth.onAuthStateChange((evento, sessao) => {
+      if (evento === "PASSWORD_RECOVERY" || tokenTemAmrRecovery(sessao?.access_token)) {
         setModoEsqueciSenha(false);
         setModoRedefinir(true);
       }
@@ -249,6 +304,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
     setLoading(true);
     setPerfilGoogleLoading(perfilEscolhido);
     localStorage.removeItem("astro_reset_pendente");
+    limparCookieResetPendente();
     localStorage.setItem("astro_google_login", "true");
     localStorage.setItem("astro_perfil_pendente", perfilEscolhido);
     localStorage.setItem("tipo_usuario", perfilEscolhido);
@@ -391,22 +447,29 @@ export function Login({ modoInicial = "login" }: LoginProps) {
 
     setEnviandoReset(true);
     try {
+      localStorage.removeItem("astro_google_login");
+      localStorage.removeItem("astro_perfil_pendente");
+      localStorage.removeItem("temp_ong_nome");
+      limparCookiePerfilLogin();
       localStorage.setItem("astro_reset_pendente", String(Date.now()));
       localStorage.setItem("astro_reset_email", emailLimpo);
+      gravarCookieResetPendente();
 
       const result = await supabase.auth.resetPasswordForEmail(emailLimpo, {
-        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery&reset=true`,
       });
 
       if (result.error) {
         localStorage.removeItem("astro_reset_pendente");
+        limparCookieResetPendente();
         alerta.erro("Não foi possível enviar o e-mail", traduzirErroAuth(result.error.message));
       } else {
         setEmailResetEnviado(true);
+        setMostrarCampoCodigo(false);
         setSegundosReenvio(60);
         alerta.sucesso(
-          "Instruções enviadas!",
-          `Enviamos o link de recuperação para ${emailLimpo}. Verifique sua caixa de entrada e a pasta de spam.`
+          "Link de redefinição enviado!",
+          `Enviamos um e-mail com o link de recuperação para ${emailLimpo}. Clique no link do e-mail (verifique também o Spam) para criar sua nova senha.`
         );
       }
     } finally {
@@ -504,6 +567,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
 
       localStorage.removeItem("astro_reset_pendente");
       localStorage.removeItem("astro_reset_email");
+      limparCookieResetPendente();
       await alerta.sucesso("Senha atualizada!", "Sua nova senha foi salva com sucesso.");
       setModoRedefinir(false);
       await checkAndRedirect(data.user);
@@ -514,9 +578,11 @@ export function Login({ modoInicial = "login" }: LoginProps) {
 
   function voltarParaLogin() {
     localStorage.removeItem("astro_reset_pendente");
+    limparCookieResetPendente();
     setModoRedefinir(false);
     setModoEsqueciSenha(false);
     setEmailResetEnviado(false);
+    setMostrarCampoCodigo(false);
     setCodigoReset("");
     setNovaSenha("");
     setConfirmarNovaSenha("");
@@ -701,75 +767,61 @@ export function Login({ modoInicial = "login" }: LoginProps) {
                       onClick={handleEnviarEmailRecuperacao}
                       disabled={enviandoReset}
                     >
-                      {enviandoReset ? "Enviando instruções..." : "Enviar link de recuperação"}
+                      {enviandoReset ? "Enviando link..." : "Enviar link de recuperação"}
                     </button>
 
-                    <div className={styles.linksSecundariosReset}>
-                      <button
-                        type="button"
-                        className={styles.voltarGoogle}
-                        onClick={voltarParaLogin}
-                        disabled={enviandoReset}
-                      >
-                        ← Voltar ao login
-                      </button>
-
-                      <button
-                        type="button"
-                        className={styles.voltarGoogle}
-                        onClick={() => setEmailResetEnviado(true)}
-                        disabled={enviandoReset}
-                      >
-                        Já tenho um código
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className={styles.voltarGoogle}
+                      onClick={voltarParaLogin}
+                      disabled={enviandoReset}
+                    >
+                      ← Voltar ao login
+                    </button>
                   </div>
                 </>
               ) : (
                 <>
                   <div className={styles.cardConfirmacaoEmail}>
-                    Enviamos as instruções de recuperação para{" "}
-                    <strong>{email.trim() || "seu e-mail"}</strong>. Clique no link recebido no e-mail
-                    (verifique também a caixa de spam) ou informe o código abaixo:
+                    Enviamos um link de redefinição de senha para{" "}
+                    <strong>{email.trim() || "seu e-mail"}</strong>.
+                    <br />
+                    <br />
+                    Abra seu e-mail e clique no botão/link <strong>Reset Password</strong> enviado
+                    pelo Supabase (verifique também a pasta de <strong>Spam / Lixo eletrônico</strong>
+                    ). Ao clicar no link, você será levado direto para a tela de{" "}
+                    <strong>Criar nova senha</strong>.
                   </div>
 
-                  {!email.trim() && (
-                    <input
-                      type="email"
-                      placeholder="Confirme o e-mail da sua conta"
-                      className={styles.input}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  )}
-
-                  <div className={styles.blocoCodigoOtp}>
-                    <span className={styles.labelOtp}>
-                      Recebeu um código no e-mail? Digite aqui:
-                    </span>
-                    <div className={styles.linhaOtp}>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Código do e-mail"
-                        className={styles.inputOtp}
-                        value={codigoReset}
-                        maxLength={10}
-                        onChange={(e) => setCodigoReset(e.target.value.replace(/\s+/g, ""))}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleValidarCodigoOtp();
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className={styles.botaoOtp}
-                        onClick={handleValidarCodigoOtp}
-                        disabled={validandoCodigo || !codigoReset.trim()}
-                      >
-                        {validandoCodigo ? "Validando..." : "Validar"}
-                      </button>
+                  {mostrarCampoCodigo ? (
+                    <div className={styles.blocoCodigoOtp}>
+                      <span className={styles.labelOtp}>
+                        Digite o código recebido no e-mail:
+                      </span>
+                      <div className={styles.linhaOtp}>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="Código do e-mail"
+                          className={styles.inputOtp}
+                          value={codigoReset}
+                          maxLength={10}
+                          onChange={(e) => setCodigoReset(e.target.value.replace(/\s+/g, ""))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleValidarCodigoOtp();
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className={styles.botaoOtp}
+                          onClick={handleValidarCodigoOtp}
+                          disabled={validandoCodigo || !codigoReset.trim()}
+                        >
+                          {validandoCodigo ? "Validando..." : "Validar"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
 
                   <div className={styles.linksSecundariosReset}>
                     <button
@@ -777,6 +829,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
                       className={styles.voltarGoogle}
                       onClick={() => {
                         setEmailResetEnviado(false);
+                        setMostrarCampoCodigo(false);
                         setCodigoReset("");
                       }}
                     >
@@ -792,8 +845,8 @@ export function Login({ modoInicial = "login" }: LoginProps) {
                       {enviandoReset
                         ? "Reenviando..."
                         : segundosReenvio > 0
-                          ? `Reenviar e-mail (${segundosReenvio}s)`
-                          : "Reenviar e-mail"}
+                          ? `Reenviar link (${segundosReenvio}s)`
+                          : "Reenviar link"}
                     </button>
                   </div>
 

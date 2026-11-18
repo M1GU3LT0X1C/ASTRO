@@ -6,7 +6,7 @@ import { garantirOng, garantirTutor } from "@/lib/perfil";
 import { acordarServidor } from "@/lib/api";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
-import type { User } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 
 type PerfilOpcao = "explorador" | "guardiao" | "base-estelar" | "estacao";
 
@@ -53,8 +53,61 @@ function limparCookiePerfil() {
   document.cookie = "astro_perfil_pendente=; path=/; max-age=0; SameSite=Lax";
 }
 
+function lerCookieResetPendente(): boolean {
+  if (typeof document === "undefined") return false;
+  return /(?:^|;\s*)astro_reset_pendente=true(?:;|$)/.test(document.cookie);
+}
+
+function limparCookieResetPendente() {
+  if (typeof document === "undefined") return;
+  document.cookie = "astro_reset_pendente=; path=/; max-age=0; SameSite=Lax";
+}
+
+function tokenTemAmrRecovery(accessToken?: string): boolean {
+  if (!accessToken) return false;
+  try {
+    const partes = accessToken.split(".");
+    if (partes.length < 2) return false;
+    const base64 = partes[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(base64));
+    if (Array.isArray(payload?.amr)) {
+      return payload.amr.some(
+        (item: { method?: string } | string) =>
+          (typeof item === "string" && (item === "recovery" || item === "otp")) ||
+          (typeof item === "object" &&
+            item !== null &&
+            (item.method === "recovery" || item.method === "otp"))
+      );
+    }
+  } catch {
+    // ignora erro de decodificação do JWT
+  }
+  return false;
+}
+
+function usuarioTemRecuperacaoRecente(user: User | null, googleLoginAtivo: boolean): boolean {
+  if (!user || googleLoginAtivo) return false;
+  const enviadoEm = (user as User & { recovery_sent_at?: string }).recovery_sent_at;
+  if (!enviadoEm) return false;
+  const ts = Date.parse(enviadoEm);
+  return !Number.isNaN(ts) && Date.now() - ts < 60 * 60 * 1000;
+}
+
+function detectarSessaoRecuperacao(
+  session: Session | null,
+  user: User | null,
+  flagInicial: boolean,
+  googleLoginAtivo: boolean
+): boolean {
+  if (flagInicial) return true;
+  if (tokenTemAmrRecovery(session?.access_token)) return true;
+  if (usuarioTemRecuperacaoRecente(user, googleLoginAtivo)) return true;
+  return false;
+}
+
 async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao: boolean }> {
   let recuperacao = false;
+  let googleLoginAtivo = false;
 
   if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
@@ -62,9 +115,22 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
     if (
       params.get("reset") === "true" ||
       params.get("type") === "recovery" ||
-      hashParams.get("type") === "recovery"
+      hashParams.get("type") === "recovery" ||
+      lerCookieResetPendente()
     ) {
       recuperacao = true;
+    }
+
+    googleLoginAtivo = localStorage.getItem("astro_google_login") === "true";
+
+    const resetPendente = localStorage.getItem("astro_reset_pendente");
+    if (resetPendente && !googleLoginAtivo) {
+      const ts = Number(resetPendente);
+      if (!Number.isNaN(ts) && Date.now() - ts < 60 * 60 * 1000) {
+        recuperacao = true;
+      } else {
+        localStorage.removeItem("astro_reset_pendente");
+      }
     }
 
     const tokenHash = params.get("token_hash");
@@ -78,67 +144,90 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
         return { user: verificado.data.session.user, recuperacao: true };
       }
     }
-
-    const resetPendente = localStorage.getItem("astro_reset_pendente");
-    const googleLogin = localStorage.getItem("astro_google_login");
-    const perfilPendente = localStorage.getItem("astro_perfil_pendente") || lerCookiePerfil();
-    if (resetPendente && !googleLogin && !perfilPendente) {
-      const ts = Number(resetPendente);
-      if (!Number.isNaN(ts) && Date.now() - ts < 60 * 60 * 1000) {
-        recuperacao = true;
-      } else {
-        localStorage.removeItem("astro_reset_pendente");
-      }
-    }
   }
 
-  const inicial = await supabase.auth.getSession();
-  if (inicial.data.session?.user) {
-    return { user: inicial.data.session.user, recuperacao };
-  }
+  // Registra o listener ANTES de getSession/exchangeCodeForSession para não perder o evento PASSWORD_RECOVERY
+  let eventoRecoveryDetectado = false;
+  const {
+    data: { subscription: subInicial },
+  } = supabase.auth.onAuthStateChange((evento, session) => {
+    if (evento === "PASSWORD_RECOVERY" || tokenTemAmrRecovery(session?.access_token)) {
+      eventoRecoveryDetectado = true;
+      recuperacao = true;
+    }
+  });
 
-  if (typeof window !== "undefined") {
-    const code = new URLSearchParams(window.location.search).get("code");
-    if (code) {
-      const trocado = await supabase.auth.exchangeCodeForSession(code).catch(() => null);
-      if (trocado?.data?.session?.user) {
-        return { user: trocado.data.session.user, recuperacao };
+  try {
+    const inicial = await supabase.auth.getSession();
+    if (inicial.data.session?.user) {
+      const ehRec = detectarSessaoRecuperacao(
+        inicial.data.session,
+        inicial.data.session.user,
+        recuperacao || eventoRecoveryDetectado,
+        googleLoginAtivo
+      );
+      subInicial.unsubscribe();
+      return { user: inicial.data.session.user, recuperacao: ehRec };
+    }
+
+    if (typeof window !== "undefined") {
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (code) {
+        const trocado = await supabase.auth.exchangeCodeForSession(code).catch(() => null);
+        if (trocado?.data?.session?.user) {
+          const ehRec = detectarSessaoRecuperacao(
+            trocado.data.session,
+            trocado.data.session.user,
+            recuperacao || eventoRecoveryDetectado,
+            googleLoginAtivo
+          );
+          subInicial.unsubscribe();
+          return { user: trocado.data.session.user, recuperacao: ehRec };
+        }
       }
     }
+  } finally {
+    subInicial.unsubscribe();
   }
 
   return new Promise((resolve) => {
     let finalizado = false;
-    const finalizar = (user: User | null) => {
+    const finalizar = (session: Session | null, user: User | null) => {
       if (finalizado) return;
       finalizado = true;
       clearInterval(intervalo);
       clearTimeout(limite);
       subscription.unsubscribe();
-      resolve({ user, recuperacao });
+      const ehRec = detectarSessaoRecuperacao(
+        session,
+        user,
+        recuperacao || eventoRecoveryDetectado,
+        googleLoginAtivo
+      );
+      resolve({ user, recuperacao: ehRec });
     };
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((evento, session) => {
-      if (evento === "PASSWORD_RECOVERY") {
+      if (evento === "PASSWORD_RECOVERY" || tokenTemAmrRecovery(session?.access_token)) {
         recuperacao = true;
       }
       if (session?.user) {
-        finalizar(session.user);
+        finalizar(session, session.user);
       }
     });
 
     const intervalo = setInterval(async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
-        finalizar(data.session.user);
+        finalizar(data.session, data.session.user);
       }
     }, 150);
 
     const limite = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
-      finalizar(data.session?.user ?? null);
+      finalizar(data.session ?? null, data.session?.user ?? null);
     }, 4500);
   });
 }
@@ -242,12 +331,19 @@ export default function CallbackPage() {
         }
       }
 
+      const eraGoogleLogin =
+        typeof window !== "undefined" && localStorage.getItem("astro_google_login") === "true";
+      const perfilPendente =
+        (typeof window !== "undefined" ? localStorage.getItem("astro_perfil_pendente") : null) ||
+        lerCookiePerfil();
+
       const { user, recuperacao } = await aguardarUsuarioSessao();
 
       if (recuperacao) {
         clearTimeout(aviso);
         alerta.fechar();
         localStorage.removeItem("astro_reset_pendente");
+        limparCookieResetPendente();
         router.replace("/recuperar-senha?reset=true");
         return;
       }
@@ -261,18 +357,43 @@ export default function CallbackPage() {
       }
 
       localStorage.removeItem("astro_google_login");
-      localStorage.removeItem("astro_reset_pendente");
 
-      const perfilPendente =
-        localStorage.getItem("astro_perfil_pendente") || lerCookiePerfil();
-
+      // Se a pessoa selecionou um perfil antes de autenticar com Google, entra direto nesse perfil
       if (perfilPendente) {
         clearTimeout(aviso);
+        localStorage.removeItem("astro_reset_pendente");
+        limparCookieResetPendente();
         await finalizarComPerfil(user, perfilPendente);
         return;
       }
 
-      // Caso a pessoa tenha chegado ao callback sem perfil pré-selecionado, pergunta qual perfil deseja acessar
+      // Se NÃO veio de um clique em "Continuar com Google", então chegou aqui por um link de e-mail do Supabase
+      if (!eraGoogleLogin) {
+        const temRecoverySent = Boolean(
+          (user as User & { recovery_sent_at?: string }).recovery_sent_at
+        );
+        const criadoEmMs = user.created_at ? Date.parse(user.created_at) : 0;
+        const contaExistente = !criadoEmMs || Date.now() - criadoEmMs > 2 * 60 * 1000;
+
+        if (temRecoverySent || contaExistente) {
+          clearTimeout(aviso);
+          alerta.fechar();
+          localStorage.removeItem("astro_reset_pendente");
+          limparCookieResetPendente();
+          router.replace("/recuperar-senha?reset=true");
+          return;
+        }
+
+        // Caso seja confirmação de e-mail de cadastro recém-criado que já possui perfil nos metadados
+        const perfilMeta = user.user_metadata?.perfil as string | undefined;
+        if (perfilMeta) {
+          clearTimeout(aviso);
+          await finalizarComPerfil(user, perfilMeta);
+          return;
+        }
+      }
+
+      // Caso a pessoa tenha vindo do Google sem perfil pré-selecionado, pergunta qual perfil deseja acessar
       clearTimeout(aviso);
       alerta.fechar();
       setUsuarioAguardandoPerfil(user);

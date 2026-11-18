@@ -14,6 +14,10 @@ export async function middleware(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/callback";
+    if (request.cookies.get("astro_reset_pendente")?.value === "true") {
+      url.searchParams.set("reset", "true");
+      url.searchParams.set("type", "recovery");
+    }
     return NextResponse.redirect(url);
   }
 
@@ -53,7 +57,10 @@ export async function middleware(request: NextRequest) {
     (rota) => pathname === rota || pathname.startsWith(`${rota}/`)
   );
 
+  const resetCookieAtivo = request.cookies.get("astro_reset_pendente")?.value === "true";
+
   const emRecuperacaoSenha =
+    resetCookieAtivo ||
     pathname === "/recuperar-senha" ||
     pathname.startsWith("/recuperar-senha/") ||
     (pathname === "/login" &&

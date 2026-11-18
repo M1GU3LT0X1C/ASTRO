@@ -507,6 +507,7 @@ export function Cadastro() {
       return;
     }
     localStorage.removeItem("astro_reset_pendente");
+    document.cookie = "astro_reset_pendente=; path=/; max-age=0; SameSite=Lax";
     localStorage.setItem("astro_google_login", "true");
     localStorage.setItem("astro_perfil_pendente", perfilSelecionado);
     localStorage.setItem("tipo_usuario", perfilSelecionado);

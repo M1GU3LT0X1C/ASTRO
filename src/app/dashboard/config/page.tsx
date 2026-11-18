@@ -119,12 +119,19 @@ export default function Page() {
         alerta.aviso("E-mail não identificado", "Entre novamente na conta ou use a tela de recuperação de senha.");
         return;
       }
+      localStorage.removeItem("astro_google_login");
+      localStorage.removeItem("astro_perfil_pendente");
+      localStorage.removeItem("temp_ong_nome");
+      document.cookie = "astro_perfil_pendente=; path=/; max-age=0; SameSite=Lax";
       localStorage.setItem("astro_reset_pendente", String(Date.now()));
       localStorage.setItem("astro_reset_email", emailConta);
+      document.cookie = "astro_reset_pendente=true; path=/; max-age=3600; SameSite=Lax";
       const { error } = await supabase.auth.resetPasswordForEmail(emailConta, {
-        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery&reset=true`,
       });
       if (error) {
+        localStorage.removeItem("astro_reset_pendente");
+        document.cookie = "astro_reset_pendente=; path=/; max-age=0; SameSite=Lax";
         alerta.erro("Não foi possível enviar o link", traduzirErroAuth(error.message));
       } else {
         alerta.sucesso(
