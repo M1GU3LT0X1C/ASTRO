@@ -11,7 +11,7 @@ export default function DashboardClient({ children, nomeOng }: { children: React
   const pathname = usePathname();
   const emMensagens = pathname === "/dashboard/mensagens";
   const emPerfil = pathname === "/dashboard/perfil";
-  const semCabecalho = emMensagens || emPerfil;
+  const semCabecalho = emMensagens || emPerfil || pathname === "/dashboard/config" || pathname.startsWith("/dashboard/config/") || pathname === "/dashboard/metricas" || pathname.startsWith("/dashboard/metricas/");
 
   const fazerBusca = () => {
     if (!busca.trim()) return;

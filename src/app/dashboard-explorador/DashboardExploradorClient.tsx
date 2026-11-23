@@ -15,6 +15,7 @@ export default function DashboardExploradorClient({ children, nomeExplorador }: 
   const router = useRouter();
   const pathname = usePathname();
   const emMensagens = pathname === "/dashboard-explorador/mensagens";
+  const semCabecalho = emMensagens || pathname === "/dashboard-explorador/config" || pathname.startsWith("/dashboard-explorador/config/") || pathname === "/dashboard-explorador/perfil" || pathname.startsWith("/dashboard-explorador/perfil/");
   const [busca, setBusca] = useState("");
 
   function fazerBusca() {
@@ -29,7 +30,7 @@ export default function DashboardExploradorClient({ children, nomeExplorador }: 
 
       <div className={styles.main}>
         <div className={styles.painel}>
-          {!emMensagens && (
+          {!semCabecalho && (
           <header className={styles.topbar}>
             <form className={styles.busca} onSubmit={(event) => { event.preventDefault(); fazerBusca(); }} role="search">
               <button type="submit" className={styles.botaoBusca} aria-label="Pesquisar clínicas">
