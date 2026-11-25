@@ -1,0 +1,146 @@
+/* Estrutura: mesma composição do dashboard da ONG */
+.container {
+  display: flex;
+  min-height: 100vh;
+  background: #f3f1f8;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 12px 12px 12px 0;
+  background: #f3f1f8;
+}
+
+.painel {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 24px);
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+/* Cabeçalho */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  min-height: 64px;
+  padding: 0 28px;
+  border-bottom: 1px solid #eee8ff;
+  background: #fff;
+}
+
+.busca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 300px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 9px 16px;
+  border: 1.5px solid #e9e0ff;
+  border-radius: 24px;
+  background: #f5f2ff;
+}
+
+.botaoBusca {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7c739d;
+  cursor: pointer;
+}
+
+.busca input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #222;
+  font-size: 13px;
+}
+
+.busca input::placeholder { color: #9a8ec2; }
+.busca:focus-within { border-color: #b7a5e9; }
+
+.direita {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.avatarLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  text-decoration: none;
+}
+
+.avatarLink:focus-visible { outline: 2px solid #100064; outline-offset: 3px; }
+
+.bolinha {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #e63d68;
+  box-shadow: 0 0 0 1px #eee;
+}
+
+.nomeTopo {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Conteúdo interno: preserva as páginas do Explorador */
+.conteudo {
+  flex: 1;
+  min-width: 0;
+  padding: 28px;
+  color: #222;
+  background: #fff;
+}
+
+/* Responsividade alinhada ao dashboard da ONG */
+@media (max-width: 768px) {
+  .main { margin-left: 70px; padding: 0; }
+  .painel { min-height: 100dvh; border-radius: 0; }
+  .topbar { min-height: 58px; padding: 0 12px; gap: 8px; }
+  .busca { width: 100%; max-width: 190px; padding: 8px 12px; }
+  .direita { gap: 8px; }
+  .nomeTopo { max-width: 90px; font-size: 12px; }
+  .conteudo { padding: 14px; }
+}
+
+@media (max-width: 380px) {
+  .busca { max-width: 150px; }
+  .nomeTopo { max-width: 65px; }
+}
+
+/* Cabeçalho compacto, sem campo de busca nesta etapa */
+.topbar { min-height: 56px; justify-content: flex-end; padding: 0 26px; }
+.conteudo { padding: 18px 26px 24px; }
+@media (max-width: 768px) {
+  .topbar { min-height: 52px; padding: 0 14px; }
+  .conteudo { padding: 14px; }
+}
