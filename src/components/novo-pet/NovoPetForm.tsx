@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Cat, Dog, Baby, Info } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { acordarServidor, ErroApi } from "@/lib/api";
 import { TEMPERAMENTOS, atualizarAnimal, buscarAnimal, cadastrarAnimal, type Urgencia } from "@/lib/animais";
 import { alerta } from "@/lib/alerta";
 import { atualizarPetTutor, buscarPetTutor, cadastrarPetTutor } from "@/lib/explorador";
@@ -58,6 +58,10 @@ export default function NovoPetForm({modo, id = null}: {modo:Modo; id?: string |
  const [personalidade,setPersonalidade]=useState<string[]>([]);const [reatividade,setReatividade]=useState<string[]>([]);const [urgencia,setUrgencia]=useState("normal");
  const [foto,setFoto]=useState("");const [arquivo,setArquivo]=useState<File|null>(null);const [salvando,setSalvando]=useState(false);
  // edicao: foto ja salva e campos que este formulario nao mostra (preservados ao salvar)
+ const envioEmCurso=useRef(false);
+ const fotoEnviada=useRef<{arquivo:File;url:string}|null>(null);
+ const [etapaEnvio,setEtapaEnvio]=useState("");
+ useEffect(()=>{if(modo==="ong")acordarServidor()},[modo]);
  const [fotoAtual,setFotoAtual]=useState("");const [extrasTutor,setExtrasTutor]=useState({peso:"",alergias:""});
  useEffect(()=>{
   if(!id)return;
@@ -89,14 +93,22 @@ export default function NovoPetForm({modo, id = null}: {modo:Modo; id?: string |
  const mudarFoto=(file?:File)=>{if(!file)return;if(!file.type.startsWith("image/")){alerta.aviso("Arquivo inválido","Selecione uma imagem.");return}if(file.size>4*1024*1024){alerta.aviso("Imagem muito grande","Use uma foto de até 4 MB.");return}setArquivo(file);setFoto(URL.createObjectURL(file))};
  const cancelar=()=>router.push(modo==="ong"?"/dashboard/meus-pets":"/dashboard-explorador/meus-pets");
  const salvar=async()=>{
+  if(envioEmCurso.current)return;
   if(!nome.trim())return alerta.aviso("Nome obrigatório","Informe o nome do pet.");
   if(!idade.trim()||!/^\d+$/.test(idade))return alerta.aviso("Idade inválida","Informe a idade em anos.");
   if(!porte||!sexo||!especie)return alerta.aviso("Dados incompletos","Selecione porte, sexo e espécie.");
+  envioEmCurso.current=true;
   setSalvando(true);
+  let etapa="cadastro";
   try{
    if(modo==="ong"){
     let fotoUrl=fotoAtual;
-    if(arquivo){const nomeArquivo=`${Date.now()}-${arquivo.name.replace(/[^a-zA-Z0-9._-]/g,"-")}`;const {error}=await supabase.storage.from("animais-fotos").upload(nomeArquivo,arquivo,{contentType:arquivo.type});if(error)throw error;fotoUrl=supabase.storage.from("animais-fotos").getPublicUrl(nomeArquivo).data.publicUrl;}
+    if(arquivo){
+     etapa="foto";setEtapaEnvio("Enviando foto...");
+     if(fotoEnviada.current?.arquivo===arquivo){fotoUrl=fotoEnviada.current.url;}
+     else {fotoUrl=await enviarImagemPublica(arquivo,"pets",{permitirDataUrl:false});fotoEnviada.current={arquivo,url:fotoUrl};}
+    }
+    etapa="cadastro";setEtapaEnvio("Salvando Astro...");
     const dados={nome:nome.trim(),idade:String(Number(idade)),raca:raca.trim(),porte,sexo,especie,castrado:flags.castrado,vacinado:flags.vacinado,vermifugado:flags.vermifugado,cuidados:flags.cuidados,
      temperamentos:personalidade.map(p=>CODIGO_PERSONALIDADE[p]||p),convivencia:reatividade,historia:sobre,fotoUrl,
      microchip,tempoAbrigo,detalhesCuidados:detalhes,recomendacoes,urgencia:urgencia as Urgencia};
@@ -111,7 +123,15 @@ export default function NovoPetForm({modo, id = null}: {modo:Modo; id?: string |
     else{await cadastrarPetTutor(dados);await alerta.sucesso("Pet adicionado!","Ele está em Meus Pets & Saúde e não foi publicado para adoção.");}
     router.push("/dashboard-explorador/meus-pets");
    }
-  }catch(e){alerta.erro("Não foi possível salvar",e instanceof Error?e.message:"Tente novamente.")}finally{setSalvando(false)}
+  }catch(e){
+   if(modo!=="ong"){await alerta.erro("Não foi possível salvar",e instanceof Error?e.message:"Tente novamente.");}
+   else {
+    const status=e instanceof ErroApi?e.status:undefined;
+    console.error("[NovoPet ONG] Falha",{etapa,status,tipo:e instanceof Error?e.name:"desconhecido"});
+    const detalhe=e instanceof Error?e.message:"Falha inesperada.";
+    await alerta.erro(etapa==="foto"?"Não foi possível enviar a foto":"Não foi possível salvar o Astro",etapa==="foto"?`${detalhe} Seus dados foram mantidos.`:status===0||status===undefined||status>=500?`${detalhe} Seus dados foram mantidos. Confira Meus Pets antes de tentar novamente, pois o envio pode ter sido recebido.`:`${detalhe} (HTTP ${status}). Seus dados foram mantidos.`);
+   }
+  }finally{envioEmCurso.current=false;setSalvando(false);setEtapaEnvio("")}
  };
  return <main className={styles.pagina}>
   <header className={styles.topo}><h1>{id?"Editar Pet":"Novo Pet"}</h1><p>{modo==="ong"?"Cadastre um animal da ONG para adoção.":"Cadastre seu pet para acompanhar os cuidados e a saúde dele."}</p></header>
@@ -153,7 +173,7 @@ export default function NovoPetForm({modo, id = null}: {modo:Modo; id?: string |
     <div className={styles.tagsCard}><h2>Tags de Reatividade</h2><div className={styles.reatividades}>{reatividades.map(({id,label,Icon})=><label key={id}><Icon size={17}/><span>{label}</span><input type="checkbox" checked={reatividade.includes(id)} onChange={()=>alternar(reatividade,setReatividade,id)}/><span className={styles.switchVisual}/></label>)}</div></div>
     <label className={styles.textoLabel}>Sobre o pet<textarea placeholder="Conte como o pet chegou, do que gosta de brincar, comportamentos no dia a dia..." maxLength={2000} value={sobre} onChange={e=>setSobre(e.target.value)}/></label>
     {modo==="ong"&&<label className={styles.textoLabel}>Recomendações da ONG<textarea placeholder="Conte o que é recomendado para esse pet..." value={recomendacoes} onChange={e=>setRecomendacoes(e.target.value)}/></label>}
-    <div className={styles.acoes}><button type="button" className={styles.cancelar} onClick={cancelar}>Cancelar</button><button type="button" className={styles.salvar} disabled={salvando} onClick={salvar}>{salvando?"Salvando...":id?"Salvar alterações":"Adicionar Pet"}</button></div>
+    <div className={styles.acoes}><button type="button" className={styles.cancelar} disabled={salvando} onClick={cancelar}>Cancelar</button><button type="button" className={styles.salvar} disabled={salvando} onClick={salvar}>{salvando?(etapaEnvio||"Salvando..."):id?"Salvar alterações":"Adicionar Pet"}</button></div>
    </section>
   </div>
  </main>
