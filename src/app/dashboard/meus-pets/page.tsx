@@ -2,7 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, PawPrint, Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
 import { STATUS_PET, alterarStatusAnimal, excluirAnimal, listarMeusAnimais, type AnimalTela } from "@/lib/animais";
@@ -27,6 +27,8 @@ function ConteudoMeusPets() {
   const [ordenar, setOrdenar] = useState("recentes");
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [erroPets, setErroPets] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
   const [menuAberto, setMenuAberto] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
@@ -62,14 +64,23 @@ function ConteudoMeusPets() {
   },[searchParams]);
 
   useEffect(() => {
+    let ativo = true;
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-      setPets(await listarMeusAnimais());
-      setLoading(false);
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) throw new Error("Sessão indisponível");
+        const lista = await listarMeusAnimais();
+        if (ativo) setPets(lista);
+      } catch (error) {
+        console.error("Falha ao carregar pets da ONG", error);
+        if (ativo) setErroPets(true);
+      } finally {
+        if (ativo) setLoading(false);
+      }
     }
-    load();
-  }, []);
+    void load();
+    return () => { ativo = false; };
+  }, [tentativa]);
 
   const addFiltro = (f: string) => setFiltros(p => p.includes(f)? p : [...p, f]);
   const removeFiltro = (f: string) => setFiltros(p => p.filter(x=>x!==f));
@@ -93,7 +104,8 @@ function ConteudoMeusPets() {
   if (ordenar === "nome") filtrados = [...filtrados].sort((a,b)=>a.nome.localeCompare(b.nome));
   if (ordenar === "idade") filtrados = [...filtrados].sort((a,b)=>a.idade-b.idade);
 
-  if (loading) return <div style={{padding:24}}>Carregando...</div>;
+  if (loading) return <div className={styles.vazioBox} role="status">Carregando seus Astros...</div>;
+  if (erroPets) return <div className={styles.vazioBox} role="alert"><strong>Não foi possível carregar seus Astros.</strong><p>Tente novamente em instantes.</p><button type="button" className={styles.btnFiltro} onClick={() => { setErroPets(false); setLoading(true); setTentativa(n => n + 1); }}>Tentar novamente</button></div>;
 
   return (
     <div className={styles.container}>
@@ -193,7 +205,9 @@ function ConteudoMeusPets() {
         </div>
       )}
 
-      {filtrados.length===0? (
+      {pets.length===0? (
+        <div className={`${styles.vazioBox} ${styles.primeiroAstro}`}><PawPrint size={36} aria-hidden="true"/><h2>Você não tem nenhum Astro cadastrado ainda</h2><p>Cadastre seu primeiro Astro para começar.</p><Link href="/dashboard/novo" className={styles.cadastrarAstro}><Plus size={18} aria-hidden="true"/> Cadastrar Astro</Link></div>
+      ):filtrados.length===0? (
         <div className={styles.vazioBox}><p>Nenhum pet com esses filtros.<br/>Tenta limpar o filtro ou cadastrar em Novo Pet.</p></div>
       ):(
         <div className={styles.grid}>

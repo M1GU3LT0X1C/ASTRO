@@ -235,3 +235,9 @@
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.primeiroAstro { display:flex; flex-direction:column; align-items:center; gap:12px; padding:40px 20px; }
+.primeiroAstro h2 { font-size:18px; color:#201a4a; margin:0; }
+.primeiroAstro p { margin:0; }
+.cadastrarAstro { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; border-radius:12px; background:#201a4a; color:#fff; text-decoration:none; font-weight:700; }
+.cadastrarAstro:hover { background:#493b80; }
+.cadastrarAstro:focus-visible { outline:3px solid #a18bd4; outline-offset:3px; }
