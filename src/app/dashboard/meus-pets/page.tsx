@@ -2,7 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, SlidersHorizontal, PawPrint, Plus } from "lucide-react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
 import { STATUS_PET, alterarStatusAnimal, excluirAnimal, listarMeusAnimais, type AnimalTela } from "@/lib/animais";
@@ -11,8 +11,8 @@ import styles from "./MeusPets.module.css";
 type Pet = AnimalTela;
 
 const FILTROS = [
-  "Pequeno","Fêmea","Cachorro","Castrado(a)","Vacinado(a)","Vermifugado(a)",
-  "Grande","Médio","Macho","Gato","Cuidados Especiais"
+  "Pequeno","Fêmea","Canino","Castrado(a)","Vacinado(a)","Vermifugado(a)",
+  "Grande","Médio","Macho","Felino","Cuidados Especiais"
 ];
 
 const itemMenu: React.CSSProperties = {
@@ -92,8 +92,8 @@ function ConteudoMeusPets() {
     if (filtros.includes("Grande") && p.porte!== "grande") return false;
     if (filtros.includes("Fêmea") && p.sexo!== "femea") return false;
     if (filtros.includes("Macho") && p.sexo!== "macho") return false;
-    if (filtros.includes("Cachorro") && p.especie!== "cachorro") return false;
-    if (filtros.includes("Gato") && p.especie!== "gato") return false;
+    if (filtros.includes("Canino") && p.especie!== "cachorro") return false;
+    if (filtros.includes("Felino") && p.especie!== "gato") return false;
     if (filtros.includes("Castrado(a)") &&!p.castrado) return false;
     if (filtros.includes("Vacinado(a)") &&!p.vacinado) return false;
     if (filtros.includes("Vermifugado(a)") &&!p.vermifugado) return false;
@@ -205,9 +205,7 @@ function ConteudoMeusPets() {
         </div>
       )}
 
-      {pets.length===0? (
-        <div className={`${styles.vazioBox} ${styles.primeiroAstro}`}><PawPrint size={36} aria-hidden="true"/><h2>Você não tem nenhum Astro cadastrado ainda</h2><p>Cadastre seu primeiro Astro para começar.</p><Link href="/dashboard/novo" className={styles.cadastrarAstro}><Plus size={18} aria-hidden="true"/> Cadastrar Astro</Link></div>
-      ):filtrados.length===0? (
+      {filtrados.length===0? (
         <div className={styles.vazioBox}><p>Nenhum pet com esses filtros.<br/>Tenta limpar o filtro ou cadastrar em Novo Pet.</p></div>
       ):(
         <div className={styles.grid}>
@@ -226,7 +224,7 @@ function ConteudoMeusPets() {
               )}
               <img src={pet.foto_url || "/logo-gato.png"} alt={pet.nome} className={styles.foto}/>
               <h3>{pet.nome}</h3>
-              <p>{pet.sexo==="femea"?"Fêmea":"Macho"} - {pet.idade} anos</p>
+              <p>{pet.sexo==="femea"?"Fêmea":"Macho"} - {pet.idade_texto || "Idade não informada"}</p>
               <small style={{fontSize:"10px", fontWeight:800, color: pet.status==="disponivel" ? "#1ba97c" : pet.status==="adotado" ? "#e63d68" : "#8a5a00"}}>{STATUS_PET[pet.status] || pet.status}</small>
               <Link href={`/adocao-clinicas/pet/${pet.id}`} className={styles.fav}>Clique para ver detalhes</Link>
             </div>
