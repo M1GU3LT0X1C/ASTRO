@@ -15,7 +15,7 @@ import { registrarVisualizacao } from "@/lib/ong";
 import { adicionarFavorito, listarFavoritos, removerFavorito } from "@/lib/painel";
 import styles from "../../perfil-publico.module.css";
 
-const ESPECIE: Record<string, string> = { cachorro: "Cachorro", gato: "Gato", outro: "Outro" };
+const ESPECIE: Record<string, string> = { cachorro: "Canino", gato: "Felino", outro: "Outro" };
 const PORTE: Record<string, string> = { pequeno: "Pequeno porte", medio: "Médio porte", grande: "Grande porte" };
 
 export default function PetPublico() {
@@ -118,7 +118,7 @@ export default function PetPublico() {
                     </h1>
                     <p className={styles.sub}>
                       {[ESPECIE[pet.especie], pet.raca, pet.sexo === "femea" ? "Fêmea" : "Macho",
-                        pet.idade ? `${pet.idade} ano${pet.idade === 1 ? "" : "s"}` : null, PORTE[pet.porte]].filter(Boolean).join(" · ")}
+                        pet.idade_texto ? pet.idade_texto : null, PORTE[pet.porte]].filter(Boolean).join(" · ")}
                     </p>
 
                     <div className={styles.chips}>
@@ -129,6 +129,8 @@ export default function PetPublico() {
                       {pet.urgencia !== "normal" && <span className={`${styles.chip} ${pet.urgencia === "critica" ? styles.chipRosa : styles.chipAmarelo}`}>{URGENCIAS[pet.urgencia]}</span>}
                       {pet.tempo_abrigo && <span className={styles.chip}>No abrigo há {pet.tempo_abrigo}</span>}
                     </div>
+                    {pet.cor_pelagem && <p className={styles.texto}>Cores e pelagem: {pet.cor_pelagem}</p>}
+                    {pet.deficiencia && <p className={styles.texto}>Possui deficiência{pet.descricao_deficiencia ? `: ${pet.descricao_deficiencia}` : ""}</p>}
                     {pet.detalhes_cuidados && <>
                       <h2 className={styles.secaoTitulo}>Cuidados especiais</h2>
                       <p className={styles.texto}>{pet.detalhes_cuidados}</p>

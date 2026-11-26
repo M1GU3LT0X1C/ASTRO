@@ -77,7 +77,7 @@ const grupos: GrupoFiltro[] = [
   {
     id: "especie",
     titulo: "Espécie",
-    opcoes: ["Cachorro", "Gato"],
+    opcoes: ["Canino", "Felino"],
   },
   {
     id: "saude",
@@ -128,7 +128,7 @@ const filtrosIniciais: Filtros = {
 
 /* ===== CONVERSÃO DOS DADOS DA API PARA OS CARDS ===== */
 
-const ROTULO_ESPECIE: Record<string, string> = { cachorro: "Cachorro", gato: "Gato" };
+const ROTULO_ESPECIE: Record<string, string> = { cachorro: "Canino", gato: "Felino" };
 const ROTULO_PORTE: Record<string, string> = { pequeno: "Pequeno", medio: "Médio", grande: "Grande" };
 const CAPACIDADE: Record<string, Item["capacidade"]> = { com: "disponivel", lotado: "lotada", superlotado: "superlotada" };
 
@@ -150,7 +150,7 @@ function animalParaItem(pet: AnimalTela): Item {
     convivencia: pet.convivencia.map((c) => CONVIVENCIAS[c] || c),
     href: `/adocao-clinicas/pet/${pet.id}`,
     criadoEm: pet.created_at,
-    idade: pet.idade ? `${pet.idade} ano${pet.idade === 1 ? "" : "s"}` : undefined,
+    idade: pet.idade_texto ? pet.idade_texto : undefined,
   };
 }
 
