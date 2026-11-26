@@ -14,6 +14,8 @@ export default function DashboardPage() {
   const [metricas, setMetricas] = useState<Metricas | null>(null);
   const [lembretes, setLembretes] = useState<Compromisso[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erroPets, setErroPets] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let ativo = true;
@@ -38,7 +40,8 @@ export default function DashboardPage() {
           session?.user ??
           (await supabase.auth.getUser().then((r) => r.data.user).catch(() => null));
 
-        if (!user || !ativo) return;
+        if (!ativo) return;
+        if (!user) throw new Error("Sessão indisponível");
 
         const ultimoUser = localStorage.getItem("ultimo_user_id");
         if (ultimoUser && ultimoUser !== user.id) localStorage.clear();
@@ -70,21 +73,29 @@ export default function DashboardPage() {
           }
         }
 
-        const [me, pets, numeros, agenda] = await Promise.all([
+        // Os pets não precisam aguardar as métricas nem a agenda.
+        const carregarPets = listarMeusAnimais().then(pets => {
+          if (ativo) setAnimais(pets);
+        }).catch(error => {
+          console.error("Falha ao carregar pets da ONG", error);
+          if (ativo) setErroPets(true);
+        }).finally(() => {
+          if (ativo) setLoading(false);
+        });
+        const carregarOutros = Promise.all([
           buscarMe().catch(() => null),
-          listarMeusAnimais().catch(() => []),
           buscarMetricas().catch(() => null),
           listarAgenda().catch(() => []),
-        ]);
-
-        if (!ativo) return;
-
-        if (me?.ong?.nomeOrganizacao) {
-          localStorage.setItem("ong_nome", me.ong.nomeOrganizacao);
-        }
-        setAnimais(pets);
-        setMetricas(numeros);
-        setLembretes(proximosCompromissos(agenda).slice(0, 3));
+        ]).then(([me, numeros, agenda]) => {
+          if (!ativo) return;
+          if (me?.ong?.nomeOrganizacao) localStorage.setItem("ong_nome", me.ong.nomeOrganizacao);
+          setMetricas(numeros);
+          setLembretes(proximosCompromissos(agenda).slice(0, 3));
+        }).catch(error => console.error("Falha ao carregar dados complementares", error));
+        await Promise.all([carregarPets, carregarOutros]);
+      } catch (error) {
+        console.error("Falha ao iniciar painel da ONG", error);
+        if (ativo) setErroPets(true);
       } finally {
         if (ativo) setLoading(false);
       }
@@ -94,7 +105,7 @@ export default function DashboardPage() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [tentativa]);
 
   return (
     <div className={styles.painelContainer}>
@@ -124,6 +135,8 @@ export default function DashboardPage() {
       <div className={styles.petsGrid}>
         {loading ? (
           <div className={styles.vazio}><p>Carregando seus pets...</p></div>
+        ) : erroPets ? (
+          <div className={styles.vazio} role="alert"><p>Não foi possível carregar seus Astros.</p><button type="button" className={styles.btnTentarNovamente} onClick={() => { setErroPets(false); setLoading(true); setTentativa(n => n + 1); }}>Tentar novamente</button></div>
         ) : animais.length===0? (
           <div className={styles.vazio}><p>Nenhum pet cadastrado ainda.</p><span>Vai em <b>Novo Pet</b>.</span></div>
         ) : animais.map((pet)=>(
