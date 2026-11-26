@@ -12,8 +12,10 @@ export default function PerfilClinica() {
   const fotoRef = useRef<HTMLInputElement>(null);
   const capaRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    try { const dados = JSON.parse(localStorage.getItem(chave) || "{}"); setPerfil({ ...vazio, ...dados }); }
-    catch { /* dados locais indisponíveis */ }
+    queueMicrotask(() => {
+      try { const dados = JSON.parse(localStorage.getItem(chave) || "{}"); setPerfil({ ...vazio, ...dados }); }
+      catch { /* dados locais indisponíveis */ }
+    });
   }, []);
   function mudar(campo: keyof Perfil, valor: string) { setPerfil(prev => ({ ...prev, [campo]: valor })); setMensagem(""); }
   function imagem(evento: React.ChangeEvent<HTMLInputElement>, campo: "capa" | "foto") {

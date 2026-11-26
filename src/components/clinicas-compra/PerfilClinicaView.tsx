@@ -111,7 +111,7 @@ export function PerfilClinicaView({
           style={{ textAlign: "center", padding: "48px 24px" }}
         >
           <p style={{ margin: 0, color: "#555" }}>
-            Carregando perfil da clínica...
+            Carregando perfil da estação / clínica...
           </p>
         </div>
       </div>
@@ -134,17 +134,17 @@ export function PerfilClinicaView({
         >
           <Stethoscope size={38} color="#0d0062" />
           <strong style={{ fontSize: 17, color: "#0d0062" }}>
-            Clínica não encontrada
+            Estação ou clínica não encontrada
           </strong>
           <p style={{ margin: 0, color: "#666", fontSize: 14 }}>
-            Esta clínica ainda não está disponível ou o link informado é
+            Esta estação ou clínica ainda não está disponível ou o link informado é
             inválido.
           </p>
           <Link
             href={`${basePath}/clinicas`}
             className={styles.btnContinuarComprando}
           >
-            Voltar para a busca de clínicas
+            Voltar para a busca de estações e clínicas
           </Link>
         </div>
       </div>

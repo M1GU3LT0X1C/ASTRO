@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal, Search } from "lucide-react";
 import { useClinica } from "../useClinica";
 import { cupomValido, type Cupom } from "../dados";
@@ -46,9 +46,8 @@ export default function CuponsClinica() {
     return texto.includes(busca.trim().toLocaleLowerCase("pt-BR")) && (filtro === "todos" || situacao(c) === filtro);
   }), [dados, busca, filtro]);
   const totalPaginas = Math.max(1, Math.ceil(lista.length / TAMANHO_PAGINA));
-  const visiveis = lista.slice((pagina - 1) * TAMANHO_PAGINA, pagina * TAMANHO_PAGINA);
-  useEffect(() => { setPagina(1); }, [busca, filtro]);
-  useEffect(() => { if (pagina > totalPaginas) setPagina(totalPaginas); }, [pagina, totalPaginas]);
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const visiveis = lista.slice((paginaAtual - 1) * TAMANHO_PAGINA, paginaAtual * TAMANHO_PAGINA);
 
   function limpar() {
     setEditando(null); setNome(""); setCategoria(""); setBeneficio(""); setCusto(""); setLimite("");
@@ -90,9 +89,9 @@ export default function CuponsClinica() {
 
   return <div className={styles.page}>
     <div className={styles.topo}>
-      <label className={styles.busca}><Search size={17}/><input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar cupom..." aria-label="Buscar cupom"/></label>
+      <label className={styles.busca}><Search size={17}/><input value={busca} onChange={e => { setBusca(e.target.value); setPagina(1); }} placeholder="Buscar cupom..." aria-label="Buscar cupom"/></label>
       <div className={styles.filtros} aria-label="Filtrar cupons">
-        {([ ["todos", `Todos (${dados.cupons.length})`], ["ativos", `Ativos (${ativos})`], ["pausados", `Pausados (${pausados})`], ["esgotados", `Esgotados (${esgotados})`] ] as [Filtro,string][]).map(([chave,rotulo]) => <button type="button" key={chave} className={filtro === chave ? styles.filtroAtivo : ""} onClick={() => setFiltro(chave)}>{rotulo}</button>)}
+        {([ ["todos", `Todos (${dados.cupons.length})`], ["ativos", `Ativos (${ativos})`], ["pausados", `Pausados (${pausados})`], ["esgotados", `Esgotados (${esgotados})`] ] as [Filtro,string][]).map(([chave,rotulo]) => <button type="button" key={chave} className={filtro === chave ? styles.filtroAtivo : ""} onClick={() => { setFiltro(chave); setPagina(1); }}>{rotulo}</button>)}
       </div>
     </div>
     <div className={styles.indicadores}>
@@ -118,7 +117,7 @@ export default function CuponsClinica() {
       <section className={styles.tabelaCaixa} aria-label="Lista de cupons"><div className={styles.tabelaScroll}><table><thead><tr><th>Nome da oferta</th><th>Categoria</th><th>Custo em<br/>Pontos</th><th>Limite /<br/>Resgates</th><th>Público</th><th>Status</th><th>Ações</th></tr></thead><tbody>
         {visiveis.map(c => <tr key={c.id}><td><strong>{c.nome}</strong><small className={styles.codigo}>{c.codigo}</small></td><td className={styles.roxo}>{c.categoria}</td><td className={styles.rosa}>{c.custo} pts</td><td className={styles.roxo}>{usados(c.id)}/{c.limite || "∞"}</td><td className={styles.rosa}>{c.publico}</td><td><span className={`${styles.status} ${situacao(c) === "ativos" ? styles.statusAtivo : situacao(c) === "pausados" ? styles.statusPausado : styles.statusEsgotado}`}>{situacao(c) === "ativos" ? "Ativo" : situacao(c) === "pausados" ? "Pausado" : "Esgotado"}</span></td><td className={styles.acoes}><button type="button" aria-label={`Ações para ${c.nome}`} aria-expanded={aberto === c.id} onClick={() => setAberto(aberto === c.id ? null : c.id)}><MoreHorizontal size={22}/></button>{aberto === c.id && <div className={styles.menuAcoes}><button type="button" onClick={() => editar(c)}>Editar</button><button type="button" onClick={() => alternar(c)}>{c.status === "ativo" ? "Pausar" : "Ativar"}</button><button type="button" onClick={() => excluir(c)}>Excluir</button></div>}</td></tr>)}
       </tbody></table>{visiveis.length === 0 && <p className={styles.vazio}>Nenhum cupom encontrado.</p>}</div>
-      <footer className={styles.paginacao}><span>Mostrando {visiveis.length} de {lista.length} cupons</span><div><button type="button" aria-label="Página anterior" disabled={pagina <= 1} onClick={() => setPagina(p => p - 1)}><ChevronLeft size={17}/></button><span className={styles.paginaAtual}>{pagina}</span><span className={styles.totalPaginas}>de {totalPaginas}</span><button type="button" aria-label="Próxima página" disabled={pagina >= totalPaginas} onClick={() => setPagina(p => p + 1)}><ChevronRight size={17}/></button></div></footer></section>
+      <footer className={styles.paginacao}><span>Mostrando {visiveis.length} de {lista.length} cupons</span><div><button type="button" aria-label="Página anterior" disabled={paginaAtual <= 1} onClick={() => setPagina(Math.max(1, paginaAtual - 1))}><ChevronLeft size={17}/></button><span className={styles.paginaAtual}>{paginaAtual}</span><span className={styles.totalPaginas}>de {totalPaginas}</span><button type="button" aria-label="Próxima página" disabled={paginaAtual >= totalPaginas} onClick={() => setPagina(Math.min(totalPaginas, paginaAtual + 1))}><ChevronRight size={17}/></button></div></footer></section>
     </div>
   </div>;
 }

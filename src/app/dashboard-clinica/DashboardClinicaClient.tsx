@@ -4,7 +4,13 @@ import { usePathname } from "next/navigation";
 import { SidebarClinica } from "@/components/dashboard-clinica/SidebarClinica";
 import styles from "./dashboard.module.css";
 
-export default function DashboardClinicaClient({ children }: { children: React.ReactNode }) {
+export default function DashboardClinicaClient({
+  children,
+  nomeClinica,
+}: {
+  children: React.ReactNode;
+  nomeClinica?: string;
+}) {
   const pathname = usePathname();
   const ocultarCabecalho = pathname === "/dashboard-clinica/cupons" || pathname === "/dashboard-clinica/metricas" || pathname === "/dashboard-clinica/servicos/novo" || pathname === "/dashboard-clinica/config" || pathname.startsWith("/dashboard-clinica/config/");
 
@@ -17,7 +23,7 @@ export default function DashboardClinicaClient({ children }: { children: React.R
             <header className={styles.topbar}>
               <div className={styles.direita}>
                 <span className={styles.bolinha} aria-hidden="true" />
-                <strong className={styles.nomeTopo}>Clínica</strong>
+                <strong className={styles.nomeTopo}>{nomeClinica || "Clínica"}</strong>
               </div>
             </header>
           )}

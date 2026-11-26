@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
 import { STATUS_PET, alterarStatusAnimal, excluirAnimal, listarMeusAnimais, type AnimalTela } from "@/lib/animais";
@@ -24,8 +25,7 @@ function ConteudoMeusPets() {
   const [busca, setBusca] = useState("");
   const [filtros, setFiltros] = useState<string[]>([]);
   const [ordenar, setOrdenar] = useState("recentes");
-  const [menuOrdenar, setMenuOrdenar] = useState(false);
-  const [mostrarFiltros, setMostrarFiltros] = useState(true);
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [loading, setLoading] = useState(true);
   const [menuAberto, setMenuAberto] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -97,46 +97,101 @@ function ConteudoMeusPets() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.topBar}>
-        {busca && (
-          <div style={{fontSize:13, color:"#555"}}>
-            Buscando por: <b>&quot;{busca}&quot;</b> <button onClick={()=>{setBusca(""); localStorage.removeItem("astro_busca");}} style={{marginLeft:8, background:"none", border:"none", color:"#e63d68", cursor:"pointer"}}>✕ limpar</button>
-          </div>
-        )}
-        <div style={{marginLeft:"auto"}} className={styles.ordenarWrap}>
-          <button className={styles.ordenarBtn} onClick={()=>setMenuOrdenar(!menuOrdenar)}>
-            {ordenar === "recentes"? "Ordenar" : ordenar === "nome"? "Nome A-Z" : "Idade"} <span>▼</span>
+      {busca && (
+        <div className={styles.buscaAtiva}>
+          Buscando por: <b>&quot;{busca}&quot;</b>{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setBusca("");
+              localStorage.removeItem("astro_busca");
+            }}
+            className={styles.btnLimparBusca}
+          >
+            ✕ limpar
           </button>
-          {menuOrdenar && (
-            <div className={styles.dropdown}>
-              <button className={ordenar==="recentes"?styles.ativo:""} onClick={()=>{setOrdenar("recentes"); setMenuOrdenar(false);}}>Recentes</button>
-              <button className={ordenar==="nome"?styles.ativo:""} onClick={()=>{setOrdenar("nome"); setMenuOrdenar(false);}}>Nome A-Z</button>
-              <button className={ordenar==="idade"?styles.ativo:""} onClick={()=>{setOrdenar("idade"); setMenuOrdenar(false);}}>Idade</button>
-            </div>
-          )}
+        </div>
+      )}
+
+      <div className={styles.barraControles}>
+        <div className={styles.esquerdaControles}>
+          <button
+            type="button"
+            className={styles.btnFiltro}
+            onClick={() => setMostrarFiltros((v) => !v)}
+            aria-expanded={mostrarFiltros}
+          >
+            <SlidersHorizontal size={16} />
+            <span>Filtro {filtros.length > 0 ? `(${filtros.length})` : ""}</span>
+          </button>
+
+          <button
+            type="button"
+            className={styles.btnLimpar}
+            onClick={() => {
+              setFiltros([]);
+              setBusca("");
+              localStorage.removeItem("astro_busca");
+            }}
+            disabled={filtros.length === 0 && !busca}
+          >
+            Limpar Filtro
+          </button>
+        </div>
+
+        <div className={styles.ordenarWrap}>
+          <select
+            className={styles.ordenarSelect}
+            value={ordenar}
+            onChange={(e) => setOrdenar(e.target.value)}
+            aria-label="Ordenar pets"
+          >
+            <option value="recentes">Ordenar</option>
+            <option value="nome">Nome A-Z</option>
+            <option value="idade">Idade</option>
+          </select>
+          <ChevronDown size={16} className={styles.ordenarIcone} />
         </div>
       </div>
 
-      <div className={styles.filtroBox}>
-        <div className={styles.filtroHeader}>
-          <button className={`${styles.btnFiltro} ${mostrarFiltros?styles.btnFiltroAtivo:""}`} onClick={()=>setMostrarFiltros(!mostrarFiltros)}>
-            <img src="/filtro.png" alt="filtro" className={styles.iconeFiltro}/> Filtro
-          </button>
-          <button className={styles.btnLimpar} onClick={()=>{setFiltros([]); setBusca(""); localStorage.removeItem("astro_busca");}}>Limpar Filtro</button>
+      {!mostrarFiltros && filtros.length > 0 && (
+        <div className={styles.tagsSelecionadasBar} aria-label="Filtros ativos">
+          {filtros.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => removeFiltro(f)}
+              className={styles.chipActive}
+              aria-label={`Remover filtro ${f}`}
+            >
+              <span>{f}</span>
+              <span className={styles.bolinhaX} aria-hidden="true">×</span>
+            </button>
+          ))}
         </div>
-        {mostrarFiltros && (
+      )}
+
+      {mostrarFiltros && (
+        <div className={styles.filtroBox} role="group" aria-label="Filtros de pets">
           <div className={styles.chipsArea}>
-            {FILTROS.map(f=> filtros.includes(f)? (
-              <div key={f} className={styles.chipActive}>
-                <span>{f}</span>
-                <button className={styles.bolinhaX} onClick={()=>removeFiltro(f)}>✕</button>
-              </div>
-            ):(
-              <button key={f} onClick={()=>addFiltro(f)} className={styles.chip}>{f}</button>
-            ))}
+            {FILTROS.map((f) => {
+              const ativo = filtros.includes(f);
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => (ativo ? removeFiltro(f) : addFiltro(f))}
+                  className={ativo ? styles.chipActive : styles.chip}
+                  aria-pressed={ativo}
+                >
+                  <span>{f}</span>
+                  {ativo && <span className={styles.bolinhaX} aria-hidden="true">×</span>}
+                </button>
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {filtrados.length===0? (
         <div className={styles.vazioBox}><p>Nenhum pet com esses filtros.<br/>Tenta limpar o filtro ou cadastrar em Novo Pet.</p></div>

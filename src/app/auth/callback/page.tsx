@@ -42,15 +42,55 @@ const OPCOES_PERFIL: {
   },
 ];
 
-function lerCookiePerfil(): string | null {
+function lerCookie(nome: string): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|;\s*)astro_perfil_pendente=([^;]+)/);
+  const escaped = nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]+)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function limparCookiePerfil() {
+function limparCookie(nome: string) {
   if (typeof document === "undefined") return;
-  document.cookie = "astro_perfil_pendente=; path=/; max-age=0; SameSite=Lax";
+  document.cookie = `${nome}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+function lerCookiePerfil(): string | null {
+  return lerCookie("astro_perfil_pendente");
+}
+
+function limparCookiePerfil() {
+  limparCookie("astro_perfil_pendente");
+}
+
+function limparEstadoAuxiliarGoogle() {
+  localStorage.removeItem("astro_google_login");
+  localStorage.removeItem("astro_origem_google");
+  localStorage.removeItem("astro_perfil_pendente");
+  localStorage.removeItem("temp_ong_nome");
+  limparCookiePerfil();
+  limparCookie("astro_origem_google");
+}
+
+function tokenTemAmrRecovery(accessToken?: string): boolean {
+  if (!accessToken) return false;
+  try {
+    const partes = accessToken.split(".");
+    if (partes.length < 2) return false;
+    const base64 = partes[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(base64));
+    if (Array.isArray(payload?.amr)) {
+      return payload.amr.some(
+        (item: { method?: string } | string) =>
+          (typeof item === "string" && (item === "recovery" || item === "otp")) ||
+          (typeof item === "object" &&
+            item !== null &&
+            (item.method === "recovery" || item.method === "otp"))
+      );
+    }
+  } catch {
+    // ignora erro de decode
+  }
+  return false;
 }
 
 async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao: boolean }> {
@@ -62,7 +102,8 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
     if (
       params.get("reset") === "true" ||
       params.get("type") === "recovery" ||
-      hashParams.get("type") === "recovery"
+      hashParams.get("type") === "recovery" ||
+      lerCookie("astro_reset_pendente") === "true"
     ) {
       recuperacao = true;
     }
@@ -94,6 +135,9 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
 
   const inicial = await supabase.auth.getSession();
   if (inicial.data.session?.user) {
+    if (tokenTemAmrRecovery(inicial.data.session.access_token)) {
+      recuperacao = true;
+    }
     return { user: inicial.data.session.user, recuperacao };
   }
 
@@ -102,6 +146,9 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
     if (code) {
       const trocado = await supabase.auth.exchangeCodeForSession(code).catch(() => null);
       if (trocado?.data?.session?.user) {
+        if (tokenTemAmrRecovery(trocado.data.session.access_token)) {
+          recuperacao = true;
+        }
         return { user: trocado.data.session.user, recuperacao };
       }
     }
@@ -121,7 +168,7 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((evento, session) => {
-      if (evento === "PASSWORD_RECOVERY") {
+      if (evento === "PASSWORD_RECOVERY" || tokenTemAmrRecovery(session?.access_token)) {
         recuperacao = true;
       }
       if (session?.user) {
@@ -132,12 +179,18 @@ async function aguardarUsuarioSessao(): Promise<{ user: User | null; recuperacao
     const intervalo = setInterval(async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
+        if (tokenTemAmrRecovery(data.session.access_token)) {
+          recuperacao = true;
+        }
         finalizar(data.session.user);
       }
     }, 400);
 
     const limite = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
+      if (tokenTemAmrRecovery(data.session?.access_token)) {
+        recuperacao = true;
+      }
       finalizar(data.session?.user ?? null);
     }, 5500);
   });
@@ -154,6 +207,8 @@ export default function CallbackPage() {
     alerta.carregando("Entrando...");
     const aviso = setTimeout(() => alerta.carregando("Entrando...", MSG_ESPERA), 3000);
 
+    const origemGoogle =
+      localStorage.getItem("astro_origem_google") || lerCookie("astro_origem_google");
     const nomeOngTemp = localStorage.getItem("temp_ong_nome");
     const nomePessoa =
       user.user_metadata?.full_name ||
@@ -163,6 +218,63 @@ export default function CallbackPage() {
       "Explorador";
 
     const ehExplorador = perfilEscolhido === "explorador";
+
+    // Consulta o perfil real já cadastrado no banco para impedir múltiplas contas/perfis com o mesmo e-mail.
+    const me = await buscarMe().catch(() => null);
+    const jaEhExplorador = Boolean(me && (me.tutor || me.tipo === "EXPLORADOR") && !me.ong);
+    const jaEhOng = Boolean(me && (me.ong || (me.tipo && me.tipo !== "EXPLORADOR")));
+    const jaPossuiConta = jaEhExplorador || jaEhOng;
+
+    if (origemGoogle === "cadastro" && jaPossuiConta) {
+      clearTimeout(aviso);
+      alerta.fechar();
+      limparEstadoAuxiliarGoogle();
+      await supabase.auth.signOut().catch(() => null);
+      await alerta.erro(
+        "E-mail já utilizado",
+        "Este e-mail já está vinculado a uma conta no Astro. Só é permitido criar uma única conta por e-mail. Faça login com a conta existente."
+      );
+      router.replace("/login");
+      return;
+    }
+
+    if (ehExplorador && jaEhOng) {
+      clearTimeout(aviso);
+      alerta.fechar();
+      const perfilReal =
+        me?.tipo === "ESTACAO" || me?.ong?.tipoPerfil === "estacao"
+          ? "estacao"
+          : me?.ong?.tipoPerfil ||
+            (user.user_metadata?.perfil && user.user_metadata.perfil !== "explorador"
+              ? String(user.user_metadata.perfil)
+              : "ong");
+      limparEstadoAuxiliarGoogle();
+      localStorage.setItem("ultimo_user_id", user.id);
+      localStorage.setItem("pessoa_nome", nomePessoa);
+      localStorage.setItem("tipo_usuario", perfilReal);
+      localStorage.setItem("ong_nome", me?.ong?.nomeOrganizacao || nomePessoa || "Minha ONG");
+      await alerta.aviso(
+        "E-mail já cadastrado em outro perfil",
+        "Este e-mail já possui uma conta institucional/clínica. Só é permitida uma conta por e-mail; redirecionando para o seu painel."
+      );
+      router.replace(perfilReal === "estacao" ? "/dashboard-clinica" : "/dashboard");
+      return;
+    }
+
+    if (!ehExplorador && jaEhExplorador) {
+      clearTimeout(aviso);
+      alerta.fechar();
+      limparEstadoAuxiliarGoogle();
+      localStorage.setItem("ultimo_user_id", user.id);
+      localStorage.setItem("pessoa_nome", nomePessoa);
+      localStorage.setItem("tipo_usuario", "explorador");
+      await alerta.aviso(
+        "E-mail já cadastrado em outro perfil",
+        "Este e-mail já possui uma conta de Explorador. Só é permitida uma conta por e-mail; redirecionando para o seu painel."
+      );
+      router.replace("/dashboard-explorador");
+      return;
+    }
 
     await supabase.auth
       .updateUser({
@@ -175,20 +287,20 @@ export default function CallbackPage() {
 
     try {
       if (ehExplorador) {
-        await garantirTutor(nomePessoa);
-      } else {
+        if (!jaEhExplorador) {
+          await garantirTutor(nomePessoa);
+        }
+      } else if (!jaEhOng) {
         await garantirOng(nomeOngTemp || nomePessoa || "Minha ONG", perfilEscolhido);
       }
     } catch {
-      // Se o back estiver dormindo ou a conta já tiver vínculo anterior, prossegue para o painel escolhido
+      // Se o back estiver dormindo, prossegue para o painel escolhido
     } finally {
       clearTimeout(aviso);
       alerta.fechar();
     }
 
-    localStorage.removeItem("astro_perfil_pendente");
-    localStorage.removeItem("temp_ong_nome");
-    limparCookiePerfil();
+    limparEstadoAuxiliarGoogle();
     localStorage.setItem("ultimo_user_id", user.id);
     localStorage.setItem("pessoa_nome", nomePessoa);
     if (user.user_metadata?.avatar_url) {
@@ -199,9 +311,13 @@ export default function CallbackPage() {
       localStorage.setItem("tipo_usuario", "explorador");
       router.replace("/dashboard-explorador");
     } else {
-      localStorage.setItem("tipo_usuario", perfilEscolhido);
-      localStorage.setItem("ong_nome", nomeOngTemp || nomePessoa || "Minha ONG");
-      router.replace("/dashboard");
+      const ehClinica =
+        perfilEscolhido === "estacao" ||
+        me?.tipo === "ESTACAO" ||
+        me?.ong?.tipoPerfil === "estacao";
+      localStorage.setItem("tipo_usuario", ehClinica ? "estacao" : perfilEscolhido);
+      localStorage.setItem("ong_nome", me?.ong?.nomeOrganizacao || nomeOngTemp || nomePessoa || "Minha ONG");
+      router.replace(ehClinica ? "/dashboard-clinica" : "/dashboard");
     }
   }
 
@@ -228,8 +344,7 @@ export default function CallbackPage() {
         if (erroOAuth) {
           clearTimeout(aviso);
           alerta.fechar();
-          localStorage.removeItem("astro_google_login");
-          limparCookiePerfil();
+          limparEstadoAuxiliarGoogle();
           await alerta.erro("Não foi possível concluir a autenticação", traduzirErroAuth(erroOAuth));
           router.replace("/login");
           return;
@@ -241,7 +356,6 @@ export default function CallbackPage() {
       if (recuperacao) {
         clearTimeout(aviso);
         alerta.fechar();
-        localStorage.removeItem("astro_reset_pendente");
         router.replace("/recuperar-senha?reset=true");
         return;
       }
@@ -249,13 +363,14 @@ export default function CallbackPage() {
       if (!user) {
         clearTimeout(aviso);
         alerta.fechar();
-        localStorage.removeItem("astro_google_login");
+        limparEstadoAuxiliarGoogle();
         router.replace("/login");
         return;
       }
 
       localStorage.removeItem("astro_google_login");
       localStorage.removeItem("astro_reset_pendente");
+      limparCookie("astro_reset_pendente");
 
       const perfilPendente =
         localStorage.getItem("astro_perfil_pendente") || lerCookiePerfil();
@@ -266,7 +381,28 @@ export default function CallbackPage() {
         return;
       }
 
-      // Caso a pessoa tenha chegado ao callback sem perfil pré-selecionado, pergunta qual perfil deseja acessar
+      // Verifica se a conta já possui perfil cadastrado antes de perguntar qual perfil escolher
+      const me = await buscarMe().catch(() => null);
+      if (me && (me.tutor || me.tipo === "EXPLORADOR") && !me.ong) {
+        clearTimeout(aviso);
+        alerta.fechar();
+        localStorage.setItem("tipo_usuario", "explorador");
+        router.replace("/dashboard-explorador");
+        return;
+      }
+      if (me && (me.ong || (me.tipo && me.tipo !== "EXPLORADOR"))) {
+        clearTimeout(aviso);
+        alerta.fechar();
+        const ehClinica = me.tipo === "ESTACAO" || me.ong?.tipoPerfil === "estacao";
+        localStorage.setItem("tipo_usuario", ehClinica ? "estacao" : me.ong?.tipoPerfil || "ong");
+        if (me.ong?.nomeOrganizacao) {
+          localStorage.setItem("ong_nome", me.ong.nomeOrganizacao);
+        }
+        router.replace(ehClinica ? "/dashboard-clinica" : "/dashboard");
+        return;
+      }
+
+      // Conta nova sem perfil pré-selecionado: pergunta qual perfil deseja criar
       clearTimeout(aviso);
       alerta.fechar();
       setUsuarioAguardandoPerfil(user);

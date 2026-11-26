@@ -198,8 +198,9 @@ export default function ConfiguracoesExplorador() {
       }
       localStorage.setItem("astro_reset_pendente", String(Date.now()));
       localStorage.setItem("astro_reset_email", emailConta);
+      document.cookie = "astro_reset_pendente=true; path=/; max-age=3600; SameSite=Lax";
       const { error } = await supabase.auth.resetPasswordForEmail(emailConta, {
-        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery&reset=true`,
       });
       if (error) {
         alerta.erro("Não foi possível enviar o link", traduzirErroAuth(error.message));

@@ -54,6 +54,56 @@ function gravarCookiePerfilLogin(perfil: string) {
   document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfil)}; path=/; max-age=900; SameSite=Lax`;
 }
 
+function gravarCookieOrigemGoogle(origem: string) {
+  if (typeof document === "undefined") return;
+  document.cookie = `astro_origem_google=${encodeURIComponent(origem)}; path=/; max-age=900; SameSite=Lax`;
+}
+
+function limparCookiePerfilLogin() {
+  if (typeof document === "undefined") return;
+  document.cookie = "astro_perfil_pendente=; path=/; max-age=0; SameSite=Lax";
+}
+
+function gravarCookieResetPendente() {
+  if (typeof document === "undefined") return;
+  document.cookie = "astro_reset_pendente=true; path=/; max-age=3600; SameSite=Lax";
+}
+
+function limparCookieResetPendente() {
+  if (typeof document === "undefined") return;
+  document.cookie = "astro_reset_pendente=; path=/; max-age=0; SameSite=Lax";
+}
+
+function tokenTemAmrRecovery(accessToken?: string): boolean {
+  if (!accessToken) return false;
+  try {
+    const partes = accessToken.split(".");
+    if (partes.length < 2) return false;
+    const base64 = partes[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(base64));
+    if (Array.isArray(payload?.amr)) {
+      return payload.amr.some(
+        (item: { method?: string } | string) =>
+          (typeof item === "string" && (item === "recovery" || item === "otp")) ||
+          (typeof item === "object" &&
+            item !== null &&
+            (item.method === "recovery" || item.method === "otp"))
+      );
+    }
+  } catch {
+    // ignora erro de decode
+  }
+  return false;
+}
+
+const VALIDADE_CODIGO_SEGUNDOS = 15 * 60; // 15 minutos
+
+function formatarTempoRestante(segundos: number): string {
+  const m = Math.floor(segundos / 60);
+  const s = segundos % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export function Login({ modoInicial = "login" }: LoginProps) {
   const router = useRouter();
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -74,6 +124,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
   const [emailResetEnviado, setEmailResetEnviado] = useState(false);
   const [enviandoReset, setEnviandoReset] = useState(false);
   const [segundosReenvio, setSegundosReenvio] = useState(0);
+  const [segundosValidadeCodigo, setSegundosValidadeCodigo] = useState(0);
   const [codigoReset, setCodigoReset] = useState("");
   const [validandoCodigo, setValidandoCodigo] = useState(false);
 
@@ -92,6 +143,14 @@ export function Login({ modoInicial = "login" }: LoginProps) {
     }, 1000);
     return () => clearInterval(timer);
   }, [segundosReenvio]);
+
+  useEffect(() => {
+    if (segundosValidadeCodigo <= 0) return;
+    const timer = setInterval(() => {
+      setSegundosValidadeCodigo((atual) => (atual > 0 ? atual - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [segundosValidadeCodigo]);
 
   useEffect(() => {
     acordarServidor(); // o back no Render pode estar dormindo; vai subindo enquanto a pessoa digita
@@ -174,12 +233,28 @@ export function Login({ modoInicial = "login" }: LoginProps) {
           })
           .catch(() => null);
       }
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          const sessao = data.session;
+          if (!sessao) return;
+          const resetPendenteAtivo = Boolean(localStorage.getItem("astro_reset_pendente"));
+          if (
+            ehReset ||
+            tokenTemAmrRecovery(sessao.access_token) ||
+            (window.location.pathname === "/recuperar-senha" && resetPendenteAtivo)
+          ) {
+            setModoEsqueciSenha(false);
+            setModoRedefinir(true);
+          }
+        })
+        .catch(() => null);
     }
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((evento) => {
-      if (evento === "PASSWORD_RECOVERY") {
+    } = supabase.auth.onAuthStateChange((evento, sessao) => {
+      if (evento === "PASSWORD_RECOVERY" || tokenTemAmrRecovery(sessao?.access_token)) {
         setModoEsqueciSenha(false);
         setModoRedefinir(true);
       }
@@ -249,7 +324,10 @@ export function Login({ modoInicial = "login" }: LoginProps) {
     setLoading(true);
     setPerfilGoogleLoading(perfilEscolhido);
     localStorage.removeItem("astro_reset_pendente");
+    limparCookieResetPendente();
     localStorage.setItem("astro_google_login", "true");
+    localStorage.setItem("astro_origem_google", "login");
+    gravarCookieOrigemGoogle("login");
     localStorage.setItem("astro_perfil_pendente", perfilEscolhido);
     localStorage.setItem("tipo_usuario", perfilEscolhido);
     gravarCookiePerfilLogin(perfilEscolhido);
@@ -296,7 +374,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
       try {
         const me = await buscarMe();
 
-        if (perfilMeta === "explorador" || me.tutor || me.tipo === "EXPLORADOR") {
+        if ((me.tutor || me.tipo === "EXPLORADOR") && !me.ong) {
           if (!me.tutor) {
             await garantirTutor(nome).catch(() => null);
           }
@@ -305,12 +383,16 @@ export function Login({ modoInicial = "login" }: LoginProps) {
           return;
         }
 
-        if (me.ong || me.tipo) {
+        if (me.ong || (me.tipo && me.tipo !== "EXPLORADOR")) {
           const ong =
             me.ong || (await garantirOng(nome || "Minha ONG").then((r) => r.ong));
-          localStorage.setItem("tipo_usuario", perfilMeta && perfilMeta !== "explorador" ? perfilMeta : "ong");
+          const tipoReal =
+            me.tipo === "ESTACAO" || ong?.tipoPerfil === "estacao"
+              ? "estacao"
+              : ong?.tipoPerfil || (perfilMeta && perfilMeta !== "explorador" ? perfilMeta : "ong");
+          localStorage.setItem("tipo_usuario", tipoReal);
           localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nome || "Minha ONG");
-          router.push("/dashboard");
+          router.push(tipoReal === "estacao" ? "/dashboard-clinica" : "/dashboard");
           return;
         }
 
@@ -324,7 +406,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
         const { ong } = await garantirOng(nome || "Minha ONG", perfilMeta);
         localStorage.setItem("tipo_usuario", perfilMeta);
         localStorage.setItem("ong_nome", ong?.nomeOrganizacao || nome || "Minha ONG");
-        router.push("/dashboard");
+        router.push(perfilMeta === "estacao" ? "/dashboard-clinica" : "/dashboard");
         return;
       } catch {
         if (tentativa === 0) {
@@ -332,7 +414,14 @@ export function Login({ modoInicial = "login" }: LoginProps) {
           continue;
         }
 
-        if (perfilMeta === "guardiao" || perfilMeta === "base-estelar" || perfilMeta === "estacao" || perfilMeta === "ong") {
+        if (perfilMeta === "estacao") {
+          localStorage.setItem("tipo_usuario", "estacao");
+          localStorage.setItem("ong_nome", nome || "Minha Clínica");
+          router.push("/dashboard-clinica");
+          return;
+        }
+
+        if (perfilMeta === "guardiao" || perfilMeta === "base-estelar" || perfilMeta === "ong") {
           localStorage.setItem("tipo_usuario", perfilMeta);
           localStorage.setItem("ong_nome", nome || "Minha ONG");
           router.push("/dashboard");
@@ -369,22 +458,32 @@ export function Login({ modoInicial = "login" }: LoginProps) {
 
     setEnviandoReset(true);
     try {
-      localStorage.setItem("astro_reset_pendente", String(Date.now()));
+      localStorage.removeItem("astro_google_login");
+      localStorage.removeItem("astro_perfil_pendente");
+      localStorage.removeItem("temp_ong_nome");
+      limparCookiePerfilLogin();
+      const agora = Date.now();
+      localStorage.setItem("astro_reset_pendente", String(agora));
+      localStorage.setItem("astro_reset_expira_em", String(agora + VALIDADE_CODIGO_SEGUNDOS * 1000));
       localStorage.setItem("astro_reset_email", emailLimpo);
+      gravarCookieResetPendente();
 
       const result = await supabase.auth.resetPasswordForEmail(emailLimpo, {
-        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery&reset=true`,
       });
 
       if (result.error) {
         localStorage.removeItem("astro_reset_pendente");
+        localStorage.removeItem("astro_reset_expira_em");
+        limparCookieResetPendente();
         alerta.erro("Não foi possível enviar o e-mail", traduzirErroAuth(result.error.message));
       } else {
         setEmailResetEnviado(true);
         setSegundosReenvio(60);
+        setSegundosValidadeCodigo(VALIDADE_CODIGO_SEGUNDOS);
         alerta.sucesso(
           "Instruções enviadas!",
-          `Enviamos o link de recuperação para ${emailLimpo}. Verifique sua caixa de entrada e a pasta de spam.`
+          `Enviamos o link/código de recuperação para ${emailLimpo}. O acesso expira em 15 minutos — verifique também sua caixa de spam.`
         );
       }
     } finally {
@@ -402,7 +501,16 @@ export function Login({ modoInicial = "login" }: LoginProps) {
     }
 
     if (!tokenLimpo || tokenLimpo.length < 6) {
-      alerta.aviso("Código incompleto", "Digite o código recebido no seu e-mail.");
+      alerta.aviso("Código incompleto", "Digite o código de 6 a 8 dígitos recebido no seu e-mail.");
+      return;
+    }
+
+    const expiraEm = Number(localStorage.getItem("astro_reset_expira_em") || "0");
+    if (expiraEm > 0 && Date.now() > expiraEm) {
+      alerta.erro(
+        "Código expirado",
+        "Este código passou do tempo limite de validade. Clique em \"Reenviar e-mail\" para gerar um novo."
+      );
       return;
     }
 
@@ -415,13 +523,17 @@ export function Login({ modoInicial = "login" }: LoginProps) {
       });
 
       if (error) {
-        alerta.erro("Código inválido ou expirado", traduzirErroAuth(error.message));
+        alerta.erro(
+          "Código inválido ou expirado",
+          `${traduzirErroAuth(error.message)} Se o seu e-mail trouxe apenas o botão/link, clique diretamente no link recebido.`
+        );
         return;
       }
 
       setCodigoReset("");
       setModoEsqueciSenha(false);
       setEmailResetEnviado(false);
+      setSegundosValidadeCodigo(0);
       setModoRedefinir(true);
     } finally {
       setValidandoCodigo(false);
@@ -481,7 +593,9 @@ export function Login({ modoInicial = "login" }: LoginProps) {
       }
 
       localStorage.removeItem("astro_reset_pendente");
+      localStorage.removeItem("astro_reset_expira_em");
       localStorage.removeItem("astro_reset_email");
+      limparCookieResetPendente();
       await alerta.sucesso("Senha atualizada!", "Sua nova senha foi salva com sucesso.");
       setModoRedefinir(false);
       await checkAndRedirect(data.user);
@@ -492,9 +606,12 @@ export function Login({ modoInicial = "login" }: LoginProps) {
 
   function voltarParaLogin() {
     localStorage.removeItem("astro_reset_pendente");
+    localStorage.removeItem("astro_reset_expira_em");
+    limparCookieResetPendente();
     setModoRedefinir(false);
     setModoEsqueciSenha(false);
     setEmailResetEnviado(false);
+    setSegundosValidadeCodigo(0);
     setCodigoReset("");
     setNovaSenha("");
     setConfirmarNovaSenha("");
@@ -723,17 +840,20 @@ export function Login({ modoInicial = "login" }: LoginProps) {
 
                   <div className={styles.blocoCodigoOtp}>
                     <span className={styles.labelOtp}>
-                      Recebeu um código no e-mail? Digite aqui:
+                      Recebeu um código no e-mail? Digite aqui:{" "}
+                      {segundosValidadeCodigo > 0 && (
+                        <strong>(expira em {formatarTempoRestante(segundosValidadeCodigo)})</strong>
+                      )}
                     </span>
                     <div className={styles.linhaOtp}>
                       <input
                         type="text"
                         inputMode="numeric"
-                        placeholder="Código do e-mail"
+                        placeholder="Código do e-mail (6 a 8 dígitos)"
                         className={styles.inputOtp}
                         value={codigoReset}
-                        maxLength={10}
-                        onChange={(e) => setCodigoReset(e.target.value.replace(/\s+/g, ""))}
+                        maxLength={8}
+                        onChange={(e) => setCodigoReset(e.target.value.replace(/\D/g, ""))}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleValidarCodigoOtp();
                         }}
@@ -742,7 +862,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
                         type="button"
                         className={styles.botaoOtp}
                         onClick={handleValidarCodigoOtp}
-                        disabled={validandoCodigo || !codigoReset.trim()}
+                        disabled={validandoCodigo || codigoReset.trim().length < 6}
                       >
                         {validandoCodigo ? "Validando..." : "Validar"}
                       </button>

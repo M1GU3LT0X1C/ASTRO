@@ -7,13 +7,13 @@ import { supabase } from "@/lib/supabase";
 import { buscarMe } from "@/lib/perfil";
 import { sair } from "@/lib/sair";
 
-type Sessao = { logado: boolean; tutor: boolean };
+type Sessao = { logado: boolean; destino: "/dashboard-explorador" | "/dashboard-clinica" | "/dashboard" };
 
 export function Header() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const [sessao, setSessao] = useState<Sessao>({ logado: false, tutor: false });
+  const [sessao, setSessao] = useState<Sessao>({ logado: false, destino: "/dashboard" });
 
   useEffect(() => {
     if (typeof window !== "undefined" && pathname !== "/login" && pathname !== "/recuperar-senha") {
@@ -25,21 +25,51 @@ export function Header() {
     }
 
     async function atualizar(userId?: string, perfilMeta?: string) {
-      if (!userId) return setSessao({ logado: false, tutor: false });
-      const fallbackTutor =
-        perfilMeta === "explorador" ||
-        (typeof window !== "undefined" && localStorage.getItem("tipo_usuario") === "explorador");
-      // se a pessoa escolheu Explorador ou tem perfil de tutor, direciona para o painel do Explorador
-      const tutor = fallbackTutor
-        ? true
-        : await buscarMe()
-            .then((me) => Boolean(me.tutor || me.tipo === "EXPLORADOR"))
-            .catch(() => fallbackTutor);
-      setSessao({ logado: true, tutor });
+      if (!userId) return setSessao({ logado: false, destino: "/dashboard" });
+      const tipoLocal =
+        typeof window !== "undefined" ? localStorage.getItem("tipo_usuario") : null;
+      const perfilConhecido = perfilMeta || tipoLocal;
+
+      if (perfilConhecido === "explorador") {
+        setSessao({ logado: true, destino: "/dashboard-explorador" });
+        return;
+      }
+
+      if (perfilConhecido === "estacao") {
+        setSessao({ logado: true, destino: "/dashboard-clinica" });
+        return;
+      }
+
+      if (
+        perfilConhecido === "guardiao" ||
+        perfilConhecido === "base-estelar" ||
+        perfilConhecido === "ong"
+      ) {
+        setSessao({ logado: true, destino: "/dashboard" });
+        return;
+      }
+
+      // Mostra imediatamente como logado sem esperar o servidor do Render
+      setSessao({ logado: true, destino: "/dashboard" });
+      const destino = await buscarMe({ timeoutMs: 4000 })
+        .then((me): Sessao["destino"] => {
+          if (me.tipo === "ESTACAO" || me.ong?.tipoPerfil === "estacao") {
+            return "/dashboard-clinica";
+          }
+          if ((me.tutor || me.tipo === "EXPLORADOR") && !me.ong) {
+            return "/dashboard-explorador";
+          }
+          return "/dashboard";
+        })
+        .catch((): Sessao["destino"] => "/dashboard");
+      setSessao({ logado: true, destino });
     }
 
-    supabase.auth.getUser().then(({ data }) =>
-      atualizar(data.user?.id, data.user?.user_metadata?.perfil as string | undefined)
+    supabase.auth.getSession().then(({ data }) =>
+      atualizar(
+        data.session?.user?.id,
+        data.session?.user?.user_metadata?.perfil as string | undefined
+      )
     );
     const {
       data: { subscription },
@@ -95,7 +125,7 @@ export function Header() {
         <div className={styles.botoes}>
           {sessao.logado ? (
             <>
-              <Link href={sessao.tutor ? "/dashboard-explorador" : "/dashboard"} className={styles.btnEntrar}>Painel</Link>
+              <Link href={sessao.destino} className={styles.btnEntrar}>Painel</Link>
               <button type="button" onClick={sair} className={styles.btnCadastro}>Sair</button>
             </>
           ) : (
@@ -123,7 +153,7 @@ export function Header() {
             <div className={styles.botoes}>
               {sessao.logado ? (
                 <>
-                  <button onClick={() => goTo(sessao.tutor ? "/dashboard-explorador" : "/dashboard")} className={styles.btnEntrar}>Painel</button>
+                  <button onClick={() => goTo(sessao.destino)} className={styles.btnEntrar}>Painel</button>
                   <button onClick={() => { setOpen(false); sair(); }} className={styles.btnCadastro}>Sair</button>
                 </>
               ) : (

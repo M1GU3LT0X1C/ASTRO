@@ -40,10 +40,29 @@ export default async function DashboardExploradorLayout({
     user.email?.split("@")[0] ||
     "Explorador";
 
-  // Garante o registro de tutor caso ainda não exista, sem redirecionar para /dashboard
+  const perfilMeta = user.user_metadata?.perfil as string | undefined;
   const me = await apiServidor<Me>("/api/me").catch(() => null);
 
-  if (!me || !me.tutor) {
+  const contaEhClinica = me
+    ? Boolean(me.tipo === "ESTACAO" || me.ong?.tipoPerfil === "estacao")
+    : perfilMeta === "estacao";
+
+  if (contaEhClinica) {
+    redirect("/dashboard-clinica");
+  }
+
+  // Conta institucional/Guardião não pode acessar o painel do Explorador nem criar perfil duplicado de tutor.
+  const contaEhOng = me
+    ? Boolean(me.ong || (me.tipo && me.tipo !== "EXPLORADOR"))
+    : perfilMeta === "guardiao" ||
+      perfilMeta === "base-estelar" ||
+      perfilMeta === "ong";
+
+  if (contaEhOng) {
+    redirect("/dashboard");
+  }
+
+  if (me && !me.tutor) {
     await apiServidor<Me>("/api/me/tutor", {
       method: "POST",
       body: { nome },

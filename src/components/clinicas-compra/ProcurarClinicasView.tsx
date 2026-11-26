@@ -35,7 +35,7 @@ export function ProcurarClinicasView({ basePath }: ProcurarClinicasViewProps) {
 
   const [clinicas, setClinicas] = useState<Ong[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [mostrarFiltros, setMostrarFiltros] = useState(true);
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [filtrosAtivos, setFiltrosAtivos] = useState<FiltroClinica[]>([]);
   const [ordenacao, setOrdenacao] = useState<"proximas" | "avaliacao" | "nome">(
     "proximas"
@@ -133,8 +133,10 @@ export function ProcurarClinicasView({ basePath }: ProcurarClinicasViewProps) {
             onClick={() => setMostrarFiltros((v) => !v)}
             aria-expanded={mostrarFiltros}
           >
-            <SlidersHorizontal size={20} />
-            <span>Filtro</span>
+            <SlidersHorizontal size={16} />
+            <span>
+              Filtro {filtrosAtivos.length > 0 ? `(${filtrosAtivos.length})` : ""}
+            </span>
           </button>
 
           <button
@@ -152,21 +154,40 @@ export function ProcurarClinicasView({ basePath }: ProcurarClinicasViewProps) {
             className={styles.ordenarSelect}
             value={ordenacao}
             onChange={(e) => setOrdenacao(e.target.value as typeof ordenacao)}
-            aria-label="Ordenar clínicas"
+            aria-label="Ordenar estações e clínicas"
           >
             <option value="proximas">Ordenar</option>
             <option value="avaliacao">Melhor avaliação</option>
             <option value="nome">Ordem alfabética</option>
           </select>
-          <ChevronDown size={18} className={styles.ordenarIcone} />
+          <ChevronDown size={16} className={styles.ordenarIcone} />
         </div>
       </div>
+
+      {!mostrarFiltros && filtrosAtivos.length > 0 && (
+        <div className={styles.tagsSelecionadasBar} aria-label="Filtros ativos">
+          {filtrosAtivos.map((filtro) => (
+            <button
+              key={filtro}
+              type="button"
+              onClick={() => toggleFiltro(filtro)}
+              className={`${styles.tagPill} ${styles.tagPillAtiva}`}
+              aria-label={`Remover filtro ${filtro}`}
+            >
+              <span>{filtro}</span>
+              <span className={styles.tagRemoveCircle} aria-hidden="true">
+                ×
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {mostrarFiltros && (
         <div
           className={styles.caixaTags}
           role="group"
-          aria-label="Filtros de clínicas"
+          aria-label="Filtros de estações e clínicas"
         >
           {FILTROS_CLINICAS.map((filtro) => {
             const ativo = filtrosAtivos.includes(filtro);
@@ -197,7 +218,9 @@ export function ProcurarClinicasView({ basePath }: ProcurarClinicasViewProps) {
           className={styles.painelBorda}
           style={{ textAlign: "center", padding: "48px 24px" }}
         >
-          <p style={{ margin: 0, color: "#555" }}>Carregando clínicas...</p>
+          <p style={{ margin: 0, color: "#555" }}>
+            Carregando estações e clínicas...
+          </p>
         </div>
       ) : clinicasFiltradas.length === 0 ? (
         <div
@@ -213,12 +236,12 @@ export function ProcurarClinicasView({ basePath }: ProcurarClinicasViewProps) {
         >
           <Stethoscope size={38} color="#0d0062" />
           <strong style={{ fontSize: 16, color: "#0d0062" }}>
-            Nenhuma clínica encontrada
+            Nenhuma estação ou clínica encontrada
           </strong>
           <p style={{ margin: 0, color: "#666", fontSize: 14, maxWidth: 420 }}>
             {filtrosAtivos.length > 0 || termoUrl
-              ? "Nenhuma clínica corresponde aos filtros selecionados. Tente limpar os filtros para ver todas as opções."
-              : "Ainda não há clínicas parceiras cadastradas no momento."}
+              ? "Nenhuma estação ou clínica corresponde aos filtros selecionados. Tente limpar os filtros para ver todas as opções."
+              : "Ainda não há estações de cuidado ou clínicas parceiras cadastradas no momento."}
           </p>
         </div>
       ) : (

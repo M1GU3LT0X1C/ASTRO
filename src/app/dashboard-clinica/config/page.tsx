@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
+import { traduzirErroAuth } from "@/lib/errosAuth";
 import styles from "./Configuracoes.module.css";
 
 type Secao = "seguranca" | "preferencias" | "colaboradores" | "integracoes" | "atendimento";
@@ -47,12 +48,14 @@ export default function ConfiguracoesClinica() {
   const [aviso, setAviso] = useState("");
 
   useEffect(() => {
-    try {
-      const dados = localStorage.getItem(chave);
-      if (dados) setAjustes({ ...inicial, ...JSON.parse(dados) });
-      const convitesSalvos = JSON.parse(localStorage.getItem(chaveConvites) || "[]");
-      if (Array.isArray(convitesSalvos)) setConvites(convitesSalvos);
-    } catch { /* armazenamento não disponível */ }
+    queueMicrotask(() => {
+      try {
+        const dados = localStorage.getItem(chave);
+        if (dados) setAjustes({ ...inicial, ...JSON.parse(dados) });
+        const convitesSalvos = JSON.parse(localStorage.getItem(chaveConvites) || "[]");
+        if (Array.isArray(convitesSalvos)) setConvites(convitesSalvos);
+      } catch { /* armazenamento não disponível */ }
+    });
   }, []);
   function mudar<K extends keyof Ajustes>(campo: K, valor: Ajustes[K]) {
     setAjustes(prev => ({ ...prev, [campo]: valor }));
@@ -67,16 +70,16 @@ export default function ConfiguracoesClinica() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { alerta.erro("Entre na conta para alterar o e-mail."); return; }
     const { error } = await supabase.auth.updateUser({ email: emailLogin.trim() });
-    if (error) alerta.erro("Não foi possível alterar o e-mail", error.message);
-    else { setEmailLogin(""); window.alert("Verifique seu e-mail para confirmar a alteração."); }
+    if (error) alerta.erro("Não foi possível alterar o e-mail", traduzirErroAuth(error.message));
+    else { setEmailLogin(""); alerta.sucesso("Solicitação enviada", "Verifique seu e-mail para confirmar a alteração."); }
   }
   async function alterarSenha() {
-    if (senha.length < 6) { alerta.erro("A senha deve ter pelo menos 6 caracteres."); return; }
+    if (senha.length < 8) { alerta.aviso("Senha muito curta", "A nova senha precisa ter pelo menos 8 caracteres."); return; }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { alerta.erro("Entre na conta para alterar a senha."); return; }
     const { error } = await supabase.auth.updateUser({ password: senha });
-    if (error) alerta.erro("Não foi possível alterar a senha", error.message);
-    else { setSenha(""); window.alert("Senha atualizada."); }
+    if (error) alerta.erro("Não foi possível alterar a senha", traduzirErroAuth(error.message));
+    else { setSenha(""); alerta.sucesso("Senha atualizada!", "Sua nova senha foi salva com sucesso."); }
   }
   function guardarConvites(lista: Convite[]) {
     try { localStorage.setItem(chaveConvites, JSON.stringify(lista)); setConvites(lista); }

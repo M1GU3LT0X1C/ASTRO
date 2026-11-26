@@ -108,6 +108,62 @@ function gravarCookiePerfil(perfil: string) {
   document.cookie = `astro_perfil_pendente=${encodeURIComponent(perfil)}; path=/; max-age=900; SameSite=Lax`;
 }
 
+const RESUMO_TERMOS_MODAL: { numero: string; titulo: string; texto: string }[] = [
+  {
+    numero: "01",
+    titulo: "Escopo da plataforma Astro",
+    texto: "O Astro conecta adotantes, ONGs, protetores independentes e clínicas veterinárias parceiras. A plataforma é um hub de intermediação e não realiza resgate físico, transporte ou atendimento veterinário direto.",
+  },
+  {
+    numero: "02",
+    titulo: "Restrição etária (+18 anos)",
+    texto: "O cadastro e as solicitações de adoção são exclusivos para maiores de 18 anos completos ou representantes autorizados de instituições. Contas de menores de 18 anos serão bloqueadas.",
+  },
+  {
+    numero: "03",
+    titulo: "Conta única por e-mail e segurança",
+    texto: "Cada endereço de e-mail pode estar vinculado a apenas um perfil (Explorador, Guardião, Base Estelar ou Estação de Cuidado). As credenciais são pessoais e intransferíveis.",
+  },
+  {
+    numero: "04",
+    titulo: "Adoção 100% gratuita e responsável",
+    texto: "É estritamente proibida a venda ou comercialização de animais. A triagem, entrevista, visita ao lar e entrega do pet são conduzidas pela ONG ou protetor responsável.",
+  },
+  {
+    numero: "05",
+    titulo: "Estações de Cuidado, cupons e conduta",
+    texto: "Cupons e serviços veterinários são de responsabilidade das clínicas parceiras. É vedado publicar informações falsas, trotes ou conteúdo ilegal, sob pena de exclusão da conta (Lei nº 9.605/1998 e Lei nº 14.064/2020).",
+  },
+];
+
+const RESUMO_PRIVACIDADE_MODAL: { numero: string; titulo: string; texto: string }[] = [
+  {
+    numero: "01",
+    titulo: "Compromisso com a LGPD",
+    texto: "Tratamos seus dados conforme a LGPD (Lei nº 13.709/2018) e o Marco Civil da Internet. Nunca vendemos nem alugamos suas informações pessoais.",
+  },
+  {
+    numero: "02",
+    titulo: "Dados coletados no cadastro",
+    texto: "Coletamos apenas o essencial para o seu perfil: nome/razão social, e-mail, telefone, CEP, CPF/CNPJ (e CRMV para clínicas), além das fotos e informações que você optar por cadastrar.",
+  },
+  {
+    numero: "03",
+    titulo: "Uso do CEP e geolocalização",
+    texto: "Seu CEP ou localização aproximada serve exclusivamente para exibir pets disponíveis, ONGs e clínicas próximas a você.",
+  },
+  {
+    numero: "04",
+    titulo: "Segurança e infraestrutura",
+    texto: "Utilizamos autenticação segura via Supabase, comunicação criptografada HTTPS e controle de acesso por perfil (Row Level Security).",
+  },
+  {
+    numero: "05",
+    titulo: "Seus direitos (Art. 18 da LGPD)",
+    texto: "Você pode consultar, corrigir ou solicitar a exclusão dos seus dados diretamente nas configurações da conta ou pelo e-mail contato@astropets.com.br.",
+  },
+];
+
 export function Cadastro() {
   const router = useRouter();
   const [etapa, setEtapa] = useState<1 | 2>(1);
@@ -127,6 +183,7 @@ export function Cadastro() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [modalLegal, setModalLegal] = useState<"termos" | "privacidade" | null>(null);
   const [carregando, setCarregando] = useState(false);
 
   // Estados de consulta na Receita Federal (CNPJ) e CEP (BrasilAPI)
@@ -347,6 +404,15 @@ export function Cadastro() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!modalLegal) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setModalLegal(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [modalLegal]);
+
   function selecionarPerfil(perfil: Perfil) {
     setPerfilSelecionado(perfil);
     setDocumento("");
@@ -474,7 +540,13 @@ export function Cadastro() {
         await garantirTutor(nome.trim() || "Explorador").catch(() => null);
       }
 
-      router.push(ehOng ? "/dashboard" : "/dashboard-explorador");
+      router.push(
+        perfilSelecionado === "estacao"
+          ? "/dashboard-clinica"
+          : ehOng
+          ? "/dashboard"
+          : "/dashboard-explorador"
+      );
     } catch (err: unknown) {
       // só libera o botão em caso de erro; no sucesso ele fica travado até a página trocar
       enviando.current = false;
@@ -482,8 +554,8 @@ export function Cadastro() {
       if (err instanceof EmailJaCadastradoError) {
         const irParaLogin = await alerta.confirmar({
           icon: "info",
-          title: "Este e-mail já está cadastrado",
-          text: "Você pode entrar com ele na página de login ou usar \"Esqueci minha senha\".",
+          title: "Este e-mail já foi utilizado",
+          text: "Só é permitido criar uma única conta por e-mail. Entre na sua conta existente na página de login ou use \"Esqueci minha senha\".",
           cancelText: "Continuar aqui", confirmText: "Ir para o login",
         });
         if (irParaLogin) router.push("/login");
@@ -507,7 +579,10 @@ export function Cadastro() {
       return;
     }
     localStorage.removeItem("astro_reset_pendente");
+    document.cookie = "astro_reset_pendente=; path=/; max-age=0; SameSite=Lax";
     localStorage.setItem("astro_google_login", "true");
+    localStorage.setItem("astro_origem_google", "cadastro");
+    document.cookie = "astro_origem_google=cadastro; path=/; max-age=900; SameSite=Lax";
     localStorage.setItem("astro_perfil_pendente", perfilSelecionado);
     localStorage.setItem("tipo_usuario", perfilSelecionado);
     if (nome.trim() && perfilSelecionado !== "explorador") {
@@ -749,25 +824,29 @@ export function Cadastro() {
                       Declaro ser responsável autorizado(a) pela instituição e que li e aceito os{" "}
                     </>
                   )}
-                  <Link
-                    href="/termos-de-uso"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.termoLink}
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    type="button"
+                    className={styles.termoLinkBotao}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setModalLegal("termos");
+                    }}
                   >
                     Termos de Uso
-                  </Link>{" "}
+                  </button>{" "}
                   e a{" "}
-                  <Link
-                    href="/politica-de-privacidade"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.termoLink}
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    type="button"
+                    className={styles.termoLinkBotao}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setModalLegal("privacidade");
+                    }}
                   >
                     Política de Privacidade
-                  </Link>{" "}
+                  </button>{" "}
                   do Astro.
                 </span>
               </label>
@@ -788,6 +867,102 @@ export function Cadastro() {
           </>
         )}
       </section>
+
+      {modalLegal && (
+        <div
+          className={styles.modalLegalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-legal-titulo"
+          onClick={() => setModalLegal(null)}
+        >
+          <div
+            className={styles.modalLegalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalLegalTopo}>
+              <div>
+                <span className={styles.modalLegalBadge}>Leitura rápida • AstroPets</span>
+                <h2 id="modal-legal-titulo">
+                  {modalLegal === "termos" ? "Termos de Uso" : "Política de Privacidade"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className={styles.modalLegalFechar}
+                onClick={() => setModalLegal(null)}
+                aria-label="Fechar leitura dos termos"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalLegalAbas} role="tablist" aria-label="Documentos legais">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={modalLegal === "termos"}
+                className={`${styles.modalLegalAba} ${modalLegal === "termos" ? styles.modalLegalAbaAtiva : ""}`}
+                onClick={() => setModalLegal("termos")}
+              >
+                Termos de Uso
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={modalLegal === "privacidade"}
+                className={`${styles.modalLegalAba} ${modalLegal === "privacidade" ? styles.modalLegalAbaAtiva : ""}`}
+                onClick={() => setModalLegal("privacidade")}
+              >
+                Política de Privacidade
+              </button>
+            </div>
+
+            <div className={styles.modalLegalCorpo}>
+              {(modalLegal === "termos" ? RESUMO_TERMOS_MODAL : RESUMO_PRIVACIDADE_MODAL).map((item) => (
+                <article key={item.numero} className={styles.modalLegalSecao}>
+                  <div className={styles.modalLegalSecaoTitulo}>
+                    <span className={styles.modalLegalNum}>{item.numero}</span>
+                    <h3>{item.titulo}</h3>
+                  </div>
+                  <p>{item.texto}</p>
+                </article>
+              ))}
+              <p className={styles.modalLegalNotaCompleta}>
+                Quer consultar o texto jurídico completo?{" "}
+                <Link
+                  href={modalLegal === "termos" ? "/termos-de-uso" : "/politica-de-privacidade"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.termoLink}
+                >
+                  Abrir página completa
+                </Link>
+              </p>
+            </div>
+
+            <div className={styles.modalLegalRodape}>
+              <button
+                type="button"
+                className={styles.modalLegalBtnSecundario}
+                onClick={() => setModalLegal(null)}
+              >
+                Fechar
+              </button>
+              <button
+                type="button"
+                className={styles.modalLegalBtnPrimario}
+                onClick={() => {
+                  setAceitouTermos(true);
+                  setModalLegal(null);
+                }}
+              >
+                Li e aceito
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

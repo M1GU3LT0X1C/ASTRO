@@ -35,7 +35,19 @@ export async function middleware(request: NextRequest) {
     pathname === "/dashboard" ||
     pathname.startsWith("/dashboard/");
 
+  const modoTesteClinica =
+    process.env.NODE_ENV === "development" &&
+    process.env.MODO_TESTE_CLINICA === "true";
+
+  const rotaClinica =
+    pathname === "/dashboard-clinica" ||
+    pathname.startsWith("/dashboard-clinica/");
+
   if (modoTesteONG && rotaONG) {
+    return NextResponse.next({ request });
+  }
+
+  if (modoTesteClinica && rotaClinica) {
     return NextResponse.next({ request });
   }
 
@@ -74,6 +86,7 @@ export async function middleware(request: NextRequest) {
 
   const rotasProtegidas = [
     "/dashboard",
+    "/dashboard-clinica",
     "/dashboard-explorador",
     "/perfil-explorador",
   ];
@@ -92,6 +105,7 @@ export async function middleware(request: NextRequest) {
   const emRecuperacaoSenha =
     pathname === "/recuperar-senha" ||
     pathname.startsWith("/recuperar-senha/") ||
+    request.cookies.get("astro_reset_pendente")?.value === "true" ||
     (pathname === "/login" &&
       (request.nextUrl.searchParams.get("reset") === "true" ||
         request.nextUrl.searchParams.get("type") === "recovery" ||
@@ -105,7 +119,12 @@ export async function middleware(request: NextRequest) {
   if (rotaAutenticacao && user && !emRecuperacaoSenha) {
     const url = request.nextUrl.clone();
     const perfil = user.user_metadata?.perfil;
-    url.pathname = perfil === "explorador" ? "/dashboard-explorador" : "/dashboard";
+    url.pathname =
+      perfil === "explorador"
+        ? "/dashboard-explorador"
+        : perfil === "estacao"
+        ? "/dashboard-clinica"
+        : "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
   }
