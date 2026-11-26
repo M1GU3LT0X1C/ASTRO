@@ -10,6 +10,7 @@ import { buscarMe, garantirOng, garantirTutor } from "@/lib/perfil";
 import { acordarServidor } from "@/lib/api";
 import type { User } from "@supabase/supabase-js";
 import styles from "./Login.module.css";
+import Carregamento from "@/components/carregamento/Carregamento";
 
 type PerfilGoogle = "explorador" | "guardiao" | "base-estelar" | "estacao";
 
@@ -290,6 +291,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
   }
 
   async function handleLogin() {
+    if (loading) return;
     const emailLimpo = email.trim();
     if (!emailLimpo || !senha) {
       alerta.aviso("Preencha e-mail e senha");
@@ -300,6 +302,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
     if (lembrar) localStorage.setItem("astro_remember_email", emailLimpo);
     else localStorage.removeItem("astro_remember_email");
 
+    try {
     const result = await supabase.auth.signInWithPassword({
       email: emailLimpo,
       password: senha,
@@ -314,6 +317,10 @@ export function Login({ modoInicial = "login" }: LoginProps) {
 
     addTentativa(emailLimpo, true);
     await checkAndRedirect(result.data.user);
+    } catch {
+      setLoading(false);
+      alerta.erro("Não foi possível entrar", "Tente novamente em instantes.");
+    }
   }
 
   function abrirSelecaoPerfilGoogle() {
@@ -1003,6 +1010,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
                 </button>
               </div>
 
+              {loading && <Carregamento titulo="Preparando seu acesso..." descricao="Estamos verificando sua conta. O servidor pode levar alguns instantes para responder." />}
               <div className={styles.botoesLinha}>
                 <button
                   type="button"
@@ -1017,6 +1025,7 @@ export function Login({ modoInicial = "login" }: LoginProps) {
                   type="button"
                   className={styles.botaoSecundario}
                   onClick={() => router.push("/cadastro")}
+                  disabled={loading}
                 >
                   Cadastre
                 </button>

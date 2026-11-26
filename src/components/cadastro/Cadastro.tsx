@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import styles from "./Cadastro.module.css";
+import Carregamento from "@/components/carregamento/Carregamento";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
 import { acordarServidor } from "@/lib/api";
@@ -851,6 +852,7 @@ export function Cadastro() {
                 </span>
               </label>
 
+              {carregando && <Carregamento titulo="Preparando sua conta..." descricao="Estamos processando seu cadastro. A inicialização do servidor pode levar alguns instantes. Aguarde sem reenviar." />}
               <button
                 type="submit"
                 className={styles.botaoContinuar}
@@ -860,7 +862,7 @@ export function Cadastro() {
               </button>
 
               <div className={styles.divisor}>ou</div>
-              <button type="button" className={styles.botaoGoogle} onClick={handleGoogleCadastro}>
+              <button type="button" className={styles.botaoGoogle} onClick={handleGoogleCadastro} disabled={carregando}>
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="" /> Continuar com Google
               </button>
             </form>
