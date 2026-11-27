@@ -196,7 +196,7 @@ export default function OngPublica() {
                           <Link key={p.id} href={`/adocao-clinicas/pet/${p.id}`} className={styles.petCard}>
                             <span>{p.foto_url ? <img src={p.foto_url} alt="" /> : <PawPrint size={30} />}</span>
                             <strong>{p.nome}</strong>
-                            <small>{p.sexo === "femea" ? "Fêmea" : "Macho"}{p.idade ? ` · ${p.idade} ano${p.idade === 1 ? "" : "s"}` : ""}</small>
+                            <small>{p.sexo === "femea" ? "Fêmea" : "Macho"}{p.idade_texto ? ` · ${p.idade_texto}` : ""}</small>
                           </Link>
                         ))}
                       </div>

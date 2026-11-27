@@ -23,22 +23,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const perfilMeta = user.user_metadata?.perfil as string | undefined
-  const escolheuOng =
-    perfilMeta === 'guardiao' ||
-    perfilMeta === 'base-estelar' ||
-    perfilMeta === 'estacao' ||
-    perfilMeta === 'ong'
-
   const me = await apiServidor<Me>('/api/me').catch(() => null)
 
-  // O dashboard é exclusivo para ONGs; exploradores usam seu próprio painel.
-  if (
-    !escolheuOng &&
-    (me?.tutor ||
-      me?.tipo === 'EXPLORADOR' ||
-      (!me && perfilMeta === 'explorador'))
-  ) {
+  // O dashboard é exclusivo para ONGs/Guardiões/Estações; contas Explorador/Tutor usam o próprio painel.
+  const contaEhExplorador = me
+    ? Boolean((me.tutor || me.tipo === 'EXPLORADOR') && !me.ong)
+    : perfilMeta === 'explorador'
+
+  if (contaEhExplorador) {
     redirect('/dashboard-explorador')
+  }
+
+  const contaEhClinica = me
+    ? Boolean(me.tipo === 'ESTACAO' || me.ong?.tipoPerfil === 'estacao')
+    : perfilMeta === 'estacao'
+
+  if (contaEhClinica) {
+    redirect('/dashboard-clinica')
   }
 
   const nomeFallback =

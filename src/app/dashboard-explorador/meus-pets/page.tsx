@@ -1,4 +1,5 @@
 "use client";
+import { formatarIdade } from "@/lib/animais";
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { PawPrint, Plus, Trash2, CalendarDays, Pencil } from "lucide-react";
@@ -11,7 +12,7 @@ import {
 } from "@/lib/explorador";
 import styles from "../painel-interno.module.css";
 
-const ESPECIE: Record<string, string> = { cachorro: "Cachorro", gato: "Gato", outro: "Outro" };
+const ESPECIE: Record<string, string> = { cachorro: "Canino", gato: "Felino", outro: "Outro" };
 const PORTE: Record<string, string> = { pequeno: "Pequeno", medio: "Médio", grande: "Grande" };
 const SEXO: Record<string, string> = { macho: "Macho", femea: "Fêmea" };
 
@@ -90,7 +91,7 @@ export default function MeusPets() {
 
   const resumo = pet ? [
     pet.especie && ESPECIE[pet.especie], pet.raca, pet.sexo && SEXO[pet.sexo],
-    pet.idade && `${pet.idade} ano${pet.idade === "1" ? "" : "s"}`, pet.porte && `Porte ${PORTE[pet.porte]?.toLowerCase() || pet.porte}`,
+    pet.idade && formatarIdade(pet.idade), pet.porte && `Porte ${PORTE[pet.porte]?.toLowerCase() || pet.porte}`,
   ].filter(Boolean).join(" · ") : "";
 
   if (carregando) return <div className={styles.pagina}><p>Carregando seus pets...</p></div>;

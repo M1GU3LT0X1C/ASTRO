@@ -10,7 +10,7 @@ export default function PainelClinica() {
   const { dados, pronto, atualizar } = useClinica();
   const [codigo, setCodigo] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const agora = Date.now();
+  const [agora, setAgora] = useState(() => Date.now());
   const ultimas24h = dados.resgates.filter(r => {
     const data = new Date(r.criadoEm).getTime();
     return Number.isFinite(data) && agora - data >= 0 && agora - data <= 86400000;
@@ -23,9 +23,11 @@ export default function PainelClinica() {
     const cupom = dados.cupons.find(c => c.codigo.toLowerCase() === codigo.trim().toLowerCase());
     if (!cupom) { setMensagem("Código não encontrado."); return; }
     if (!cupomValido(cupom, dados)) { setMensagem("Cupom pausado, vencido ou esgotado."); return; }
+    const instante = Date.now();
+    setAgora(instante);
     atualizar(d => ({
       ...d,
-      resgates: [{ id: crypto.randomUUID(), cupomId: cupom.id, codigo: cupom.codigo, criadoEm: new Date().toISOString() }, ...d.resgates],
+      resgates: [{ id: crypto.randomUUID(), cupomId: cupom.id, codigo: cupom.codigo, criadoEm: new Date(instante).toISOString() }, ...d.resgates],
     }));
     setCodigo("");
     setMensagem("Cupom validado! Resgate registrado com sucesso.");

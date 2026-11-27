@@ -49,13 +49,14 @@ export default function DashboardExploradorClient({ children, nomeExplorador }: 
     queueMicrotask(lerCacheLocal);
 
     supabase.auth
-      .getUser()
+      .getSession()
       .then(({ data }) => {
-        if (!ativo || !data.user) return;
-        const avatarMeta = data.user.user_metadata?.avatar_url as string | undefined;
+        const user = data.session?.user;
+        if (!ativo || !user) return;
+        const avatarMeta = user.user_metadata?.avatar_url as string | undefined;
         const nomeMeta =
-          (data.user.user_metadata?.nome as string | undefined) ||
-          (data.user.user_metadata?.full_name as string | undefined);
+          (user.user_metadata?.nome as string | undefined) ||
+          (user.user_metadata?.full_name as string | undefined);
         if (avatarMeta) {
           setFotoExplorador((atual) => atual || avatarMeta);
         }

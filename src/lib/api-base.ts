@@ -7,7 +7,11 @@ export class ErroApi extends Error {
   }
 }
 
-export type OpcoesApi = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown };
+export type OpcoesApi = {
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  body?: unknown;
+  timeoutMs?: number;
+};
 
 // No plano gratuito do Render o back "dorme" e leva ate ~2 min para acordar;
 // sem limite, a tela ficaria esperando para sempre.
@@ -23,6 +27,7 @@ export const montarUrl = (baseUrl: string, caminho: string) => {
 
 export async function chamarApi<T>(baseUrl: string, caminho: string, token: string | undefined, opcoes: OpcoesApi = {}): Promise<T> {
   let resposta: Response;
+  const limiteMs = opcoes.timeoutMs ?? TEMPO_LIMITE_MS;
   try {
     resposta = await fetch(montarUrl(baseUrl, caminho), {
       method: opcoes.method ?? "GET",
@@ -32,7 +37,7 @@ export async function chamarApi<T>(baseUrl: string, caminho: string, token: stri
       },
       body: opcoes.body !== undefined ? JSON.stringify(opcoes.body) : undefined,
       cache: "no-store",
-      signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
+      signal: AbortSignal.timeout(limiteMs),
     });
   } catch (err) {
     const tempoEsgotado = err instanceof DOMException && err.name === "TimeoutError";

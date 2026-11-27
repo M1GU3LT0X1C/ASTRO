@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { alerta } from "@/lib/alerta";
 import { traduzirErroAuth } from "@/lib/errosAuth";
 import { buscarMinhaOng, registrarDocumento, salvarMinhaOng, type Ong } from "@/lib/ong";
 import { buscarPreferencias, salvarPreferencias } from "@/lib/painel";
+import { buscarMe, garantirOng } from "@/lib/perfil";
 import { enviarDocumentoPrivado } from "@/lib/upload";
 import styles from "./Configuracoes.module.css";
 import Link from "next/link";
@@ -40,6 +42,7 @@ const STATUS_VERIFICACAO: Record<string, string> = {
 const CHAVE_CONVITES = "astro_ong_convites_rascunho_v1";
 
 export default function Page() {
+  const router = useRouter();
   const [open, setOpen] = useState<Section | null>(null);
   const [settings, setSettings] = useState<Settings>(initial);
   const [ong, setOng] = useState<Ong | null>(null);
@@ -61,35 +64,93 @@ export default function Page() {
   const [integracaoAviso, setIntegracaoAviso] = useState("");
 
   useEffect(() => {
+    let ativo = true;
     queueMicrotask(() => {
       try {
         const rascunhos = localStorage.getItem(CHAVE_CONVITES);
-        if (rascunhos) setConvites(JSON.parse(rascunhos));
+        if (rascunhos && ativo) setConvites(JSON.parse(rascunhos));
       } catch { /* armazenamento indisponivel */ }
     });
-    Promise.all([buscarMinhaOng(), buscarPreferencias(preferenciasIniciais)])
-      .then(([dadosOng, preferencias]) => {
-        setOng(dadosOng);
-        setSettings({
-          ...initial,
-          ...preferencias,
-          site: dadosOng.site || "",
-          instagram: dadosOng.instagram || "",
-          whatsappContato: dadosOng.whatsapp || "",
-          facebook: dadosOng.facebook || "",
-          emailPublico: dadosOng.emailPublico || "",
-          idadeMinima: String(dadosOng.idadeMinima ?? 18),
-          moradia: dadosOng.moradiaAceita || "qualquer",
-          entrevista: dadosOng.exigeEntrevista,
-          visita: dadosOng.exigeVisita,
-          termo: dadosOng.exigeTermo,
-        });
-      })
-      .catch(() => {
+
+    async function carregarConfiguracoes() {
+      const [resOngInicial, resPrefs] = await Promise.allSettled([
+        buscarMinhaOng(),
+        buscarPreferencias(preferenciasIniciais),
+      ]);
+
+      let dadosOng: Ong | null =
+        resOngInicial.status === "fulfilled" ? resOngInicial.value : null;
+
+      if (!dadosOng) {
+        const me = await buscarMe().catch(() => null);
+        if (!ativo) return;
+
+        // Se a conta é de Explorador/Tutor no banco, não existe perfil de ONG para ela.
+        if (me && (me.tutor || me.tipo === "EXPLORADOR") && !me.ong) {
+          await alerta.aviso(
+            "Conta vinculada como Explorador",
+            "Este e-mail está cadastrado como Explorador e não possui perfil de ONG/Guardião. Redirecionando para as suas configurações."
+          );
+          if (ativo) router.replace("/dashboard-explorador/config");
+          return;
+        }
+
+        // Se for ONG/Guardião legítimo mas o registro ainda não tinha sido inicializado, tenta criar uma vez.
+        if (!me || (!me.tutor && me.tipo !== "EXPLORADOR")) {
+          const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+          const nomePadrao =
+            (typeof window !== "undefined" && localStorage.getItem("ong_nome")) ||
+            user?.user_metadata?.nome ||
+            user?.user_metadata?.full_name ||
+            user?.email?.split("@")[0] ||
+            "Minha ONG";
+          const tipoPerfil =
+            (user?.user_metadata?.perfil as string | undefined) ||
+            (typeof window !== "undefined" ? localStorage.getItem("tipo_usuario") || undefined : undefined);
+
+          await garantirOng(nomePadrao, tipoPerfil).catch(() => null);
+          dadosOng = await buscarMinhaOng().catch(() => null);
+        }
+      }
+
+      if (!ativo) return;
+
+      const preferencias =
+        resPrefs.status === "fulfilled" ? resPrefs.value : preferenciasIniciais;
+
+      if (!dadosOng) {
         setFalhaCarga(true);
-        alerta.erro("Não foi possível carregar as configurações", "Recarregue a página em instantes.");
+        setSettings((atual) => ({ ...atual, ...preferencias }));
+        alerta.erro(
+          "Não foi possível carregar o perfil da ONG",
+          "Verifique sua conexão ou recarregue a página em instantes."
+        );
+        return;
+      }
+
+      setFalhaCarga(false);
+      setOng(dadosOng);
+      setSettings({
+        ...initial,
+        ...preferencias,
+        site: dadosOng.site || "",
+        instagram: dadosOng.instagram || "",
+        whatsappContato: dadosOng.whatsapp || "",
+        facebook: dadosOng.facebook || "",
+        emailPublico: dadosOng.emailPublico || "",
+        idadeMinima: String(dadosOng.idadeMinima ?? 18),
+        moradia: dadosOng.moradiaAceita || "qualquer",
+        entrevista: dadosOng.exigeEntrevista,
+        visita: dadosOng.exigeVisita,
+        termo: dadosOng.exigeTermo,
       });
-  }, []);
+    }
+
+    carregarConfiguracoes();
+    return () => {
+      ativo = false;
+    };
+  }, [router]);
 
   const alterarEmail = async () => {
     if (!emailLogin.trim()) return;
@@ -121,8 +182,9 @@ export default function Page() {
       }
       localStorage.setItem("astro_reset_pendente", String(Date.now()));
       localStorage.setItem("astro_reset_email", emailConta);
+      document.cookie = "astro_reset_pendente=true; path=/; max-age=3600; SameSite=Lax";
       const { error } = await supabase.auth.resetPasswordForEmail(emailConta, {
-        redirectTo: `${window.location.origin}/recuperar-senha?reset=true`,
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery&reset=true`,
       });
       if (error) {
         alerta.erro("Não foi possível enviar o link", traduzirErroAuth(error.message));

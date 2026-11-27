@@ -31,8 +31,14 @@ export default function MetricasClinica() {
   const servicosPorCategoria = Object.entries(dados.servicos.reduce<Record<string,number>>((acc,s) => { if(s.ativo) acc[s.categoria]=(acc[s.categoria]||0)+1; return acc; },{})).sort((a,b)=>b[1]-a[1]);
   const totalServicos = servicosPorCategoria.reduce((s,[,n])=>s+n,0);
   const fatias = servicosPorCategoria.map(([nome,n],i)=>({nome,n,cor:cores[i%cores.length],porcentagem:totalServicos?100*n/totalServicos:0}));
-  let acumulado=0;
-  const gradiente = fatias.map(f=>{const inicio=acumulado;acumulado+=f.porcentagem;return `${f.cor} ${inicio}% ${acumulado}%`;}).join(", ");
+  const gradiente = fatias.reduce<{ acumulado: number; partes: string[] }>(
+    (acc, f) => {
+      const inicio = acc.acumulado;
+      const fim = inicio + f.porcentagem;
+      return { acumulado: fim, partes: [...acc.partes, `${f.cor} ${inicio}% ${fim}%`] };
+    },
+    { acumulado: 0, partes: [] }
+  ).partes.join(", ");
   const cuponsOrdenados = dados.cupons.map(c=>({nome:c.nome,usos:dados.resgates.filter(r=>r.cupomId===c.id).length})).sort((a,b)=>b.usos-a.usos).slice(0,5);
   const maiorCupom = Math.max(1,...cuponsOrdenados.map(c=>c.usos));
   const alternar=(campo:keyof typeof mostrar)=>setMostrar(atual=>({...atual,[campo]:!atual[campo]}));

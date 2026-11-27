@@ -27,21 +27,23 @@ function Formulario() {
 
   useEffect(() => {
     if (!pronto || carregado) return;
-    if (id) {
-      const atual = dados.servicos.find(s => s.id === id);
-      if (atual) {
-        setNome(atual.nome); setCategoria(atual.categoria); setDescricao(atual.descricao);
-        setTipo(atual.tipo); setPreco(String(atual.preco));
-        try {
-          const parsed: unknown = JSON.parse(atual.adicionais);
-          if (parsed && typeof parsed === "object" && "itens" in parsed && Array.isArray(parsed.itens)) {
-            setAdicionais(parsed.itens.map((a: Adicional) => ({ nome: String(a.nome ?? ""), valor: String(a.valor ?? "") })));
-            setObservacoes("observacoes" in parsed ? String(parsed.observacoes ?? "") : "");
-          } else { setObservacoes(atual.adicionais || ""); }
-        } catch { setObservacoes(atual.adicionais || ""); }
+    queueMicrotask(() => {
+      if (id) {
+        const atual = dados.servicos.find(s => s.id === id);
+        if (atual) {
+          setNome(atual.nome); setCategoria(atual.categoria); setDescricao(atual.descricao);
+          setTipo(atual.tipo); setPreco(String(atual.preco));
+          try {
+            const parsed: unknown = JSON.parse(atual.adicionais);
+            if (parsed && typeof parsed === "object" && "itens" in parsed && Array.isArray(parsed.itens)) {
+              setAdicionais(parsed.itens.map((a: Adicional) => ({ nome: String(a.nome ?? ""), valor: String(a.valor ?? "") })));
+              setObservacoes("observacoes" in parsed ? String(parsed.observacoes ?? "") : "");
+            } else { setObservacoes(atual.adicionais || ""); }
+          } catch { setObservacoes(atual.adicionais || ""); }
+        }
       }
-    }
-    setCarregado(true);
+      setCarregado(true);
+    });
   }, [pronto, carregado, id, dados.servicos]);
 
   function publicar(evento: FormEvent<HTMLFormElement>) {

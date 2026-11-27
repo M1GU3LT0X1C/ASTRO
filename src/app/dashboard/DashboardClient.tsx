@@ -40,10 +40,11 @@ export default function DashboardClient({ children, nomeOng }: { children: React
     queueMicrotask(lerCacheLocal);
 
     supabase.auth
-      .getUser()
+      .getSession()
       .then(({ data }) => {
-        if (!ativo || !data.user) return;
-        const avatarMeta = data.user.user_metadata?.avatar_url as string | undefined;
+        const user = data.session?.user;
+        if (!ativo || !user) return;
+        const avatarMeta = user.user_metadata?.avatar_url as string | undefined;
         if (avatarMeta) {
           setFotoOng((atual) => atual || avatarMeta);
         }
@@ -51,20 +52,28 @@ export default function DashboardClient({ children, nomeOng }: { children: React
       .catch(() => null);
 
     buscarMe()
-      .then(({ ong, parceiro }) => {
+      .then((me) => {
         if (!ativo) return;
-        if (parceiro?.logoUrl) {
-          setFotoOng(parceiro.logoUrl);
+        if (!me.ong && (me.tutor || me.tipo === "EXPLORADOR")) {
+          router.replace("/dashboard-explorador");
+          return;
+        }
+        if (me.tipo === "ESTACAO" || me.ong?.tipoPerfil === "estacao") {
+          router.replace("/dashboard-clinica");
+          return;
+        }
+        if (me.parceiro?.logoUrl) {
+          setFotoOng(me.parceiro.logoUrl);
           try {
-            localStorage.setItem("ong_foto", parceiro.logoUrl);
+            localStorage.setItem("ong_foto", me.parceiro.logoUrl);
           } catch {
             // ignora
           }
         }
-        if (ong?.nomeOrganizacao) {
-          setNomeExibido(ong.nomeOrganizacao);
+        if (me.ong?.nomeOrganizacao) {
+          setNomeExibido(me.ong.nomeOrganizacao);
           try {
-            localStorage.setItem("ong_nome", ong.nomeOrganizacao);
+            localStorage.setItem("ong_nome", me.ong.nomeOrganizacao);
           } catch {
             // ignora
           }
@@ -81,7 +90,7 @@ export default function DashboardClient({ children, nomeOng }: { children: React
       window.removeEventListener("storage", lerCacheLocal);
       window.removeEventListener("focus", lerCacheLocal);
     };
-  }, [nomeOng]);
+  }, [nomeOng, router]);
 
   const fazerBusca = () => {
     if (!busca.trim()) return;

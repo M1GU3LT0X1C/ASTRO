@@ -50,12 +50,13 @@ function comprimirParaDataUrl(arquivo: File, maxDim = 480): Promise<string> {
 }
 
 /** Envia uma imagem para o bucket publico e devolve a URL publica. pasta: "logos", "capas", "explorador", "pets"... */
-export async function enviarImagemPublica(arquivo: File, pasta: string): Promise<string> {
+export async function enviarImagemPublica(arquivo: File, pasta: string, opcoes: { permitirDataUrl?: boolean } = {}): Promise<string> {
   try {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
+      if (opcoes.permitirDataUrl === false) throw new Error("Sua sessão expirou. Entre novamente para enviar a foto.");
       return await comprimirParaDataUrl(arquivo);
     }
     const caminho = `${pasta}/${user.id}-${Date.now()}.${extensao(arquivo)}`;
@@ -65,10 +66,12 @@ export async function enviarImagemPublica(arquivo: File, pasta: string): Promise
       upsert: true,
     });
     if (error) {
+      if (opcoes.permitirDataUrl === false) throw new Error(error.message);
       return await comprimirParaDataUrl(arquivo);
     }
     return armazenamento.getPublicUrl(caminho).data.publicUrl;
-  } catch {
+  } catch (error) {
+    if (opcoes.permitirDataUrl === false) throw error;
     return await comprimirParaDataUrl(arquivo);
   }
 }

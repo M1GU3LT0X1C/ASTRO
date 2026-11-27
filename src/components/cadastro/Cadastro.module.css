@@ -448,6 +448,210 @@
 .termoLink:hover {
   color: #1a0b5c;
 }
+.termoLinkBotao {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: #e63d68;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.termoLinkBotao:hover {
+  color: #1a0b5c;
+}
+
+/* MODAL DINÂMICO DE TERMOS E PRIVACIDADE */
+.modalLegalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(15, 7, 56, 0.62);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modalLegalCard {
+  width: 100%;
+  max-width: 620px;
+  max-height: min(86vh, 720px);
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #e7e1f7;
+  box-shadow: 0 24px 60px rgba(15, 7, 56, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalSubir 0.22s ease;
+}
+@keyframes modalSubir {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modalLegalTopo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 14px;
+  border-bottom: 1px solid #f0ecfa;
+}
+.modalLegalBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #e63d68;
+  margin-bottom: 4px;
+}
+.modalLegalTopo h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a0b5c;
+}
+.modalLegalFechar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #f4f1fa;
+  color: #1a0b5c;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.modalLegalFechar:hover {
+  background: #e6dff7;
+}
+.modalLegalAbas {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #f9f7ff;
+  border-bottom: 1px solid #f0ecfa;
+}
+.modalLegalAba {
+  flex: 1;
+  border: 1.5px solid #e4ddf5;
+  background: #ffffff;
+  color: #4a407a;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.modalLegalAba:hover {
+  border-color: #1a0b5c;
+  color: #1a0b5c;
+}
+.modalLegalAbaAtiva {
+  background: #1a0b5c;
+  border-color: #1a0b5c;
+  color: #ffffff;
+}
+.modalLegalAbaAtiva:hover {
+  color: #ffffff;
+}
+.modalLegalCorpo {
+  padding: 18px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modalLegalSecao {
+  background: #faf8ff;
+  border: 1px solid #eee8ff;
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+.modalLegalSecaoTitulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.modalLegalNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #e63d68;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.modalLegalSecaoTitulo h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a0b5c;
+}
+.modalLegalSecao p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #443c68;
+}
+.modalLegalNotaCompleta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #6b638a;
+  text-align: center;
+}
+.modalLegalRodape {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid #f0ecfa;
+  background: #ffffff;
+}
+.modalLegalBtnSecundario {
+  border: 1.5px solid #ded8f2;
+  background: #ffffff;
+  color: #1a0b5c;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.modalLegalBtnSecundario:hover {
+  background: #f5f2ff;
+}
+.modalLegalBtnPrimario {
+  border: none;
+  background: #e63d68;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.modalLegalBtnPrimario:hover {
+  background: #d02f59;
+}
 
 @media (max-width: 768px) {
   .cadastro { padding: 24px 0 30px; }

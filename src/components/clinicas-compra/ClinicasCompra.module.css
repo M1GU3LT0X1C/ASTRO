@@ -31,33 +31,36 @@
 .btnFiltroBox {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  height: 52px;
-  padding: 0 20px;
-  border-radius: 14px;
+  min-height: 43px;
+  padding: 0 17px;
+  border-radius: 10px;
   background: #ffffff;
-  border: 1px solid #e6e2f2;
-  box-shadow: 0 2px 8px rgba(13, 0, 98, 0.08);
-  font-size: 16px;
+  border: 1px solid #c8c8c8;
+  font-size: 13px;
   font-weight: 500;
-  color: #111111;
+  color: #333333;
   cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.btnFiltroBox[aria-expanded="true"],
 .btnFiltroBox:hover {
   border-color: #0d0062;
+  color: #0d0062;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 0, 98, 0.08);
 }
 
 .btnLimparFiltro {
-  background: none;
+  background: transparent;
   border: none;
   color: #0d0062;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  padding: 6px 8px;
+  padding: 6px 4px;
   transition: opacity 0.2s ease;
 }
 
@@ -74,84 +77,106 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 52px;
-  border-radius: 14px;
+  min-height: 43px;
+  border-radius: 10px;
   background: #ffffff;
-  border: 1px solid #e6e2f2;
-  box-shadow: 0 2px 8px rgba(13, 0, 98, 0.08);
-  padding: 0 14px;
+  border: 1px solid #c8c8c8;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ordenarWrap:hover {
+  border-color: #0d0062;
+  box-shadow: 0 4px 12px rgba(13, 0, 98, 0.08);
 }
 
 .ordenarSelect {
   appearance: none;
   border: none;
+  border-radius: 10px;
   background: transparent;
-  padding: 0 28px 0 6px;
-  font-size: 16px;
+  height: 43px;
+  min-width: 115px;
+  padding: 0 38px 0 16px;
+  font-size: 13px;
   font-weight: 500;
-  color: #111111;
+  color: #333333;
   cursor: pointer;
   outline: none;
 }
 
 .ordenarIcone {
   position: absolute;
-  right: 14px;
+  right: 12px;
   pointer-events: none;
   color: #111111;
+}
+
+.tagsSelecionadasBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
 }
 
 .caixaTags {
   width: 100%;
   background: #ffffff;
-  border-radius: 18px;
-  border: 1px solid #e6e2f2;
-  box-shadow: 0 2px 10px rgba(13, 0, 98, 0.08);
+  border-radius: 16px;
+  border: 1px solid #dcd8e8;
+  box-shadow: 0 12px 30px rgba(13, 0, 98, 0.12);
   padding: 18px 20px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 9px;
 }
 
 .tagPill {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  height: 40px;
-  padding: 0 16px;
+  justify-content: center;
+  gap: 8px;
+  min-height: 31px;
+  padding: 5px 13px;
   border-radius: 999px;
-  border: 2px solid #0d0062;
-  background: rgba(13, 0, 98, 0.11);
-  color: #0d0062;
-  font-size: 14px;
-  font-weight: 700;
+  border: 1px solid #d5d0e6;
+  background: #ffffff;
+  color: #2c2459;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tagPill:hover {
-  background: rgba(13, 0, 98, 0.18);
+  border-color: #0d0062;
+  color: #0d0062;
+  background: #f6f4fc;
 }
 
 .tagPillAtiva {
+  border-color: #0d0062;
   background: #0d0062;
   color: #ffffff;
+  font-weight: 700;
+  padding: 5px 7px 5px 12px;
 }
 
 .tagPillAtiva:hover {
-  background: #1a0980;
+  background: #2b1a91;
+  border-color: #2b1a91;
+  color: #ffffff;
 }
 
 .tagRemoveCircle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #ffffff;
   color: #0d0062;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   line-height: 1;
 }

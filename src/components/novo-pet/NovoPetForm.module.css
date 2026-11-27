@@ -281,7 +281,7 @@
 
 .acoes {
   display:flex;
-  justify-content:flex-end;
+  justify-content:center;
   gap:12px;
   margin-top:auto;
   padding-top:12px
@@ -460,4 +460,46 @@
     font-size: 13px;
   }
 
+}
+
+.idadeDetalhada { display:flex; gap:12px; padding:14px 12px; align-items:center; }
+.idadeDetalhada input, .idadeDetalhada select { min-width:0; flex:1; width:100%; padding:10px 12px; border:1px solid #231477; border-radius:12px; background:#fff; color:#160a65; font:inherit; }
+.novaPersonalidade { display:flex; flex-wrap:wrap; gap:10px; padding:0 14px 14px; align-items:center; }
+.novaPersonalidade input { flex:1 1 140px; min-width:0; border:1px solid #231477; border-radius:20px; padding:10px 14px; font:inherit; }
+.novaPersonalidade button { border:0; border-radius:20px; background:#160a65; color:#fff; padding:10px 16px; cursor:pointer; font:inherit; }
+.novaPersonalidade button:disabled { opacity:.5; cursor:default; }
+
+/* Feedback visual das ações do formulário. */
+.acoes button {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .acoes .cancelar:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(227, 60, 105, .28);
+  }
+  .acoes .salvar:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(22, 10, 101, .28);
+  }
+}
+
+.acoes button:not(:disabled):active,
+.acoes button:not(:disabled):hover:active {
+  transform: translateY(0) scale(.98);
+  box-shadow: none;
+}
+
+.acoes button:focus-visible {
+  outline: 2px solid #160a65;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acoes button { transition: none; }
+  .acoes .cancelar:not(:disabled):hover,
+  .acoes .salvar:not(:disabled):hover,
+  .acoes button:not(:disabled):active,
+  .acoes button:not(:disabled):hover:active { transform: none; }
 }

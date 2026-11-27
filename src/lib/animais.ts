@@ -41,6 +41,7 @@ export type AnimalForm = {
   convivencia?: string[]; historia?: string;
   microchip?: string; tempoAbrigo?: string; detalhesCuidados?: string; recomendacoes?: string;
   urgencia?: Urgencia;
+  corPelagem?: string; deficiencia?: boolean; descricaoDeficiencia?: string;
 };
 
 export type Urgencia = "normal" | "prioritaria" | "critica";
@@ -49,7 +50,7 @@ export const URGENCIAS: Record<Urgencia, string> = {
 };
 
 export type AnimalTela = {
-  id: string; nome: string; sexo: string; idade: number; raca: string;
+  id: string; nome: string; sexo: string; idade: number; idade_texto: string; cor_pelagem: string; deficiencia: boolean; descricao_deficiencia: string; raca: string;
   especie: string; porte: string; foto_url: string; status: string;
   castrado: boolean; vacinado: boolean; vermifugado: boolean;
   cuidados_especiais: boolean; temperamentos: string[]; convivencia: string[];
@@ -74,7 +75,7 @@ function paraApi(form: AnimalForm) {
   return {
     nome: form.nome,
     especie: ESPECIE_PARA_API[form.especie] || "OUTRO",
-    porte: PORTE_PARA_API[form.porte] || "MEDIO",
+    porte: PORTE_PARA_API[form.porte] || null,
     sexo: form.sexo === "femea" ? "FEMEA" : "MACHO",
     idade: form.idade,
     historia: form.historia?.trim() || null,
@@ -91,6 +92,8 @@ function paraApi(form: AnimalForm) {
       ...(form.convivencia || []).map((c) => PREFIXO_CONVIVENCIA + c),
       ...(form.vermifugado ? [TAG_VERMIFUGADO] : []),
       ...(form.cuidados ? [TAG_CUIDADOS] : []),
+      ...(form.corPelagem ? ["pelagem:" + form.corPelagem] : []),
+      ...(form.deficiencia ? ["deficiencia", ...(form.descricaoDeficiencia ? ["deficiencia:" + form.descricaoDeficiencia] : [])] : []),
       ...(form.raca ? [PREFIXO_RACA + form.raca] : []),
     ],
   };
@@ -103,7 +106,11 @@ function daApi(pet: PetApi): AnimalTela {
     id: pet.id,
     nome: pet.nome,
     sexo: (pet.sexo || "").toLowerCase(),
-    idade: parseInt(pet.idade ?? "", 10) || 0, // texto livre no banco, ex.: "2 anos"
+    idade: idadeEmAnos(pet.idade || ""),
+    idade_texto: formatarIdade(pet.idade || ""),
+    cor_pelagem: caracteristicas.find(c=>c.startsWith("pelagem:"))?.slice(8)||"",
+    deficiencia: caracteristicas.includes("deficiencia"),
+    descricao_deficiencia: caracteristicas.find(c=>c.startsWith("deficiencia:"))?.slice(12)||"", // texto livre no banco, ex.: "2 anos"
     raca,
     especie: ESPECIE_DA_API[pet.especie] || "",
     porte: (pet.porte && PORTE_DA_API[pet.porte]) || "",
@@ -114,7 +121,7 @@ function daApi(pet: PetApi): AnimalTela {
     vermifugado: caracteristicas.includes(TAG_VERMIFUGADO),
     cuidados_especiais: caracteristicas.includes(TAG_CUIDADOS),
     temperamentos: caracteristicas.filter((c) => c !== TAG_VERMIFUGADO && c !== TAG_CUIDADOS
-      && !c.startsWith(PREFIXO_RACA) && !c.startsWith(PREFIXO_CONVIVENCIA)),
+      && c !== "deficiencia" && !c.startsWith("deficiencia:") && !c.startsWith("pelagem:") && !c.startsWith(PREFIXO_RACA) && !c.startsWith(PREFIXO_CONVIVENCIA)),
     convivencia: caracteristicas.filter((c) => c.startsWith(PREFIXO_CONVIVENCIA)).map((c) => c.slice(PREFIXO_CONVIVENCIA.length)),
     historia: pet.historia || "",
     created_at: pet.criadoEm,
@@ -135,7 +142,7 @@ function daApi(pet: PetApi): AnimalTela {
 /** Formulario a partir de um pet ja cadastrado (edicao). */
 export function paraFormulario(pet: AnimalTela): AnimalForm {
   return {
-    nome: pet.nome, idade: String(pet.idade || ""), raca: pet.raca,
+    nome: pet.nome, idade: pet.idade_texto, corPelagem: pet.cor_pelagem, deficiencia: pet.deficiencia, descricaoDeficiencia: pet.descricao_deficiencia, raca: pet.raca,
     porte: pet.porte, sexo: pet.sexo, especie: pet.especie,
     castrado: pet.castrado, vacinado: pet.vacinado, vermifugado: pet.vermifugado, cuidados: pet.cuidados_especiais,
     temperamentos: pet.temperamentos, fotoUrl: pet.foto_url, convivencia: pet.convivencia, historia: pet.historia,
@@ -173,3 +180,6 @@ export async function listarDisponiveis(endereco?: string): Promise<AnimalTela[]
   const pets = await api<PetApi[]>(`/api/pets${params}`);
   return pets.map(daApi);
 }
+
+export function formatarIdade(valor: string) { const v=valor.trim(); return /^\d+$/.test(v)?`${v} ${v==="1"?"ano":"anos"}`:v; }
+export function idadeEmAnos(valor:string) { const n=parseInt(valor,10); return Number.isNaN(n)?Infinity:valor.includes("semana")?n/52: /m[eê]s/.test(valor)?n/12:n; }
